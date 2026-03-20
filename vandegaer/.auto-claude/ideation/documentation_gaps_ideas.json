@@ -1,0 +1,120 @@
+{
+  "documentation_gaps": [
+    {
+      "id": "doc-001",
+      "type": "documentation_gaps",
+      "title": "Create Project README.md",
+      "description": "The project lacks a README.md file entirely. There is no entry-point documentation for developers joining the project. The extensive planning docs (SOCIALBIT_SAAS_PLANNING.md, DATABASE_ARCHITECTURE.md) focus on future architecture but don't help someone set up and run the current codebase.",
+      "rationale": "A README is the first thing developers look for when joining a project. Without it, onboarding requires reading through scattered planning documents and reverse-engineering the setup process. This is a critical blocker for any new team member or contributor.",
+      "category": "readme",
+      "targetAudience": "contributors",
+      "affectedAreas": [
+        "Project root",
+        "config/app.example.php"
+      ],
+      "currentDocumentation": "None - no README.md exists",
+      "proposedContent": "Create comprehensive README.md covering: project description, tech stack (PHP 8.x, MySQL, vanilla architecture), prerequisites (XAMPP/PHP/MySQL), installation steps, database setup with migrations, configuration via config/app.php, running the development server, and project structure overview. Include badges for PHP version and license.",
+      "priority": "high",
+      "estimatedEffort": "medium"
+    },
+    {
+      "id": "doc-002",
+      "type": "documentation_gaps",
+      "title": "Document CSV Import Formats and API Endpoints",
+      "description": "The GenericCsvImporter supports two CSV formats (TikTok export and content_tracker_enhanced) but there's no user-facing documentation explaining the expected column headers, data formats, or import endpoints. Users must read the PHP source code to understand what CSV formats are accepted.",
+      "rationale": "CSV import is a primary feature for getting data into SocialBit. Marketing agencies will need clear documentation of expected column names (e.g., Content_ID, Bereik, Platform, Datum) and sample CSV files. Without this, users will experience import failures and frustration.",
+      "category": "examples",
+      "targetAudience": "users",
+      "affectedAreas": [
+        "src/Services/GenericCsvImporter.php",
+        "src/Services/TikTokCsvImporter.php",
+        "src/Controllers/ImportController.php"
+      ],
+      "currentDocumentation": "Only inline code comments in Dutch within GenericCsvImporter.php",
+      "proposedContent": "Create docs/csv-import-guide.md covering: supported CSV formats with column header tables, sample CSV files for each format, API endpoint documentation (POST /api/import/generic, POST /api/import/tiktok), expected response formats, common error messages and solutions. Include downloadable CSV templates.",
+      "priority": "high",
+      "estimatedEffort": "medium"
+    },
+    {
+      "id": "doc-003",
+      "type": "documentation_gaps",
+      "title": "Add PHPDoc API Documentation for Controllers and Repositories",
+      "description": "Controllers (ImportController, PostController, AuthController, etc.) and Repositories lack comprehensive PHPDoc blocks. For example, ImportController.tiktok() has no documentation of the expected $_FILES structure, response format, or possible error responses. PostRepository methods are missing parameter types and return type documentation.",
+      "rationale": "API documentation is essential for maintaining code quality and enabling team collaboration. Without proper PHPDoc, IDEs can't provide autocomplete, and developers must trace through code to understand method contracts. This affects both internal development speed and external API consumers.",
+      "category": "api_docs",
+      "targetAudience": "developers",
+      "affectedAreas": [
+        "src/Controllers/ImportController.php",
+        "src/Controllers/PostController.php",
+        "src/Controllers/AuthController.php",
+        "src/Repositories/PostRepository.php",
+        "src/Repositories/TikTokRepository.php",
+        "src/Repositories/AnalyticsRepository.php"
+      ],
+      "currentDocumentation": "Basic class-level comments in Dutch, method-level docs inconsistent or missing",
+      "proposedContent": "Add complete PHPDoc blocks to all public methods in Controllers and Repositories including: @param with types and descriptions, @return with type and structure documentation, @throws for exceptions, usage examples where helpful. Ensure consistency between Dutch comments and English technical documentation.",
+      "priority": "medium",
+      "estimatedEffort": "high"
+    },
+    {
+      "id": "doc-004",
+      "type": "documentation_gaps",
+      "title": "Create API Route Reference Documentation",
+      "description": "The Router class supports dynamic route registration but there's no documentation of available API endpoints. The public/index2.php file likely defines routes but developers must read the source to discover available endpoints, HTTP methods, and required parameters.",
+      "rationale": "API route documentation is fundamental for frontend developers, API consumers, and testers. Without it, discovering available functionality requires code archaeology. As SocialBit grows to support multiple platforms (Instagram, TikTok, Facebook), having a clear API reference becomes essential.",
+      "category": "api_docs",
+      "targetAudience": "developers",
+      "affectedAreas": [
+        "src/Core/Router.php",
+        "public/index2.php",
+        "All Controllers"
+      ],
+      "currentDocumentation": "Router.php has class-level comment explaining pattern syntax, but no endpoint catalog exists",
+      "proposedContent": "Create docs/api-reference.md with: complete list of all API endpoints organized by domain (auth, posts, import, analytics), HTTP methods, request/response examples in JSON, authentication requirements, rate limiting info if applicable. Consider adding OpenAPI/Swagger spec file for tooling integration.",
+      "priority": "medium",
+      "estimatedEffort": "medium"
+    },
+    {
+      "id": "doc-005",
+      "type": "documentation_gaps",
+      "title": "Document Database Schema and Migration Process",
+      "description": "While DATABASE_ARCHITECTURE.md provides an excellent theoretical PostgreSQL schema, the actual codebase uses MySQL with a different structure. There's no documentation of the current database schema (posts, metrics_history, import_history, hashtag_performance tables) or how to set up/migrate the database.",
+      "rationale": "The gap between planning docs and reality creates confusion. New developers might try to implement the PostgreSQL schema from DATABASE_ARCHITECTURE.md when the actual system uses MySQL. Clear documentation of the current state plus migration scripts would accelerate onboarding.",
+      "category": "architecture",
+      "targetAudience": "contributors",
+      "affectedAreas": [
+        "DATABASE_ARCHITECTURE.md",
+        "scripts/migrate_csv_to_db.php",
+        "src/Core/Database.php",
+        "Database tables: posts, metrics_history, import_history, hashtag_performance, post_hashtags"
+      ],
+      "currentDocumentation": "DATABASE_ARCHITECTURE.md describes future PostgreSQL design; no docs for current MySQL schema",
+      "proposedContent": "Create docs/database-setup.md covering: current MySQL schema with table definitions and relationships, database creation SQL script, migration/seeding instructions, explanation of key tables (posts for content, metrics_history for time-series data), and how the current schema relates to the planned architecture in DATABASE_ARCHITECTURE.md.",
+      "priority": "medium",
+      "estimatedEffort": "medium"
+    }
+  ],
+  "metadata": {
+    "filesAnalyzed": 32,
+    "documentedFunctions": 18,
+    "undocumentedFunctions": 45,
+    "readmeLastUpdated": null,
+    "existingDocs": [
+      "SOCIALBIT_SAAS_PLANNING.md",
+      "DATABASE_ARCHITECTURE.md",
+      "TECH_STACK_COMPARISON.md",
+      "API_INTEGRATION_STRATEGY.md",
+      "MULTI_TENANT_ARCHITECTURE.md",
+      "READY_TO_START_DEVELOPMENT.md"
+    ],
+    "codebaseLanguages": ["PHP"],
+    "framework": "vanilla PHP (no framework)",
+    "primaryGaps": [
+      "No README.md for project onboarding",
+      "Missing API endpoint documentation",
+      "No user-facing CSV import guide",
+      "Gap between planning docs and current implementation"
+    ],
+    "generatedAt": "2025-12-30T22:15:00Z"
+  }
+}

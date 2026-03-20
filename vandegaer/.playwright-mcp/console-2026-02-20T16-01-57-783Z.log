@@ -1,0 +1,11 @@
+[    8977ms] TypeError: Cannot read properties of undefined (reading 'add')
+    at showTableDetails (http://localhost/socialbit-live/database-playground.html:1336:37)
+    at HTMLDocument.<anonymous> (http://localhost/socialbit-live/database-playground.html:1573:7)
+[  226205ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[  472320ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[  490563ms] TypeError: Cannot read properties of undefined (reading 'add')
+    at showTableDetails (http://localhost/socialbit-live/database-playground.html:1354:37)
+    at HTMLDocument.<anonymous> (http://localhost/socialbit-live/database-playground.html:1591:7)
+[  524941ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[  544689ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[  545567ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63

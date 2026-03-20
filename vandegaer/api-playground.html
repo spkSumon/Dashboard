@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔌 API Playground - SocialBit</title>
+
+  <!-- Jungle Theme CSS -->
+  <link rel="stylesheet" href="public/assets/jungle-theme.css">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    body {
+      /* Flow-in animation - background shows first, content flows in after 1s */
+      animation: none; /* Body itself does not animate */
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+      padding-top: 80px;
+      background: linear-gradient(135deg, #0d1b0e 0%, #1a3a1f 100%);
+      color: #7fda89;
+      position: relative;
+    }
+
+    /* Jungle landscape background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('img/horizon 3.png') center/cover no-repeat fixed;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: linear-gradient(135deg, rgba(13, 27, 14, 0.95), rgba(26, 58, 31, 0.95));
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(46, 204, 113, 0.3);
+      padding: 1rem 2rem;
+    }
+
+    .nav-content {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+
+    .nav-logo-icon {
+      font-size: 2rem;
+      color: #39ff14;
+      text-shadow: 0 0 20px rgba(57, 255, 20, 0.6);
+    }
+
+    .nav-logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #39ff14;
+      text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: #7fda89;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #39ff14, #2ecc71);
+      transition: width 0.3s;
+    }
+
+    .nav-link:hover {
+      color: #39ff14;
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    .nav-link.active {
+      color: #39ff14;
+    }
+
+    .nav-link.active::after {
+      width: 100%;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-size: 3rem;
+      color: #39ff14;
+      text-shadow: 0 0 20px rgba(57, 255, 20, 0.6);
+      margin-bottom: 1rem;
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      color: #7fda89;
+      margin-bottom: 2rem;
+    }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: rgba(46, 204, 113, 0.1);
+      border: 1px solid rgba(46, 204, 113, 0.3);
+      color: #7fda89;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tab-btn:hover {
+      background: rgba(46, 204, 113, 0.2);
+      border-color: rgba(57, 255, 20, 0.5);
+      color: #39ff14;
+      box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+    }
+
+    .tab-btn.active {
+      background: rgba(57, 255, 20, 0.2);
+      border-color: #39ff14;
+      color: #39ff14;
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* API Endpoint Mapper */
+    .api-category {
+      background: rgba(46, 204, 113, 0.05);
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .api-category-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .api-category-header:hover .category-icon {
+      transform: scale(1.1);
+    }
+
+    .category-icon {
+      font-size: 1.5rem;
+      transition: transform 0.3s;
+    }
+
+    .category-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #39ff14;
+    }
+
+    .category-count {
+      margin-left: auto;
+      background: rgba(57, 255, 20, 0.2);
+      padding: 0.25rem 0.75rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+    }
+
+    .endpoint-list {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .endpoint {
+      background: rgba(13, 27, 14, 0.5);
+      border: 1px solid rgba(46, 204, 113, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .endpoint:hover {
+      border-color: #39ff14;
+      box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+      transform: translateX(5px);
+    }
+
+    .endpoint-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .method-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .method-GET {
+      background: rgba(46, 204, 113, 0.2);
+      color: #2ecc71;
+      border: 1px solid #2ecc71;
+    }
+
+    .method-POST {
+      background: rgba(52, 152, 219, 0.2);
+      color: #3498db;
+      border: 1px solid #3498db;
+    }
+
+    .method-PUT {
+      background: rgba(241, 196, 15, 0.2);
+      color: #f1c40f;
+      border: 1px solid #f1c40f;
+    }
+
+    .method-DELETE {
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+      border: 1px solid #e74c3c;
+    }
+
+    .endpoint-path {
+      font-family: 'Courier New', monospace;
+      color: #7fda89;
+      flex: 1;
+    }
+
+    .auth-badge {
+      background: rgba(231, 76, 60, 0.2);
+      color: #e74c3c;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      border: 1px solid #e74c3c;
+    }
+
+    .endpoint-description {
+      color: #5a9f66;
+      font-size: 0.9rem;
+      margin-left: 5rem;
+    }
+
+    /* Flow Visualizer */
+    .flow-container {
+      background: rgba(46, 204, 113, 0.05);
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .flow-diagram {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+
+    .flow-node {
+      background: rgba(13, 27, 14, 0.8);
+      border: 2px solid rgba(46, 204, 113, 0.5);
+      border-radius: 12px;
+      padding: 1.5rem;
+      min-width: 150px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .flow-node:hover {
+      border-color: #39ff14;
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+      transform: scale(1.05);
+    }
+
+    .flow-node-icon {
+      font-size: 2rem;
+      color: #39ff14;
+      margin-bottom: 0.5rem;
+    }
+
+    .flow-node-title {
+      font-weight: 700;
+      color: #39ff14;
+      margin-bottom: 0.25rem;
+    }
+
+    .flow-node-subtitle {
+      font-size: 0.85rem;
+      color: #7fda89;
+    }
+
+    .flow-arrow {
+      font-size: 2rem;
+      color: #2ecc71;
+    }
+
+    /* API Tester */
+    .tester-container {
+      background: rgba(46, 204, 113, 0.05);
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      border-radius: 12px;
+      padding: 2rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      color: #39ff14;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input,
+    .form-select,
+    .form-textarea {
+      width: 100%;
+      background: rgba(13, 27, 14, 0.5);
+      border: 1px solid rgba(46, 204, 113, 0.3);
+      color: #7fda89;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+    }
+
+    .form-textarea {
+      min-height: 150px;
+      resize: vertical;
+    }
+
+    .form-input:focus,
+    .form-select:focus,
+    .form-textarea:focus {
+      outline: none;
+      border-color: #39ff14;
+      box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+    }
+
+    .btn {
+      background: rgba(46, 204, 113, 0.2);
+      border: 1px solid #2ecc71;
+      color: #2ecc71;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn:hover {
+      background: rgba(57, 255, 20, 0.3);
+      border-color: #39ff14;
+      color: #39ff14;
+      box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+    }
+
+    .response-container {
+      margin-top: 1.5rem;
+      background: rgba(13, 27, 14, 0.8);
+      border: 1px solid rgba(46, 204, 113, 0.3);
+      border-radius: 8px;
+      padding: 1rem;
+      display: none;
+    }
+
+    .response-container.active {
+      display: block;
+    }
+
+    .response-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      color: #39ff14;
+      font-weight: 700;
+    }
+
+    .response-body {
+      /* Flow-in animation - background shows first, content flows in after 1s */
+      animation: none; /* Body itself does not animate */
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      border-radius: 4px;
+      padding: 1rem;
+      overflow-x: auto;
+    }
+
+    .response-body pre {
+      margin: 0;
+      color: #7fda89;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    /* Integration Status */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .status-card {
+      background: rgba(46, 204, 113, 0.05);
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s;
+    }
+
+    .status-card:hover {
+      border-color: #39ff14;
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+    }
+
+    .status-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .status-icon {
+      font-size: 2rem;
+    }
+
+    .status-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #39ff14;
+    }
+
+    .status-indicator {
+      margin-left: auto;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .status-connected {
+      background: #2ecc71;
+      box-shadow: 0 0 10px rgba(46, 204, 113, 0.6);
+    }
+
+    .status-disconnected {
+      background: #e74c3c;
+      box-shadow: 0 0 10px rgba(231, 76, 60, 0.6);
+    }
+
+    .status-pending {
+      background: #f1c40f;
+      box-shadow: 0 0 10px rgba(241, 196, 15, 0.6);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .status-details {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+
+    .status-label {
+      color: #7fda89;
+    }
+
+    .status-value {
+      color: #39ff14;
+      font-weight: 600;
+    }
+
+    /* Prompt Generation */
+    .prompt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .prompt-card {
+      background: rgba(46, 204, 113, 0.05);
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .prompt-card:hover {
+      border-color: #39ff14;
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.2);
+      transform: translateY(-5px);
+    }
+
+    .prompt-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .prompt-icon {
+      font-size: 1.5rem;
+      color: #39ff14;
+    }
+
+    .prompt-title {
+      font-weight: 700;
+      color: #39ff14;
+      font-size: 1.1rem;
+    }
+
+    .prompt-text {
+      background: rgba(13, 27, 14, 0.5);
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      border-radius: 8px;
+      padding: 1rem;
+      color: #7fda89;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .copy-notification {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      background: rgba(46, 204, 113, 0.9);
+      color: #0d1b0e;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      box-shadow: 0 4px 20px rgba(57, 255, 20, 0.4);
+      display: none;
+      z-index: 2000;
+    }
+
+    .copy-notification.show {
+      display: block;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2rem;
+      }
+
+      .nav-links {
+        gap: 1rem;
+      }
+
+      .flow-diagram {
+        flex-direction: column;
+      }
+
+      .flow-arrow {
+        transform: rotate(90deg);
+      }
+
+      .status-grid,
+      .prompt-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    /* Background fade-in animation - full quality to normal opacity */
+    body::before {
+      animation: bgFadeIn 0.75s ease-out forwards;
+    }
+
+    @keyframes bgFadeIn {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0.15;
+      }
+    }
+
+    /* Hide all elements initially */
+    body > *:not(script):not(style) {
+      opacity: 0;
+    }
+
+    /* Random flow-in animations from different directions */
+    @keyframes flowFromLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes flowFromRight {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes flowFromTop {
+      from {
+        opacity: 0;
+        transform: translateY(-100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes flowFromBottom {
+      from {
+        opacity: 0;
+        transform: translateY(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .flow-left {
+      animation: flowFromLeft 0.75s ease-out forwards;
+    }
+
+    .flow-right {
+      animation: flowFromRight 0.75s ease-out forwards;
+    }
+
+    .flow-top {
+      animation: flowFromTop 0.75s ease-out forwards;
+    }
+
+    .flow-bottom {
+      animation: flowFromBottom 0.75s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-content">
+      <a href="index-jungle.html" class="nav-logo">
+        <span class="nav-logo-icon"><i class="fas fa-leaf"></i></span>
+        <span class="nav-logo-text">SocialBit</span>
+      </a>
+      <div class="nav-links">
+        <a href="index-jungle.html" class="nav-link">🏠 Home</a>
+        <a href="jungle.html" class="nav-link"><i class="fas fa-leaf"></i> Dashboard</a>
+        <a href="api-connector.html" class="nav-link"><i class="fas fa-network-wired"></i> API Lab</a>
+        <a href="codebase-playground.html" class="nav-link">🦜 Codebase</a>
+        <a href="database-playground.html" class="nav-link">🗄️ Database</a>
+        <a href="file-analyzer-demo.html" class="nav-link">📁 Analyzer</a>
+        <a href="public/index.html" class="nav-link">📊 Main App</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🚀 API Playground</h1>
+      <p>Visual API mapper, request flow visualizer, and live API testing playground</p>
+
+      <!-- Tab Navigation -->
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('endpoints')">
+          <i class="fas fa-map-signs"></i> Endpoint Mapper
+        </button>
+        <button class="tab-btn" onclick="switchTab('flow')">
+          <i class="fas fa-project-diagram"></i> Request Flow
+        </button>
+        <button class="tab-btn" onclick="switchTab('tester')">
+          <i class="fas fa-vial"></i> Live Tester
+        </button>
+        <button class="tab-btn" onclick="switchTab('status')">
+          <i class="fas fa-heartbeat"></i> Integration Status
+        </button>
+        <button class="tab-btn" onclick="switchTab('prompts')">
+          <i class="fas fa-magic"></i> Prompt Generator
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Content: Endpoint Mapper -->
+    <div id="tab-endpoints" class="tab-content active">
+      <div id="endpoint-categories"></div>
+    </div>
+
+    <!-- Tab Content: Request Flow -->
+    <div id="tab-flow" class="tab-content">
+      <div class="flow-container">
+        <h2 style="color: #39ff14; text-align: center; margin-bottom: 1rem;">Request → Response Flow</h2>
+        <p style="color: #7fda89; text-align: center; margin-bottom: 2rem;">
+          Click an endpoint in the Endpoint Mapper to see its flow visualization
+        </p>
+        <div class="flow-diagram" id="flow-diagram">
+          <div class="flow-node">
+            <div class="flow-node-icon"><i class="fas fa-globe"></i></div>
+            <div class="flow-node-title">HTTP Request</div>
+            <div class="flow-node-subtitle">Client sends request</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-node-icon"><i class="fas fa-route"></i></div>
+            <div class="flow-node-title">Router</div>
+            <div class="flow-node-subtitle">index2.php</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-node-icon"><i class="fas fa-server"></i></div>
+            <div class="flow-node-title">Controller</div>
+            <div class="flow-node-subtitle">HTTP handling</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-node-icon"><i class="fas fa-cog"></i></div>
+            <div class="flow-node-title">Service</div>
+            <div class="flow-node-subtitle">Business logic</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-node-icon"><i class="fas fa-database"></i></div>
+            <div class="flow-node-title">Repository</div>
+            <div class="flow-node-subtitle">Database access</div>
+          </div>
+          <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+          <div class="flow-node">
+            <div class="flow-node-icon"><i class="fas fa-reply"></i></div>
+            <div class="flow-node-title">JSON Response</div>
+            <div class="flow-node-subtitle">Data returned</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content: Live Tester -->
+    <div id="tab-tester" class="tab-content">
+      <div class="tester-container">
+        <h2 style="color: #39ff14; margin-bottom: 1.5rem;"><i class="fas fa-vial"></i> Live API Tester</h2>
+
+        <div class="form-group">
+          <label class="form-label">Endpoint Category</label>
+          <select class="form-select" id="test-category" onchange="updateEndpointOptions()">
+            <option value="">Select a category...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Endpoint</label>
+          <select class="form-select" id="test-endpoint" onchange="updateTestForm()">
+            <option value="">Select an endpoint...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">HTTP Method</label>
+          <input type="text" class="form-input" id="test-method" readonly value="GET">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Request URL</label>
+          <input type="text" class="form-input" id="test-url" readonly value="/api/health">
+        </div>
+
+        <div class="form-group" id="auth-group" style="display: none;">
+          <label class="form-label">Authorization Token</label>
+          <input type="text" class="form-input" id="test-token" placeholder="Enter your auth token...">
+        </div>
+
+        <div class="form-group" id="body-group" style="display: none;">
+          <label class="form-label">Request Body (JSON)</label>
+          <textarea class="form-textarea" id="test-body" placeholder='{"key": "value"}'></textarea>
+        </div>
+
+        <button class="btn" onclick="sendTestRequest()">
+          <i class="fas fa-paper-plane"></i> Send Request
+        </button>
+
+        <div class="response-container" id="response-container">
+          <div class="response-header">
+            <i class="fas fa-code"></i> Response
+          </div>
+          <div class="response-body">
+            <pre id="response-output"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content: Integration Status -->
+    <div id="tab-status" class="tab-content">
+      <div class="status-grid">
+        <!-- TikTok API -->
+        <div class="status-card">
+          <div class="status-card-header">
+            <div class="status-icon">📱</div>
+            <div class="status-title">TikTok API</div>
+            <div class="status-indicator status-pending"></div>
+          </div>
+          <div class="status-details">
+            <div class="status-row">
+              <span class="status-label">Status:</span>
+              <span class="status-value">Pending Approval</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Service:</span>
+              <span class="status-value">TikTokOAuthService</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Endpoint:</span>
+              <span class="status-value">/api/tiktok/*</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Last Sync:</span>
+              <span class="status-value">N/A</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Instagram Graph API -->
+        <div class="status-card">
+          <div class="status-card-header">
+            <div class="status-icon">📷</div>
+            <div class="status-title">Instagram Graph API</div>
+            <div class="status-indicator status-connected"></div>
+          </div>
+          <div class="status-details">
+            <div class="status-row">
+              <span class="status-label">Status:</span>
+              <span class="status-value">Connected</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Service:</span>
+              <span class="status-value">InstagramApiService</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Endpoint:</span>
+              <span class="status-value">/api/instagram/*</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Last Sync:</span>
+              <span class="status-value">Check status endpoint</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Facebook Graph API -->
+        <div class="status-card">
+          <div class="status-card-header">
+            <div class="status-icon">👥</div>
+            <div class="status-title">Facebook Graph API</div>
+            <div class="status-indicator status-connected"></div>
+          </div>
+          <div class="status-details">
+            <div class="status-row">
+              <span class="status-label">Status:</span>
+              <span class="status-value">Connected</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Service:</span>
+              <span class="status-value">FacebookApiService</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Endpoint:</span>
+              <span class="status-value">/api/facebook/*</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Last Sync:</span>
+              <span class="status-value">Check status endpoint</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Metricool API -->
+        <div class="status-card">
+          <div class="status-card-header">
+            <div class="status-icon">📊</div>
+            <div class="status-title">Metricool API</div>
+            <div class="status-indicator status-connected"></div>
+          </div>
+          <div class="status-details">
+            <div class="status-row">
+              <span class="status-label">Status:</span>
+              <span class="status-value">Connected</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Service:</span>
+              <span class="status-value">MetricoolApiService</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Endpoint:</span>
+              <span class="status-value">/api/metricool/*</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Last Sync:</span>
+              <span class="status-value">Daily 4 AM</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Fathom Analytics -->
+        <div class="status-card">
+          <div class="status-card-header">
+            <div class="status-icon">📈</div>
+            <div class="status-title">Fathom Analytics</div>
+            <div class="status-indicator status-connected"></div>
+          </div>
+          <div class="status-details">
+            <div class="status-row">
+              <span class="status-label">Status:</span>
+              <span class="status-value">Connected</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Service:</span>
+              <span class="status-value">FathomAnalyticsApiService</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Endpoint:</span>
+              <span class="status-value">/api/analytics/fathom/*</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Last Sync:</span>
+              <span class="status-value">Daily 6 AM</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Google Business API -->
+        <div class="status-card">
+          <div class="status-card-header">
+            <div class="status-icon">🏢</div>
+            <div class="status-title">Google Business API</div>
+            <div class="status-indicator status-pending"></div>
+          </div>
+          <div class="status-details">
+            <div class="status-row">
+              <span class="status-label">Status:</span>
+              <span class="status-value">Planned</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Service:</span>
+              <span class="status-value">GoogleAnalyticsApiService</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Endpoint:</span>
+              <span class="status-value">TBD</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Last Sync:</span>
+              <span class="status-value">N/A</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Content: Prompt Generator -->
+    <div id="tab-prompts" class="tab-content">
+      <div class="prompt-grid">
+        <!-- Security Review -->
+        <div class="prompt-card" onclick="copyPrompt('security')">
+          <div class="prompt-card-header">
+            <div class="prompt-icon"><i class="fas fa-shield-alt"></i></div>
+            <div class="prompt-title">Security Review</div>
+          </div>
+          <div class="prompt-text" id="prompt-security">
+Review API security in C:\xampp3\htdocs\socialbit-live\src\Controllers\
+
+Focus on:
+- SQL injection vulnerabilities (prepared statements)
+- XSS prevention in JSON responses
+- CSRF protection for state-changing operations
+- Authentication bypass risks
+- Rate limiting implementation
+- Input validation on all endpoints
+- Proper error handling (no sensitive data leaks)
+
+Provide specific file:line references for issues found.
+          </div>
+        </div>
+
+        <!-- Performance Optimization -->
+        <div class="prompt-card" onclick="copyPrompt('performance')">
+          <div class="prompt-card-header">
+            <div class="prompt-icon"><i class="fas fa-tachometer-alt"></i></div>
+            <div class="prompt-title">Performance Optimization</div>
+          </div>
+          <div class="prompt-text" id="prompt-performance">
+Optimize API performance for C:\xampp3\htdocs\socialbit-live\src\Controllers\AnalyticsController.php
+
+Review:
+- Database query efficiency (N+1 queries, missing indexes)
+- Response caching opportunities
+- Pagination implementation
+- Unnecessary data fetching
+- Repository query optimization
+- Memory usage for large datasets
+
+Suggest specific improvements with code examples.
+          </div>
+        </div>
+
+        <!-- Error Handling -->
+        <div class="prompt-card" onclick="copyPrompt('errors')">
+          <div class="prompt-card-header">
+            <div class="prompt-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="prompt-title">Error Handling</div>
+          </div>
+          <div class="prompt-text" id="prompt-errors">
+Add comprehensive error handling to C:\xampp3\htdocs\socialbit-live\src\Services\
+
+Requirements:
+- Try/catch blocks for external API calls
+- Graceful degradation on service failures
+- Meaningful error messages for users
+- Error logging for debugging
+- HTTP status code correctness
+- Rollback on partial failures
+
+Focus on Services that integrate with external APIs (TikTok, Instagram, Metricool, Fathom).
+          </div>
+        </div>
+
+        <!-- API Documentation -->
+        <div class="prompt-card" onclick="copyPrompt('docs')">
+          <div class="prompt-card-header">
+            <div class="prompt-icon"><i class="fas fa-book"></i></div>
+            <div class="prompt-title">API Documentation</div>
+          </div>
+          <div class="prompt-text" id="prompt-docs">
+Generate comprehensive API documentation for all endpoints in C:\xampp3\htdocs\socialbit-live\public\index2.php
+
+Include:
+- Endpoint path and HTTP method
+- Request parameters (query, body, headers)
+- Response format with examples
+- Error responses with status codes
+- Authentication requirements
+- Rate limiting (if applicable)
+
+Output in OpenAPI 3.0 format or Markdown.
+          </div>
+        </div>
+
+        <!-- Test Coverage -->
+        <div class="prompt-card" onclick="copyPrompt('tests')">
+          <div class="prompt-card-header">
+            <div class="prompt-icon"><i class="fas fa-vial"></i></div>
+            <div class="prompt-title">Test Coverage</div>
+          </div>
+          <div class="prompt-text" id="prompt-tests">
+Create integration tests for API endpoints in C:\xampp3\htdocs\socialbit-live\
+
+Priority endpoints:
+- /api/metricool/sync (POST)
+- /api/instagram/sync (POST)
+- /api/facebook/sync (POST)
+- /api/hashtags/recommendations (GET)
+- /api/insights (GET)
+
+Test cases should cover:
+- Happy path scenarios
+- Invalid input handling
+- Authentication failures
+- External API failures (mocked)
+- Rate limiting behavior
+
+Use PHPUnit format.
+          </div>
+        </div>
+
+        <!-- Data Validation -->
+        <div class="prompt-card" onclick="copyPrompt('validation')">
+          <div class="prompt-card-header">
+            <div class="prompt-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="prompt-title">Data Validation</div>
+          </div>
+          <div class="prompt-text" id="prompt-validation">
+Review and enhance input validation in C:\xampp3\htdocs\socialbit-live\src\Controllers\
+
+Check:
+- Type validation (int, string, date, email)
+- Required field enforcement
+- Range/length constraints
+- Enum value validation
+- Date format validation
+- JSON schema validation for POST bodies
+- Sanitization before database storage
+
+Identify endpoints missing validation and suggest implementation.
+          </div>
+        </div>
+
+        <!-- Rate Limiting -->
+        <div class="prompt-card" onclick="copyPrompt('ratelimit')">
+          <div class="prompt-card-header">
+            <div class="prompt-icon"><i class="fas fa-hourglass-half"></i></div>
+            <div class="prompt-title">Rate Limiting</div>
+          </div>
+          <div class="prompt-text" id="prompt-ratelimit">
+Implement rate limiting for API endpoints in C:\xampp3\htdocs\socialbit-live\
+
+Strategy:
+- Identify endpoints requiring rate limits (sync, import, external API calls)
+- Design tiered limits (per-user, per-IP, global)
+- Implement using Redis or database tracking
+- Return proper 429 Too Many Requests responses
+- Add Retry-After headers
+- Document limits in API responses
+
+Focus on protecting expensive operations (data sync, CSV imports).
+          </div>
+        </div>
+
+        <!-- API Versioning -->
+        <div class="prompt-card" onclick="copyPrompt('versioning')">
+          <div class="prompt-card-header">
+            <div class="prompt-icon"><i class="fas fa-code-branch"></i></div>
+            <div class="prompt-title">API Versioning</div>
+          </div>
+          <div class="prompt-text" id="prompt-versioning">
+Design API versioning strategy for C:\xampp3\htdocs\socialbit-live\
+
+Consider:
+- URL versioning (/api/v1/, /api/v2/) vs header versioning
+- Backward compatibility requirements
+- Deprecation policy and timeline
+- Migration path for existing integrations
+- Version negotiation mechanism
+- Documentation versioning
+
+Provide implementation plan for transitioning current endpoints to v1.
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Prompt Generator Section -->
+      <div style="margin-top: 3rem; padding-top: 3rem; border-top: 2px solid rgba(46, 204, 113, 0.3);">
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <h2 style="font-size: 2rem; color: #39ff14; margin-bottom: 0.5rem;">
+            <i class="fas fa-magic"></i> Custom Prompt Generator
+          </h2>
+          <p style="color: #7fda89;">Build a custom API analysis prompt based on your needs</p>
+        </div>
+
+        <!-- Control Panel -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+
+          <!-- Endpoint Selection -->
+          <div style="background: rgba(46, 204, 113, 0.05); border: 1px solid rgba(46, 204, 113, 0.2); border-radius: 12px; padding: 1.5rem;">
+            <h3 style="color: #39ff14; margin-bottom: 1rem; font-size: 1.1rem;">
+              <i class="fas fa-map-marker-alt"></i> Select Endpoints
+            </h3>
+            <div style="max-height: 300px; overflow-y: auto;">
+              <div id="endpoint-checkboxes"></div>
+            </div>
+          </div>
+
+          <!-- Analysis Focus -->
+          <div style="background: rgba(46, 204, 113, 0.05); border: 1px solid rgba(46, 204, 113, 0.2); border-radius: 12px; padding: 1.5rem;">
+            <h3 style="color: #39ff14; margin-bottom: 1rem; font-size: 1.1rem;">
+              <i class="fas fa-crosshairs"></i> Analysis Focus
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="focus-security" class="focus-checkbox" checked>
+                <span style="color: #7fda89;"><i class="fas fa-shield-alt"></i> Security Review</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="focus-performance" class="focus-checkbox">
+                <span style="color: #7fda89;"><i class="fas fa-tachometer-alt"></i> Performance</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="focus-errors" class="focus-checkbox">
+                <span style="color: #7fda89;"><i class="fas fa-exclamation-triangle"></i> Error Handling</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="focus-testing" class="focus-checkbox">
+                <span style="color: #7fda89;"><i class="fas fa-vial"></i> Testing</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="focus-docs" class="focus-checkbox">
+                <span style="color: #7fda89;"><i class="fas fa-book"></i> Documentation</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Method Filter -->
+          <div style="background: rgba(46, 204, 113, 0.05); border: 1px solid rgba(46, 204, 113, 0.2); border-radius: 12px; padding: 1.5rem;">
+            <h3 style="color: #39ff14; margin-bottom: 1rem; font-size: 1.1rem;">
+              <i class="fas fa-filter"></i> HTTP Methods
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="method-get" class="method-checkbox" checked>
+                <span style="color: #7fda89; font-family: monospace; font-weight: 600;">GET</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="method-post" class="method-checkbox" checked>
+                <span style="color: #7fda89; font-family: monospace; font-weight: 600;">POST</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="method-put" class="method-checkbox">
+                <span style="color: #7fda89; font-family: monospace; font-weight: 600;">PUT</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="checkbox" id="method-delete" class="method-checkbox">
+                <span style="color: #7fda89; font-family: monospace; font-weight: 600;">DELETE</span>
+              </label>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Prompt Output Terminal -->
+        <div style="background: linear-gradient(135deg, rgba(10, 14, 10, 0.95) 0%, rgba(13, 27, 14, 0.9) 100%); border: 1px solid var(--jungle-accent); border-radius: 12px; padding: 24px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.3);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <i class="fas fa-terminal" style="color: #39ff14; font-size: 1.2rem;"></i>
+              <span style="font-size: 1.1rem; font-weight: 600; color: #39ff14;">Generated Custom Prompt</span>
+            </div>
+            <div style="display: flex; gap: 0.75rem;">
+              <button onclick="generateCustomPrompt()" style="background: linear-gradient(135deg, #2ecc71, #39ff14); color: #0d1b0e; border: none; padding: 0.75rem 1.5rem; border-radius: 50px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s;">
+                <i class="fas fa-magic"></i> <span>Generate Prompt</span>
+              </button>
+              <button id="custom-copy-btn" onclick="copyCustomPrompt()" style="background: transparent; border: 2px solid #2ecc71; color: #2ecc71; padding: 0.75rem 1.5rem; border-radius: 50px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s;">
+                <i class="fas fa-copy"></i> <span>Copy</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="custom-prompt-output" style="background: rgba(10, 14, 10, 0.5); border: 1px solid rgba(46, 204, 113, 0.2); border-radius: 8px; padding: 1rem; color: #e0e0e0; font-family: 'Monaco', 'Courier New', monospace; font-size: 13px; line-height: 1.8; max-height: 400px; overflow-y: auto; white-space: pre-wrap;">
+            <div style="color: #7fda89; font-style: italic;">
+              Select endpoints and analysis focus, then click "Generate Prompt" to create a custom API analysis prompt...
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Copy Notification -->
+  <div class="copy-notification" id="copy-notification">
+    <i class="fas fa-check-circle"></i> Prompt copied to clipboard!
+  </div>
+
+  <script>
+    // API Endpoints Database
+    const apiEndpoints = {
+      "Core": [
+        { method: "GET", path: "/", description: "Main dashboard (frontend)", auth: false, controller: "index.html" },
+        { method: "GET", path: "/api/health", description: "Health check endpoint", auth: false, controller: "Router" }
+      ],
+      "Authentication": [
+        { method: "POST", path: "/api/auth/login", description: "User login", auth: false, controller: "AuthController", service: null, repository: "UserRepository" }
+      ],
+      "Posts": [
+        { method: "GET", path: "/api/posts", description: "List all posts", auth: false, controller: "PostController", service: null, repository: "PostRepository" },
+        { method: "GET", path: "/api/posts/{id}", description: "Get single post by ID", auth: false, controller: "PostController", service: null, repository: "PostRepository" },
+        { method: "GET", path: "/api/posts/meta/earliest-date", description: "Get earliest post date", auth: false, controller: "PostController", service: null, repository: "PostRepository" },
+        { method: "POST", path: "/api/posts/{id}/edit", description: "Update post details", auth: true, controller: "PostEditController", service: null, repository: "PostRepository" },
+        { method: "POST", path: "/api/posts/{id}/label", description: "Set post label/topic", auth: true, controller: "LabelController", service: null, repository: "PostRepository" }
+      ],
+      "Analytics": [
+        { method: "GET", path: "/api/hashtags/top", description: "Top performing hashtags", auth: false, controller: "AnalyticsController", service: "EngagementService", repository: "AnalyticsRepository" },
+        { method: "GET", path: "/api/hashtags/trend", description: "Hashtag performance over time", auth: false, controller: "AnalyticsController", service: "EngagementService", repository: "AnalyticsRepository" },
+        { method: "GET", path: "/api/hashtags/recommendations", description: "Hashtag recommendations for next post", auth: false, controller: "AnalyticsController", service: "EngagementService", repository: "AnalyticsRepository" },
+        { method: "GET", path: "/api/engagement/overview", description: "Engagement statistics overview", auth: false, controller: "AnalyticsController", service: "EngagementService", repository: "AnalyticsRepository" },
+        { method: "GET", path: "/api/analytics/post-types", description: "Content type performance analysis", auth: false, controller: "AnalyticsController", service: "EngagementService", repository: "AnalyticsRepository" },
+        { method: "GET", path: "/api/analytics/topics", description: "Topic performance analysis", auth: false, controller: "AnalyticsController", service: "EngagementService", repository: "AnalyticsRepository" },
+        { method: "GET", path: "/api/tiktok/demographics/summary", description: "TikTok audience demographics", auth: false, controller: "AnalyticsController", service: "EngagementService", repository: "AnalyticsRepository" }
+      ],
+      "Insights": [
+        { method: "GET", path: "/api/insights", description: "Actionable recommendations and insights", auth: false, controller: "InsightsController", service: "InsightsService", repository: "AnalyticsRepository" }
+      ],
+      "Web Analytics": [
+        { method: "POST", path: "/api/analytics/fathom/credentials", description: "Save Fathom credentials", auth: false, controller: "WebAnalyticsController", service: "FathomAnalyticsApiService", repository: "SettingsRepository" },
+        { method: "GET", path: "/api/analytics/fathom/test", description: "Test Fathom connection", auth: false, controller: "WebAnalyticsController", service: "FathomAnalyticsApiService", repository: "SettingsRepository" },
+        { method: "GET", path: "/api/analytics/fathom/stats", description: "Get Fathom stats", auth: false, controller: "WebAnalyticsController", service: "FathomAnalyticsApiService", repository: "WebAnalyticsRepository" },
+        { method: "GET", path: "/api/analytics/fathom/referrers", description: "Get Fathom referrers", auth: false, controller: "WebAnalyticsController", service: "FathomAnalyticsApiService", repository: "WebAnalyticsRepository" },
+        { method: "GET", path: "/api/analytics/fathom/pages", description: "Get Fathom page stats", auth: false, controller: "WebAnalyticsController", service: "FathomAnalyticsApiService", repository: "WebAnalyticsRepository" },
+        { method: "GET", path: "/api/analytics/fathom/timeseries", description: "Get Fathom time series", auth: false, controller: "WebAnalyticsController", service: "FathomAnalyticsApiService", repository: "WebAnalyticsRepository" },
+        { method: "POST", path: "/api/analytics/fathom/collect", description: "Collect Fathom data", auth: false, controller: "WebAnalyticsController", service: "FathomAnalyticsApiService", repository: "WebAnalyticsRepository" },
+        { method: "GET", path: "/api/analytics/website/stats", description: "Get stored analytics", auth: false, controller: "WebAnalyticsController", service: null, repository: "WebAnalyticsRepository" },
+        { method: "GET", path: "/api/analytics/website/top-traffic-posts", description: "Posts driving most traffic", auth: false, controller: "WebAnalyticsController", service: null, repository: "WebAnalyticsRepository" }
+      ],
+      "Glossary": [
+        { method: "GET", path: "/api/glossary/terms", description: "List all glossary terms", auth: false, controller: "GlossaryController", service: "GlossaryService", repository: "Database" },
+        { method: "GET", path: "/api/glossary/search", description: "Search glossary terms", auth: false, controller: "GlossaryController", service: "GlossaryService", repository: "Database" },
+        { method: "GET", path: "/api/glossary/categories", description: "List glossary categories", auth: false, controller: "GlossaryController", service: "GlossaryService", repository: "Database" }
+      ],
+      "TikTok OAuth": [
+        { method: "GET", path: "/api/tiktok/authorize", description: "Start OAuth flow (redirect to TikTok)", auth: false, controller: "TikTokOAuthController", service: "TikTokOAuthService", repository: "TikTokRepository" },
+        { method: "GET", path: "/api/tiktok/callback", description: "OAuth callback from TikTok", auth: false, controller: "TikTokOAuthController", service: "TikTokOAuthService", repository: "TikTokRepository" },
+        { method: "GET", path: "/api/tiktok/status", description: "Check TikTok connection status", auth: true, controller: "TikTokOAuthController", service: "TikTokOAuthService", repository: "TikTokRepository" },
+        { method: "POST", path: "/api/tiktok/disconnect", description: "Disconnect TikTok account", auth: true, controller: "TikTokOAuthController", service: "TikTokOAuthService", repository: "TikTokRepository" },
+        { method: "POST", path: "/api/tiktok/sync", description: "Sync TikTok analytics data", auth: true, controller: "TikTokAnalyticsController", service: "TikTokAnalyticsService", repository: "PostRepository" }
+      ],
+      "Instagram API": [
+        { method: "POST", path: "/api/instagram/credentials", description: "Save Instagram credentials", auth: false, controller: "InstagramController", service: "InstagramApiService", repository: "SettingsRepository" },
+        { method: "GET", path: "/api/instagram/test", description: "Test Instagram connection", auth: false, controller: "InstagramController", service: "InstagramApiService", repository: "SettingsRepository" },
+        { method: "GET", path: "/api/instagram/posts", description: "Fetch Instagram posts", auth: false, controller: "InstagramController", service: "InstagramApiService", repository: "PostRepository" },
+        { method: "POST", path: "/api/instagram/sync", description: "Sync Instagram posts to database", auth: true, controller: "InstagramController", service: "InstagramApiService", repository: "PostRepository" },
+        { method: "POST", path: "/api/instagram/refresh-token", description: "Refresh Instagram access token", auth: true, controller: "InstagramController", service: "InstagramApiService", repository: "SettingsRepository" }
+      ],
+      "Facebook API": [
+        { method: "POST", path: "/api/facebook/credentials", description: "Save Facebook credentials", auth: false, controller: "FacebookController", service: "FacebookApiService", repository: "SettingsRepository" },
+        { method: "GET", path: "/api/facebook/test", description: "Test Facebook connection", auth: false, controller: "FacebookController", service: "FacebookApiService", repository: "SettingsRepository" },
+        { method: "GET", path: "/api/facebook/posts", description: "Fetch Facebook posts", auth: false, controller: "FacebookController", service: "FacebookApiService", repository: "PostRepository" },
+        { method: "POST", path: "/api/facebook/sync", description: "Sync Facebook posts to database", auth: true, controller: "FacebookController", service: "FacebookApiService", repository: "PostRepository" },
+        { method: "GET", path: "/api/facebook/insights", description: "Get Facebook page insights", auth: false, controller: "FacebookController", service: "FacebookApiService", repository: "PostRepository" }
+      ],
+      "Metricool API": [
+        { method: "POST", path: "/api/metricool/test", description: "Test Metricool connection", auth: false, controller: "MetricoolController", service: "MetricoolApiService", repository: "SettingsRepository" },
+        { method: "POST", path: "/api/metricool/save", description: "Save Metricool credentials", auth: false, controller: "MetricoolController", service: "MetricoolApiService", repository: "SettingsRepository" },
+        { method: "GET", path: "/api/metricool/profiles", description: "Get connected social profiles", auth: false, controller: "MetricoolController", service: "MetricoolApiService", repository: "SettingsRepository" },
+        { method: "GET", path: "/api/metricool/status", description: "Get Metricool connection status", auth: false, controller: "MetricoolController", service: "MetricoolApiService", repository: "SettingsRepository" },
+        { method: "POST", path: "/api/metricool/sync", description: "Sync posts from Metricool", auth: true, controller: "MetricoolController", service: "MetricoolApiService", repository: "PostRepository" }
+      ],
+      "Planning": [
+        { method: "GET", path: "/api/planning", description: "List content planning entries", auth: true, controller: "PlanningController", service: null, repository: "PlanningRepository" },
+        { method: "GET", path: "/api/planning/{id}", description: "Get single planning entry", auth: true, controller: "PlanningController", service: null, repository: "PlanningRepository" },
+        { method: "POST", path: "/api/planning", description: "Create planning entry", auth: true, controller: "PlanningController", service: null, repository: "PlanningRepository" },
+        { method: "POST", path: "/api/planning/{id}", description: "Update planning entry", auth: true, controller: "PlanningController", service: null, repository: "PlanningRepository" },
+        { method: "POST", path: "/api/planning/{id}/delete", description: "Delete planning entry", auth: true, controller: "PlanningController", service: null, repository: "PlanningRepository" }
+      ],
+      "Import": [
+        { method: "POST", path: "/api/import/tiktok", description: "Import TikTok CSV file", auth: false, controller: "ImportController", service: "TikTokCsvImporter", repository: null },
+        { method: "POST", path: "/api/import/csv", description: "Import generic CSV file", auth: false, controller: "ImportController", service: "GenericCsvImporter", repository: null }
+      ],
+      "Settings": [
+        { method: "GET", path: "/api/settings", description: "List all settings", auth: true, controller: "SettingsController", service: null, repository: "SettingsRepository" },
+        { method: "POST", path: "/api/settings", description: "Update settings", auth: true, controller: "SettingsController", service: null, repository: "SettingsRepository" },
+        { method: "GET", path: "/api/settings/brand-colors", description: "Get brand colors", auth: false, controller: "SettingsController", service: null, repository: "SettingsRepository" },
+        { method: "POST", path: "/api/settings/brand-colors", description: "Update brand colors", auth: true, controller: "SettingsController", service: null, repository: "SettingsRepository" }
+      ]
+    };
+
+    // Render endpoint categories
+    function renderEndpoints() {
+      const container = document.getElementById('endpoint-categories');
+      container.innerHTML = '';
+
+      Object.keys(apiEndpoints).forEach(category => {
+        const endpoints = apiEndpoints[category];
+        const categoryDiv = document.createElement('div');
+        categoryDiv.className = 'api-category';
+
+        const icons = {
+          "Core": "🏠",
+          "Authentication": "🔐",
+          "Posts": "📝",
+          "Analytics": "📊",
+          "Insights": "💡",
+          "Web Analytics": "📈",
+          "Glossary": "📖",
+          "TikTok OAuth": "📱",
+          "Instagram API": "📷",
+          "Facebook API": "👥",
+          "Metricool API": "🎯",
+          "Planning": "📅",
+          "Import": "📥",
+          "Settings": "⚙️"
+        };
+
+        categoryDiv.innerHTML = `
+          <div class="api-category-header">
+            <span class="category-icon">${icons[category] || '📦'}</span>
+            <span class="category-title">${category}</span>
+            <span class="category-count">${endpoints.length} endpoints</span>
+          </div>
+          <div class="endpoint-list">
+            ${endpoints.map(ep => `
+              <div class="endpoint" onclick="showEndpointFlow('${category}', '${ep.path}')">
+                <div class="endpoint-header">
+                  <span class="method-badge method-${ep.method}">${ep.method}</span>
+                  <span class="endpoint-path">${ep.path}</span>
+                  ${ep.auth ? '<span class="auth-badge">AUTH</span>' : ''}
+                </div>
+                <div class="endpoint-description">${ep.description}</div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        container.appendChild(categoryDiv);
+      });
+
+      // Populate category dropdown
+      const categorySelect = document.getElementById('test-category');
+      categorySelect.innerHTML = '<option value="">Select a category...</option>';
+      Object.keys(apiEndpoints).forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categorySelect.appendChild(option);
+      });
+    }
+
+    // Update endpoint options based on category
+    function updateEndpointOptions() {
+      const category = document.getElementById('test-category').value;
+      const endpointSelect = document.getElementById('test-endpoint');
+
+      endpointSelect.innerHTML = '<option value="">Select an endpoint...</option>';
+
+      if (category && apiEndpoints[category]) {
+        apiEndpoints[category].forEach((ep, index) => {
+          const option = document.createElement('option');
+          option.value = `${category}|${index}`;
+          option.textContent = `${ep.method} ${ep.path}`;
+          endpointSelect.appendChild(option);
+        });
+      }
+    }
+
+    // Update test form based on selected endpoint
+    function updateTestForm() {
+      const endpointValue = document.getElementById('test-endpoint').value;
+      if (!endpointValue) return;
+
+      const [category, index] = endpointValue.split('|');
+      const endpoint = apiEndpoints[category][parseInt(index)];
+
+      document.getElementById('test-method').value = endpoint.method;
+      document.getElementById('test-url').value = endpoint.path;
+
+      // Show/hide auth group
+      const authGroup = document.getElementById('auth-group');
+      authGroup.style.display = endpoint.auth ? 'block' : 'none';
+
+      // Show/hide body group for POST methods
+      const bodyGroup = document.getElementById('body-group');
+      bodyGroup.style.display = endpoint.method === 'POST' ? 'block' : 'none';
+    }
+
+    // Send test request
+    async function sendTestRequest() {
+      const method = document.getElementById('test-method').value;
+      const url = document.getElementById('test-url').value;
+      const token = document.getElementById('test-token').value;
+      const body = document.getElementById('test-body').value;
+
+      const responseContainer = document.getElementById('response-container');
+      const responseOutput = document.getElementById('response-output');
+
+      try {
+        const options = {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        };
+
+        if (token) {
+          options.headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        if (method === 'POST' && body) {
+          options.body = body;
+        }
+
+        const response = await fetch(url, options);
+        const data = await response.json();
+
+        responseOutput.textContent = JSON.stringify(data, null, 2);
+        responseContainer.classList.add('active');
+      } catch (error) {
+        responseOutput.textContent = `Error: ${error.message}`;
+        responseContainer.classList.add('active');
+      }
+    }
+
+    // Show endpoint flow
+    function showEndpointFlow(category, path) {
+      switchTab('flow');
+
+      // Find endpoint
+      const endpoint = apiEndpoints[category].find(ep => ep.path === path);
+      if (!endpoint) return;
+
+      const flowDiagram = document.getElementById('flow-diagram');
+      flowDiagram.innerHTML = `
+        <div class="flow-node">
+          <div class="flow-node-icon"><i class="fas fa-globe"></i></div>
+          <div class="flow-node-title">${endpoint.method} ${path}</div>
+          <div class="flow-node-subtitle">HTTP Request</div>
+        </div>
+        <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="flow-node">
+          <div class="flow-node-icon"><i class="fas fa-route"></i></div>
+          <div class="flow-node-title">Router</div>
+          <div class="flow-node-subtitle">index2.php</div>
+        </div>
+        ${endpoint.auth ? `
+        <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="flow-node">
+          <div class="flow-node-icon"><i class="fas fa-shield-alt"></i></div>
+          <div class="flow-node-title">Auth Middleware</div>
+          <div class="flow-node-subtitle">Token validation</div>
+        </div>
+        ` : ''}
+        <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="flow-node">
+          <div class="flow-node-icon"><i class="fas fa-server"></i></div>
+          <div class="flow-node-title">${endpoint.controller}</div>
+          <div class="flow-node-subtitle">Controller</div>
+        </div>
+        ${endpoint.service ? `
+        <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="flow-node">
+          <div class="flow-node-icon"><i class="fas fa-cog"></i></div>
+          <div class="flow-node-title">${endpoint.service}</div>
+          <div class="flow-node-subtitle">Service</div>
+        </div>
+        ` : ''}
+        ${endpoint.repository ? `
+        <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="flow-node">
+          <div class="flow-node-icon"><i class="fas fa-database"></i></div>
+          <div class="flow-node-title">${endpoint.repository}</div>
+          <div class="flow-node-subtitle">Repository</div>
+        </div>
+        ` : ''}
+        <div class="flow-arrow"><i class="fas fa-arrow-right"></i></div>
+        <div class="flow-node">
+          <div class="flow-node-icon"><i class="fas fa-reply"></i></div>
+          <div class="flow-node-title">JSON Response</div>
+          <div class="flow-node-subtitle">Data returned</div>
+        </div>
+      `;
+    }
+
+    // Copy prompt to clipboard
+    function copyPrompt(type) {
+      const promptText = document.getElementById(`prompt-${type}`).textContent;
+      navigator.clipboard.writeText(promptText.trim()).then(() => {
+        const notification = document.getElementById('copy-notification');
+        notification.classList.add('show');
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 2000);
+      });
+    }
+
+    // Switch tabs
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event?.target.classList.add('active');
+
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      document.getElementById(`tab-${tabName}`).classList.add('active');
+    }
+
+    // ========================================
+    // CUSTOM PROMPT GENERATOR
+    // ========================================
+
+    // Populate endpoint checkboxes
+    function populateEndpointCheckboxes() {
+      const container = document.getElementById('endpoint-checkboxes');
+      container.innerHTML = '';
+
+      Object.keys(apiEndpoints).forEach(category => {
+        const endpoints = apiEndpoints[category];
+
+        // Category header
+        const categoryDiv = document.createElement('div');
+        categoryDiv.style.marginBottom = '1rem';
+        categoryDiv.innerHTML = `
+          <div style="color: #39ff14; font-weight: 700; margin-bottom: 0.5rem; font-size: 0.9rem;">
+            ${category}
+          </div>
+        `;
+
+        // Endpoints
+        endpoints.forEach((endpoint, index) => {
+          const checkboxId = `endpoint-${category}-${index}`;
+          const label = document.createElement('label');
+          label.style.cssText = 'display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 0.5rem; padding: 0.5rem; border-radius: 6px; transition: background 0.2s;';
+          label.onmouseover = () => label.style.background = 'rgba(46, 204, 113, 0.1)';
+          label.onmouseout = () => label.style.background = 'transparent';
+
+          label.innerHTML = `
+            <input type="checkbox" id="${checkboxId}" class="endpoint-checkbox" data-category="${category}" data-index="${index}">
+            <span style="color: #7fda89; font-size: 0.85rem;">
+              <span style="font-family: monospace; font-weight: 600; color: ${endpoint.method === 'GET' ? '#39ff14' : endpoint.method === 'POST' ? '#ffd700' : '#ff9500'};">
+                ${endpoint.method}
+              </span>
+              ${endpoint.path}
+            </span>
+          `;
+
+          categoryDiv.appendChild(label);
+        });
+
+        container.appendChild(categoryDiv);
+      });
+    }
+
+    // Generate custom prompt
+    function generateCustomPrompt() {
+      const parts = [];
+
+      // Get selected endpoints
+      const selectedEndpoints = [];
+      document.querySelectorAll('.endpoint-checkbox:checked').forEach(checkbox => {
+        const category = checkbox.dataset.category;
+        const index = parseInt(checkbox.dataset.index);
+        const endpoint = apiEndpoints[category][index];
+        selectedEndpoints.push({ category, ...endpoint });
+      });
+
+      // Get selected methods
+      const selectedMethods = [];
+      if (document.getElementById('method-get').checked) selectedMethods.push('GET');
+      if (document.getElementById('method-post').checked) selectedMethods.push('POST');
+      if (document.getElementById('method-put').checked) selectedMethods.push('PUT');
+      if (document.getElementById('method-delete').checked) selectedMethods.push('DELETE');
+
+      // Get focus areas
+      const focusAreas = [];
+      if (document.getElementById('focus-security').checked) focusAreas.push('Security');
+      if (document.getElementById('focus-performance').checked) focusAreas.push('Performance');
+      if (document.getElementById('focus-errors').checked) focusAreas.push('Error Handling');
+      if (document.getElementById('focus-testing').checked) focusAreas.push('Testing');
+      if (document.getElementById('focus-docs').checked) focusAreas.push('Documentation');
+
+      // Validation
+      if (selectedEndpoints.length === 0) {
+        document.getElementById('custom-prompt-output').innerHTML = `
+          <div style="color: #ff9500;">
+            ⚠️ Please select at least one endpoint to analyze.
+          </div>
+        `;
+        return;
+      }
+
+      if (focusAreas.length === 0) {
+        document.getElementById('custom-prompt-output').innerHTML = `
+          <div style="color: #ff9500;">
+            ⚠️ Please select at least one analysis focus area.
+          </div>
+        `;
+        return;
+      }
+
+      // Build prompt
+      parts.push('# Custom API Analysis - SocialBit Platform\n');
+
+      // Selected endpoints
+      parts.push(`## Target Endpoints (${selectedEndpoints.length} selected):\n`);
+      selectedEndpoints.forEach(endpoint => {
+        parts.push(`- **${endpoint.method}** \`${endpoint.path}\``);
+        parts.push(`  - ${endpoint.description}`);
+        if (endpoint.controller) parts.push(`  - Controller: ${endpoint.controller}`);
+        if (endpoint.service) parts.push(`  - Service: ${endpoint.service}`);
+        if (endpoint.repository) parts.push(`  - Repository: ${endpoint.repository}`);
+        parts.push('');
+      });
+
+      // Analysis focus
+      parts.push('## Analysis Focus:\n');
+
+      if (focusAreas.includes('Security')) {
+        parts.push('### 🔒 Security Review:');
+        parts.push('- SQL injection vulnerabilities (verify prepared statements)');
+        parts.push('- XSS prevention in JSON responses');
+        parts.push('- CSRF protection for state-changing operations');
+        parts.push('- Authentication and authorization checks');
+        parts.push('- Input validation and sanitization');
+        parts.push('- Rate limiting implementation');
+        parts.push('- Error messages (no sensitive data leaks)\n');
+      }
+
+      if (focusAreas.includes('Performance')) {
+        parts.push('### ⚡ Performance Optimization:');
+        parts.push('- Database query efficiency (N+1 queries, missing indexes)');
+        parts.push('- Response caching opportunities');
+        parts.push('- Pagination implementation');
+        parts.push('- Unnecessary data fetching');
+        parts.push('- Memory usage for large datasets');
+        parts.push('- Repository query optimization\n');
+      }
+
+      if (focusAreas.includes('Error Handling')) {
+        parts.push('### 🛡️ Error Handling:');
+        parts.push('- Try/catch blocks for external API calls');
+        parts.push('- Graceful degradation on service failures');
+        parts.push('- Meaningful error messages for users');
+        parts.push('- Error logging and monitoring');
+        parts.push('- HTTP status code correctness');
+        parts.push('- Transaction rollback on partial failures\n');
+      }
+
+      if (focusAreas.includes('Testing')) {
+        parts.push('### 🧪 Testing Coverage:');
+        parts.push('- Unit tests for business logic');
+        parts.push('- Integration tests for API endpoints');
+        parts.push('- Edge case handling');
+        parts.push('- Mocking external dependencies');
+        parts.push('- Test data setup and teardown');
+        parts.push('- Assertion completeness\n');
+      }
+
+      if (focusAreas.includes('Documentation')) {
+        parts.push('### 📖 Documentation:');
+        parts.push('- Endpoint descriptions and examples');
+        parts.push('- Request/response schemas');
+        parts.push('- Authentication requirements');
+        parts.push('- Error response formats');
+        parts.push('- Rate limiting details');
+        parts.push('- OpenAPI/Swagger spec updates\n');
+      }
+
+      // Context
+      parts.push('## Project Context:\n');
+      parts.push('- **Platform:** SocialBit - Multi-tenant social media analytics');
+      parts.push('- **Stack:** Vanilla PHP 8.4+, MySQL/MariaDB');
+      parts.push('- **Architecture:** 3-layer MVC (Controller → Service → Repository)');
+      parts.push('- **Project Root:** C:\\xampp3\\htdocs\\socialbit-live\\');
+      parts.push('- **Multi-Tenant:** All tables have client_id with CASCADE DELETE');
+      parts.push('- **Integrations:** TikTok, Instagram, Facebook, Metricool, Fathom Analytics\n');
+
+      // Deliverables
+      parts.push('## Deliverables:\n');
+      parts.push('Provide specific recommendations with:');
+      parts.push('- **File:line references** for all issues found');
+      parts.push('- **Code examples** for suggested improvements');
+      parts.push('- **Priority ranking** (High/Medium/Low)');
+      parts.push('- **Implementation difficulty** (Easy/Medium/Hard)');
+      parts.push('- **Testing strategy** for verification');
+
+      const promptText = parts.join('\n');
+      document.getElementById('custom-prompt-output').textContent = promptText;
+    }
+
+    // Copy custom prompt to clipboard
+    function copyCustomPrompt() {
+      const promptOutput = document.getElementById('custom-prompt-output');
+      const promptText = promptOutput.textContent;
+
+      if (!promptText || promptText.includes('Select endpoints')) {
+        return;
+      }
+
+      navigator.clipboard.writeText(promptText).then(() => {
+        const copyBtn = document.getElementById('custom-copy-btn');
+        const originalHTML = copyBtn.innerHTML;
+        copyBtn.innerHTML = '<i class="fas fa-check"></i> <span>Copied!</span>';
+        copyBtn.style.background = 'linear-gradient(135deg, #2ecc71, #39ff14)';
+        copyBtn.style.color = '#0d1b0e';
+
+        setTimeout(() => {
+          copyBtn.innerHTML = originalHTML;
+          copyBtn.style.background = 'transparent';
+          copyBtn.style.color = '#2ecc71';
+        }, 2000);
+
+        // Also show notification
+        const notification = document.getElementById('copy-notification');
+        notification.classList.add('show');
+        setTimeout(() => {
+          notification.classList.remove('show');
+        }, 2000);
+      });
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      renderEndpoints();
+      populateEndpointCheckboxes();
+    });
+    // Random background switcher
+    (function() {
+      const backgrounds = [
+        "img/horizon 1.png",
+        "img/horizon 2.png",
+        "img/horizon 3.png",
+        "img/landscape 1.png",
+        "img/landscape 2.png",
+        "img/landscape 3.png"
+      ];
+      const randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+
+      // Find and update the body::before background
+      const style = document.createElement("style");
+      style.textContent = `
+        body::before {
+          background: url("${randomBg}") center/cover no-repeat fixed !important;
+        }
+      `;
+      document.head.appendChild(style);
+    })();
+
+
+    // Apply random flow directions to page elements
+    document.addEventListener('DOMContentLoaded', function() {
+      const directions = ['flow-left', 'flow-right', 'flow-top', 'flow-bottom'];
+      const elements = document.querySelectorAll('body > *:not(script):not(style)');
+
+      elements.forEach((element, index) => {
+        const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+        const delay = index * 0.05; // Stagger elements slightly (50ms per element)
+        element.classList.add(randomDirection);
+        element.style.animationDelay = delay + 's';
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "sourceType": "ideation",
+  "ideationType": "documentation_gaps",
+  "ideaId": "doc-001",
+  "rationale": "A README is the first thing developers look for when joining a project. Without it, onboarding requires reading through scattered planning documents and reverse-engineering the setup process. This is a critical blocker for any new team member or contributor.",
+  "category": "documentation",
+  "priority": "high"
+}

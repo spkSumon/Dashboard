@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🦜 Codebase Playground - SocialBit</title>
+
+  <!-- Jungle Theme CSS -->
+  <link rel="stylesheet" href="public/assets/jungle-theme.css">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    body {
+      /* Flow-in animation - background shows first, content flows in after 1s */
+      animation: none; /* Body itself does not animate */
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      padding-top: 80px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Jungle background with subtle opacity */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        linear-gradient(135deg, rgba(10, 31, 15, 0.95) 0%, rgba(13, 27, 14, 0.92) 100%),
+        url('img/landscape 1.png') center/cover no-repeat;
+      background-attachment: fixed;
+      opacity: 0.85;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Misty overlay effect */
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at 30% 40%, rgba(64, 224, 208, 0.05) 0%, transparent 50%),
+                  radial-gradient(ellipse at 70% 60%, rgba(255, 149, 0, 0.04) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: linear-gradient(135deg, rgba(13, 27, 14, 0.95), rgba(26, 58, 31, 0.95));
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(46, 204, 113, 0.3);
+      padding: 1rem 2rem;
+    }
+
+    .nav-content {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+
+    .nav-logo-icon {
+      font-size: 2rem;
+      color: var(--jungle-glow);
+      animation: gentle-pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes gentle-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.05); opacity: 0.9; }
+    }
+
+    .nav-logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--jungle-glow);
+      text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: #7fda89;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--jungle-glow), var(--jungle-accent));
+      transition: width 0.3s;
+    }
+
+    .nav-link:hover {
+      color: var(--jungle-glow);
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    .nav-link.active {
+      color: var(--jungle-glow);
+    }
+
+    .nav-link.active::after {
+      width: 100%;
+    }
+
+    /* Mobile menu toggle */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--jungle-glow);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, rgba(13, 27, 14, 0.98), rgba(26, 58, 31, 0.98));
+        flex-direction: column;
+        padding: 1rem 2rem;
+        gap: 1rem;
+        border-bottom: 1px solid rgba(46, 204, 113, 0.3);
+      }
+
+      .nav-links.open {
+        display: flex;
+      }
+
+      .mobile-menu-btn {
+        display: block;
+      }
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1800px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header with Parrot Icon */
+    .header {
+      background: linear-gradient(135deg, rgba(26, 58, 31, 0.9) 0%, rgba(13, 27, 14, 0.9) 100%);
+      border: 2px solid var(--jungle-accent);
+      border-radius: var(--radius-2xl);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 300px;
+      height: 300px;
+      background: url('img/icon parrot.png') center/contain no-repeat;
+      opacity: 0.08;
+      transform: rotate(-15deg);
+      pointer-events: none;
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-shadow: 0 0 10px var(--jungle-glow);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title-icon {
+      width: 42px;
+      height: 42px;
+      filter: drop-shadow(0 0 8px var(--jungle-glow));
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #7fda89;
+      font-style: italic;
+    }
+
+    /* Split Panel Layout */
+    .playground-layout {
+      display: grid;
+      grid-template-columns: 35% 65%;
+      gap: 20px;
+      margin-bottom: 20px;
+      min-height: 500px;
+    }
+
+    /* Left Panel - Controls */
+    .controls-panel {
+      background: linear-gradient(135deg, rgba(10, 14, 10, 0.9) 0%, rgba(26, 58, 31, 0.6) 100%);
+      border: 1px solid var(--jungle-accent);
+      border-radius: var(--radius-2xl);
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      overflow-y: auto;
+      max-height: 700px;
+      position: relative;
+    }
+
+    .controls-panel::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at center, rgba(46, 204, 113, 0.05) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
+    }
+
+    .controls-panel:hover::before {
+      opacity: 1;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(46, 204, 113, 0.3);
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--jungle-glow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      color: var(--jungle-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    .control-group {
+      margin-bottom: 16px;
+    }
+
+    .label {
+      display: block;
+      font-size: 11px;
+      color: #7fda89;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input, .select {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(10, 14, 10, 0.8);
+      border: 1px solid var(--jungle-accent);
+      border-radius: var(--radius-md);
+      color: var(--jungle-glow);
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      transition: all 0.3s;
+    }
+
+    .input:focus, .select:focus {
+      outline: none;
+      border-color: var(--jungle-glow);
+      box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+      background: rgba(10, 14, 10, 0.95);
+    }
+
+    .input::placeholder {
+      color: #4a6f4f;
+    }
+
+    /* File Tree Checkbox List */
+    .file-tree {
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      border-radius: var(--radius-md);
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      margin-bottom: 4px;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .file-item:hover {
+      background: rgba(46, 204, 113, 0.1);
+    }
+
+    .file-item input[type="checkbox"] {
+      accent-color: var(--jungle-accent);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .file-item-icon {
+      font-size: 14px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .file-item-name {
+      font-size: 12px;
+      color: #e0e0e0;
+      flex: 1;
+    }
+
+    /* Action Buttons */
+    .btn {
+      width: 100%;
+      padding: 12px 20px;
+      background: linear-gradient(135deg, var(--jungle-accent) 0%, #27ae60 100%);
+      border: none;
+      border-radius: var(--radius-full);
+      color: var(--jungle-dark);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(46, 204, 113, 0.5);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, rgba(255, 149, 0, 0.8) 0%, rgba(255, 167, 38, 0.8) 100%);
+      color: var(--jungle-dark);
+      box-shadow: 0 4px 12px rgba(255, 149, 0, 0.3);
+    }
+
+    .btn-secondary:hover {
+      box-shadow: 0 6px 20px rgba(255, 149, 0, 0.5);
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* Right Panel - Preview */
+    .preview-panel {
+      background: linear-gradient(135deg, rgba(10, 14, 10, 0.9) 0%, rgba(26, 58, 31, 0.6) 100%);
+      border: 1px solid var(--jungle-accent);
+      border-radius: var(--radius-2xl);
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      overflow-y: auto;
+      max-height: 700px;
+      position: relative;
+    }
+
+    .preview-panel::before {
+      content: '';
+      position: absolute;
+      top: 10%;
+      right: -5%;
+      width: 200px;
+      height: 200px;
+      background: url('img/icon eye.png') center/contain no-repeat;
+      opacity: 0.06;
+      pointer-events: none;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(5deg); }
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: rgba(0, 0, 0, 0.4);
+      padding: 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(46, 204, 113, 0.3);
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--jungle-glow);
+      box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: #7fda89;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--jungle-glow);
+    }
+
+    /* File List Preview */
+    .file-list-preview {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .preview-file-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      margin-bottom: 6px;
+      background: rgba(26, 58, 31, 0.3);
+      border-left: 3px solid var(--jungle-accent);
+      border-radius: var(--radius-sm);
+      transition: all 0.2s;
+    }
+
+    .preview-file-item:hover {
+      background: rgba(46, 204, 113, 0.15);
+      border-left-color: var(--jungle-glow);
+    }
+
+    .preview-file-item.selected {
+      background: rgba(46, 204, 113, 0.2);
+      border-left-color: var(--jungle-glow);
+      box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+    }
+
+    .preview-file-icon {
+      font-size: 16px;
+      width: 24px;
+      text-align: center;
+    }
+
+    .preview-file-details {
+      flex: 1;
+    }
+
+    .preview-file-name {
+      font-size: 13px;
+      color: #e0e0e0;
+      font-weight: 600;
+    }
+
+    .preview-file-path {
+      font-size: 10px;
+      color: #7fda89;
+      opacity: 0.7;
+    }
+
+    .preview-file-size {
+      font-size: 11px;
+      color: #7fda89;
+    }
+
+    /* Bottom Section - Prompt Output Terminal */
+    .prompt-terminal {
+      background: linear-gradient(135deg, rgba(10, 14, 10, 0.95) 0%, rgba(13, 27, 14, 0.9) 100%);
+      border: 1px solid var(--jungle-accent);
+      border-radius: var(--radius-2xl);
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prompt-terminal::before {
+      content: '';
+      position: absolute;
+      bottom: -10%;
+      left: -5%;
+      width: 250px;
+      height: 250px;
+      background: url('img/icon totem.png') center/contain no-repeat;
+      opacity: 0.05;
+      pointer-events: none;
+    }
+
+    .terminal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(46, 204, 113, 0.3);
+    }
+
+    .terminal-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--jungle-glow);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .terminal-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-copy {
+      padding: 8px 16px;
+      background: linear-gradient(135deg, var(--jungle-accent) 0%, #27ae60 100%);
+      border: none;
+      border-radius: var(--radius-full);
+      color: var(--jungle-dark);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+    }
+
+    .btn-copy:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.5);
+    }
+
+    .btn-copy.copied {
+      background: linear-gradient(135deg, var(--jungle-glow) 0%, var(--jungle-accent) 100%);
+      animation: pulse 0.5s ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .terminal-output {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(46, 204, 113, 0.2);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      max-height: 300px;
+      overflow-y: auto;
+      color: var(--jungle-glow);
+      position: relative;
+    }
+
+    .terminal-output::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .terminal-output::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 4px;
+    }
+
+    .terminal-output::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, var(--jungle-accent), var(--jungle-glow));
+      border-radius: 4px;
+    }
+
+    .terminal-output::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, var(--jungle-glow), var(--jungle-accent));
+    }
+
+    .terminal-line {
+      margin-bottom: 4px;
+    }
+
+    .terminal-prompt {
+      color: var(--jungle-glow);
+      margin-right: 8px;
+    }
+
+    .prompt-placeholder {
+      color: #7fda89;
+      font-style: italic;
+      text-align: center;
+      padding: 40px;
+      opacity: 0.6;
+    }
+
+    /* Code Syntax Highlighting */
+    .code-keyword {
+      color: #ff9500;
+    }
+
+    .code-string {
+      color: var(--jungle-glow);
+    }
+
+    .code-comment {
+      color: #7fda89;
+      font-style: italic;
+    }
+
+    .code-function {
+      color: var(--jungle-accent);
+    }
+
+    /* Loading State */
+    .loading {
+      text-align: center;
+      padding: 20px;
+      font-size: 14px;
+      color: #7fda89;
+    }
+
+    .loading::after {
+      content: '...';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+      .playground-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .controls-panel,
+      .preview-panel {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 12px;
+      }
+
+      .header {
+        padding: 16px;
+      }
+
+      .title {
+        font-size: 24px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .btn-group {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Tooltip for icons */
+    [data-tooltip] {
+      position: relative;
+      cursor: help;
+    }
+
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      background: rgba(10, 14, 10, 0.95);
+      color: var(--jungle-glow);
+      padding: 6px 12px;
+      border-radius: var(--radius-md);
+      font-size: 11px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      border: 1px solid var(--jungle-accent);
+      z-index: 1000;
+    }
+
+    [data-tooltip]:hover::after {
+      opacity: 1;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #7fda89;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state-text {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    /* Background fade-in animation - full quality to normal opacity */
+    body::before {
+      animation: bgFadeIn 0.75s ease-out forwards;
+    }
+
+    @keyframes bgFadeIn {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0.15;
+      }
+    }
+
+    /* Hide all elements initially */
+    body > *:not(script):not(style) {
+      opacity: 0;
+    }
+
+    /* Random flow-in animations from different directions */
+    @keyframes flowFromLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes flowFromRight {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes flowFromTop {
+      from {
+        opacity: 0;
+        transform: translateY(-100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes flowFromBottom {
+      from {
+        opacity: 0;
+        transform: translateY(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .flow-left {
+      animation: flowFromLeft 0.75s ease-out forwards;
+    }
+
+    .flow-right {
+      animation: flowFromRight 0.75s ease-out forwards;
+    }
+
+    .flow-top {
+      animation: flowFromTop 0.75s ease-out forwards;
+    }
+
+    .flow-bottom {
+      animation: flowFromBottom 0.75s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-content">
+      <a href="index.html" class="nav-logo">
+        <span class="nav-logo-icon"><i class="fas fa-leaf"></i></span>
+        <span class="nav-logo-text">SocialBit</span>
+      </a>
+
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+
+      <div class="nav-links" id="navLinks">
+        <a href="index-jungle.html" class="nav-link">🏠 Home</a>
+        <a href="jungle.html" class="nav-link"><i class="fas fa-leaf"></i> Dashboard</a>
+        <a href="api-connector.html" class="nav-link"><i class="fas fa-network-wired"></i> API Lab</a>
+        <a href="codebase-playground.html" class="nav-link active">🦜 Playground</a>
+        <a href="public/index.html" class="nav-link">📊 Main App</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-content">
+        <h1 class="title">
+          <img src="img/icon parrot.png" alt="Parrot" class="title-icon">
+          <span>CODEBASE PLAYGROUND</span>
+          <span>🧪</span>
+        </h1>
+        <p class="subtitle">// AI Prompt Generator for Codebase Analysis - Select files, configure analysis, generate Claude-ready prompts</p>
+      </div>
+    </div>
+
+    <!-- Split Panel Layout -->
+    <div class="playground-layout">
+      <!-- Left Panel - Controls -->
+      <div class="controls-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fas fa-sliders-h"></i>
+            <span>Analysis Controls</span>
+          </div>
+        </div>
+
+        <!-- File Selection Section -->
+        <div class="section">
+          <div class="section-label">
+            <i class="fas fa-folder-tree"></i>
+            <span>File Selection</span>
+          </div>
+
+          <div class="control-group">
+            <label class="label">Root Directory</label>
+            <input type="text" class="input" id="root-directory" placeholder="C:\xampp3\htdocs\socialbit-live" value="C:\xampp3\htdocs\socialbit-live">
+          </div>
+
+          <div class="control-group">
+            <label class="label">File Tree (Select files to analyze)</label>
+            <div class="file-tree" id="file-tree">
+              <div class="loading">Loading file tree</div>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="label">File Pattern Filter</label>
+            <input type="text" class="input" id="file-pattern" placeholder="*.php, *.js, *.sql">
+          </div>
+        </div>
+
+        <!-- Analysis Type Section -->
+        <div class="section">
+          <div class="section-label">
+            <i class="fas fa-brain"></i>
+            <span>Analysis Type</span>
+          </div>
+
+          <div class="control-group">
+            <label class="label">Primary Focus</label>
+            <select class="select" id="analysis-type">
+              <option value="general">General Codebase Review</option>
+              <option value="security">Security Audit</option>
+              <option value="performance">Performance Analysis</option>
+              <option value="testing">Test Coverage</option>
+              <option value="refactor">Refactoring Opportunities</option>
+              <option value="documentation">Documentation Needs</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label class="label">Detail Level</label>
+            <select class="select" id="detail-level">
+              <option value="high">High (Comprehensive)</option>
+              <option value="medium" selected>Medium (Balanced)</option>
+              <option value="low">Low (Overview)</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label class="label">Include Context</label>
+            <select class="select" id="context-type">
+              <option value="full">Full File Contents</option>
+              <option value="structure">Structure Only</option>
+              <option value="snippets">Key Snippets</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="btn-group">
+          <button class="btn" id="generate-btn" onclick="generatePrompt()">
+            <i class="fas fa-magic"></i>
+            Generate Prompt
+          </button>
+          <button class="btn btn-secondary" id="reset-btn" onclick="resetForm()">
+            <i class="fas fa-redo"></i>
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Panel - Preview -->
+      <div class="preview-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fas fa-eye"></i>
+            <span>Selection Preview</span>
+          </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card" data-tooltip="Total files selected">
+            <div class="stat-label">Files Selected</div>
+            <div class="stat-value" id="selected-count">0</div>
+          </div>
+          <div class="stat-card" data-tooltip="Total size of selected files">
+            <div class="stat-label">Total Size</div>
+            <div class="stat-value" id="total-size">0 KB</div>
+          </div>
+          <div class="stat-card" data-tooltip="Estimated lines of code">
+            <div class="stat-label">Est. Lines</div>
+            <div class="stat-value" id="est-lines">0</div>
+          </div>
+          <div class="stat-card" data-tooltip="File types included">
+            <div class="stat-label">File Types</div>
+            <div class="stat-value" id="file-types">0</div>
+          </div>
+        </div>
+
+        <!-- File List Preview -->
+        <div class="section">
+          <div class="section-label">
+            <i class="fas fa-list"></i>
+            <span>Selected Files</span>
+          </div>
+          <div class="file-list-preview" id="file-list-preview">
+            <div class="empty-state">
+              <div class="empty-state-icon">🦜</div>
+              <div class="empty-state-text">
+                No files selected yet.<br>
+                Choose files from the tree on the left to begin.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Section - Prompt Output Terminal -->
+    <div class="prompt-terminal">
+      <div class="terminal-header">
+        <div class="terminal-title">
+          <i class="fas fa-terminal"></i>
+          <span>Generated Prompt</span>
+        </div>
+        <div class="terminal-controls">
+          <button class="btn-copy" id="copy-btn" onclick="copyPrompt()">
+            <i class="fas fa-copy"></i>
+            <span id="copy-text">Copy</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="terminal-output" id="prompt-output">
+        <div class="prompt-placeholder">
+          Generated prompt will appear here...<br><br>
+          Configure your analysis settings and click "Generate Prompt" to begin.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========================================
+    // STATE MANAGEMENT
+    // ========================================
+    const state = {
+      rootDirectory: 'C:\\xampp3\\htdocs\\socialbit-live',
+      selectedFiles: [],
+      filePattern: '*.php',
+      analysisType: 'general',
+      detailLevel: 'medium',
+      contextType: 'full',
+      fileStats: {
+        totalSize: 0,
+        totalLines: 0,
+        fileTypes: new Set()
+      }
+    };
+
+    // Project structure (TODO: Will be provided by file-analyzer in task #4)
+    const projectStructure = {
+      'src/Controllers': [
+        'AnalyticsController.php',
+        'AuthController.php',
+        'FacebookController.php',
+        'GlossaryController.php',
+        'ImportController.php',
+        'InsightsController.php',
+        'InstagramController.php',
+        'LabelController.php',
+        'MetricoolController.php',
+        'PlanningController.php',
+        'PostController.php',
+        'PostEditController.php',
+        'SettingsController.php',
+        'TikTokAnalyticsController.php',
+        'TikTokOAuthController.php',
+        'WebAnalyticsController.php'
+      ],
+      'src/Services': [
+        'EngagementService.php',
+        'FacebookApiService.php',
+        'FathomAnalyticsApiService.php',
+        'GenericCsvImporter.php',
+        'GlossaryService.php',
+        'GoogleAnalyticsApiService.php',
+        'InsightsService.php',
+        'InstagramApiService.php',
+        'MetricoolApiService.php',
+        'TikTokAnalyticsService.php',
+        'TikTokCsvImporter.php',
+        'TikTokOAuthService.php'
+      ],
+      'src/Repositories': [
+        'AnalyticsRepository.php',
+        'ClientRepository.php',
+        'MetricsHistoryRepository.php',
+        'PlanningRepository.php',
+        'PostRepository.php',
+        'SettingsRepository.php',
+        'TikTokRepository.php',
+        'UserRepository.php',
+        'WebAnalyticsRepository.php'
+      ],
+      'src/Middleware': [
+        'Auth.php'
+      ],
+      'src/Helpers': [
+        'Request.php',
+        'Response.php',
+        'Validation.php'
+      ],
+      'src/Core': [
+        'Database.php',
+        'Router.php'
+      ],
+      'config': [
+        'app.php',
+        'app.example.php'
+      ],
+      'scripts': [
+        '000_create_database_schema.sql',
+        '006_multi_tenant_foundation.sql',
+        '007_analytics_enhancement.sql',
+        '011_algorithm_metrics_2026.sql',
+        '012_hashtag_tracking.sql',
+        '013_competitor_analysis.sql',
+        '014_website_traffic.sql',
+        '019_glossary.sql',
+        '020_inbox_messages.sql'
+      ]
+    };
+
+    // ========================================
+    // PROMPT TEMPLATES
+    // ========================================
+    const promptTemplates = {
+      general: {
+        intro: "Review the following SocialBit files for overall code quality and structure:",
+        focus: [
+          "Code organization and architecture patterns",
+          "Adherence to PSR-12 coding standards",
+          "Consistent naming conventions",
+          "Proper separation of concerns (MVC pattern)",
+          "Error handling and validation",
+          "Documentation and code comments"
+        ],
+        outro: "Provide a high-level assessment and prioritized recommendations."
+      },
+      security: {
+        intro: "Perform a comprehensive security audit of the following SocialBit files:",
+        focus: [
+          "SQL injection vulnerabilities (verify all queries use prepared statements)",
+          "XSS (Cross-Site Scripting) attack vectors in user input handling",
+          "Authentication and authorization bypasses",
+          "CSRF (Cross-Site Request Forgery) protection",
+          "Sensitive data exposure (credentials, tokens, API keys)",
+          "Session security and user data handling",
+          "File upload validation and sanitization",
+          "OAuth token storage and refresh mechanisms"
+        ],
+        outro: "Categorize findings by severity (Critical/High/Medium/Low) with specific remediation steps."
+      },
+      performance: {
+        intro: "Analyze the following files for performance bottlenecks and optimization opportunities:",
+        focus: [
+          "N+1 query problems in repository methods",
+          "Missing database indexes on foreign keys and frequently queried columns",
+          "Inefficient loops or redundant database calls",
+          "Memory-intensive operations or potential leaks",
+          "Caching opportunities (query results, API responses)",
+          "Unnecessary API calls or external service requests",
+          "Time-series data handling (metrics_history partitioning)",
+          "Multi-tenant query optimization (client_id filtering)"
+        ],
+        outro: "Include specific code examples and estimated performance impact for each recommendation."
+      },
+      testing: {
+        intro: "Generate comprehensive PHPUnit test suites for the following SocialBit components:",
+        focus: [
+          "Unit tests for all public methods with edge cases",
+          "Mock external dependencies (database, API services)",
+          "Test data factories and fixtures setup",
+          "Integration tests for multi-step workflows (OAuth, CSV import)",
+          "Repository tests with actual database transactions",
+          "Service layer tests for business logic validation",
+          "Controller tests for HTTP request/response handling",
+          "Assertion coverage for success and error paths"
+        ],
+        outro: "Follow PHPUnit best practices. Use meaningful test names and arrange-act-assert pattern."
+      },
+      refactor: {
+        intro: "Identify refactoring opportunities in the following SocialBit files:",
+        focus: [
+          "Code duplication and repeated logic (extract to shared methods)",
+          "Long methods that violate Single Responsibility Principle",
+          "Complex conditionals that could use polymorphism or strategy pattern",
+          "Magic numbers and hardcoded values (extract to constants)",
+          "Inconsistent error handling patterns",
+          "Missing type hints or return type declarations",
+          "Opportunities to use modern PHP features (null coalescing, arrow functions)",
+          "Class responsibilities that could be better separated"
+        ],
+        outro: "Prioritize refactoring by impact vs. effort. Suggest incremental improvements."
+      },
+      documentation: {
+        intro: "Assess documentation needs for the following SocialBit files:",
+        focus: [
+          "Missing or incomplete PHPDoc blocks for classes and methods",
+          "Complex business logic without explanatory comments",
+          "API endpoints without usage examples or parameter descriptions",
+          "Unclear method names that need clarification",
+          "Database schema changes without migration documentation",
+          "Missing README or setup instructions for new developers",
+          "Undocumented configuration options or environment variables",
+          "OAuth flows and API integration steps"
+        ],
+        outro: "Suggest specific documentation additions. Use clear, concise language for non-technical users where applicable."
+      }
+    };
+
+    // ========================================
+    // FILE TREE RENDERING
+    // ========================================
+    function renderFileTree() {
+      const treeContainer = document.getElementById('file-tree');
+
+      const treeHtml = Object.keys(projectStructure).map(folder => {
+        const folderId = folder.replace(/[\/\\]/g, '-');
+        return `
+          <div class="file-item" style="margin-bottom: 8px;">
+            <input type="checkbox" id="folder-${folderId}" onchange="handleFolderSelect('${folder}')" style="cursor: pointer;">
+            <span class="file-item-icon">📁</span>
+            <label for="folder-${folderId}" class="file-item-name" style="cursor: pointer; font-weight: 600; color: var(--jungle-accent);">${folder}/</label>
+          </div>
+          ${projectStructure[folder].map(file => {
+            const filePath = folder + '/' + file;
+            const fileId = filePath.replace(/[\/\\]/g, '-').replace(/\./g, '_');
+            const fileExt = file.split('.').pop();
+            const fileIcon = fileExt === 'php' ? '🐘' : fileExt === 'sql' ? '🗄️' : fileExt === 'js' ? '📜' : '📄';
+
+            return `
+              <div class="file-item" style="padding-left: 24px;">
+                <input type="checkbox" id="file-${fileId}" value="${filePath}" onchange="handleFileSelect()" data-ext="${fileExt}" style="cursor: pointer;">
+                <span class="file-item-icon">${fileIcon}</span>
+                <label for="file-${fileId}" class="file-item-name" style="cursor: pointer;">${file}</label>
+              </div>
+            `;
+          }).join('')}
+        `;
+      }).join('');
+
+      treeContainer.innerHTML = treeHtml;
+    }
+
+    // ========================================
+    // EVENT HANDLERS
+    // ========================================
+    function handleFolderSelect(folder) {
+      const folderId = folder.replace(/[\/\\]/g, '-');
+      const folderCheckbox = document.getElementById(`folder-${folderId}`);
+      const isChecked = folderCheckbox.checked;
+
+      // Select/deselect all files in this folder
+      projectStructure[folder].forEach(file => {
+        const filePath = folder + '/' + file;
+        const fileId = filePath.replace(/[\/\\]/g, '-').replace(/\./g, '_');
+        const fileCheckbox = document.getElementById(`file-${fileId}`);
+        if (fileCheckbox) {
+          fileCheckbox.checked = isChecked;
+        }
+      });
+
+      handleFileSelect();
+    }
+
+    function handleFileSelect() {
+      const checkboxes = document.querySelectorAll('.file-tree input[type="checkbox"][value]');
+      state.selectedFiles = Array.from(checkboxes)
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+
+      // Calculate stats
+      calculateFileStats();
+
+      // Update displays
+      updateAll();
+    }
+
+    function calculateFileStats() {
+      const fileTypes = new Set();
+      let totalLines = 0;
+
+      state.selectedFiles.forEach(file => {
+        const ext = file.split('.').pop();
+        fileTypes.add(ext);
+
+        // Estimate lines based on file type
+        if (ext === 'php') {
+          totalLines += 200; // avg PHP controller/service
+        } else if (ext === 'sql') {
+          totalLines += 50; // avg migration
+        } else if (ext === 'js') {
+          totalLines += 150;
+        } else {
+          totalLines += 30;
+        }
+      });
+
+      state.fileStats = {
+        totalSize: (totalLines * 50) / 1024, // rough estimate: 50 bytes per line
+        totalLines: totalLines,
+        fileTypes: fileTypes
+      };
+    }
+
+    // ========================================
+    // PREVIEW UPDATES
+    // ========================================
+    function updatePreview() {
+      // Update stats cards
+      document.getElementById('selected-count').textContent = state.selectedFiles.length;
+      document.getElementById('total-size').textContent = state.fileStats.totalSize.toFixed(1) + ' KB';
+      document.getElementById('est-lines').textContent = state.fileStats.totalLines.toLocaleString();
+      document.getElementById('file-types').textContent = state.fileStats.fileTypes.size;
+
+      // Update file list preview
+      const previewContainer = document.getElementById('file-list-preview');
+
+      if (state.selectedFiles.length === 0) {
+        previewContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🦜</div>
+            <div class="empty-state-text">
+              No files selected yet.<br>
+              Choose files from the tree on the left to begin.
+            </div>
+          </div>
+        `;
+      } else {
+        const fileListHtml = state.selectedFiles.map(file => {
+          const fileName = file.split('/').pop();
+          const fileExt = fileName.split('.').pop();
+          const fileIcon = fileExt === 'php' ? '🐘' : fileExt === 'sql' ? '🗄️' : fileExt === 'js' ? '📜' : '📄';
+          const estLines = fileExt === 'php' ? 200 : fileExt === 'sql' ? 50 : 150;
+
+          return `
+            <div class="preview-file-item selected">
+              <span class="preview-file-icon">${fileIcon}</span>
+              <div class="preview-file-details">
+                <div class="preview-file-name">${fileName}</div>
+                <div class="preview-file-path">${file}</div>
+              </div>
+              <div class="preview-file-size">~${estLines} lines</div>
+            </div>
+          `;
+        }).join('');
+
+        previewContainer.innerHTML = fileListHtml;
+      }
+    }
+
+    function updatePrompt() {
+      // Auto-generate prompt when files are selected
+      if (state.selectedFiles.length > 0) {
+        generatePrompt();
+      } else {
+        document.getElementById('prompt-output').innerHTML = `
+          <div class="prompt-placeholder">
+            Generated prompt will appear here...<br><br>
+            Configure your analysis settings and click "Generate Prompt" to begin.
+          </div>
+        `;
+      }
+    }
+
+    function updateAll() {
+      updatePreview();
+      updatePrompt();
+    }
+
+    // ========================================
+    // PROMPT GENERATION
+    // ========================================
+    function generatePrompt() {
+      if (state.selectedFiles.length === 0) {
+        document.getElementById('prompt-output').innerHTML = `
+          <div class="prompt-placeholder" style="color: var(--jungle-warning);">
+            ⚠️ Please select at least one file to analyze
+          </div>
+        `;
+        return;
+      }
+
+      const template = promptTemplates[state.analysisType];
+      const parts = [];
+
+      // Header with context
+      parts.push('# SocialBit Codebase Analysis Request\n');
+
+      // Intro
+      parts.push(template.intro);
+      parts.push('');
+
+      // File list
+      parts.push('## Files to Analyze:\n');
+      state.selectedFiles.forEach(file => {
+        parts.push(`- \`${file}\``);
+      });
+      parts.push('');
+
+      // Analysis focus areas
+      parts.push('## Focus Areas:\n');
+      template.focus.forEach(focus => {
+        parts.push(`- ${focus}`);
+      });
+      parts.push('');
+
+      // Context instructions
+      parts.push('## Context:\n');
+      if (state.contextType === 'full') {
+        parts.push('- Please read each file completely and provide detailed analysis with code snippets.');
+      } else if (state.contextType === 'structure') {
+        parts.push('- Focus on file structure, class/method signatures, and architecture patterns.');
+      } else if (state.contextType === 'snippets') {
+        parts.push('- Highlight key sections and problematic code snippets only.');
+      }
+
+      // Detail level
+      if (state.detailLevel === 'high') {
+        parts.push('- Include specific line numbers, code examples, and detailed explanations for all findings.');
+      } else if (state.detailLevel === 'medium') {
+        parts.push('- Provide balanced analysis with representative code examples and clear explanations.');
+      } else {
+        parts.push('- Provide high-level overview with summary of key findings only.');
+      }
+      parts.push('');
+
+      // Project context
+      parts.push('## Project Context:\n');
+      parts.push('- **Project:** SocialBit - Multi-tenant social media analytics platform');
+      parts.push('- **Tech Stack:** Vanilla PHP 8.4+, MySQL, 3-layer MVC (Controllers → Services → Repositories)');
+      parts.push('- **Key Features:** TikTok/Instagram/Facebook analytics, Metricool integration, multi-client support');
+      parts.push('- **Coding Standards:** PSR-12, prepared statements (PDO), type hints required');
+      parts.push('');
+
+      // Outro
+      parts.push('## Deliverable:\n');
+      parts.push(template.outro);
+
+      const promptText = parts.join('\n');
+      document.getElementById('prompt-output').textContent = promptText;
+    }
+
+    // ========================================
+    // COPY TO CLIPBOARD
+    // ========================================
+    function copyPrompt() {
+      const promptOutput = document.getElementById('prompt-output');
+      const promptText = promptOutput.textContent;
+
+      if (!promptText || promptText.includes('Generated prompt will appear here') || promptText.includes('Please select at least one')) {
+        return;
+      }
+
+      navigator.clipboard.writeText(promptText).then(() => {
+        const copyBtn = document.getElementById('copy-btn');
+        const copyText = document.getElementById('copy-text');
+        const originalText = copyText.textContent;
+
+        copyBtn.classList.add('copied');
+        copyText.textContent = 'Copied!';
+
+        setTimeout(() => {
+          copyBtn.classList.remove('copied');
+          copyText.textContent = originalText;
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy prompt:', err);
+        alert('Failed to copy to clipboard. Please select and copy manually.');
+      });
+    }
+
+    // ========================================
+    // RESET FORM
+    // ========================================
+    function resetForm() {
+      // Reset state
+      state.selectedFiles = [];
+      state.filePattern = '*.php';
+      state.analysisType = 'general';
+      state.detailLevel = 'medium';
+      state.contextType = 'full';
+
+      // Uncheck all checkboxes
+      document.querySelectorAll('.file-tree input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+      });
+
+      // Reset dropdowns
+      document.getElementById('analysis-type').value = 'general';
+      document.getElementById('detail-level').value = 'medium';
+      document.getElementById('context-type').value = 'full';
+      document.getElementById('file-pattern').value = '';
+
+      // Reset stats
+      state.fileStats = {
+        totalSize: 0,
+        totalLines: 0,
+        fileTypes: new Set()
+      };
+
+      // Update displays
+      updateAll();
+    }
+
+    // ========================================
+    // EVENT BINDINGS
+    // ========================================
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🦜 Codebase Playground initialized');
+
+      // Render file tree
+      renderFileTree();
+
+      // Bind control events
+      document.getElementById('analysis-type').addEventListener('change', (e) => {
+        state.analysisType = e.target.value;
+        updatePrompt();
+      });
+
+      document.getElementById('detail-level').addEventListener('change', (e) => {
+        state.detailLevel = e.target.value;
+        updatePrompt();
+      });
+
+      document.getElementById('context-type').addEventListener('change', (e) => {
+        state.contextType = e.target.value;
+        updatePrompt();
+      });
+
+      document.getElementById('file-pattern').addEventListener('input', (e) => {
+        state.filePattern = e.target.value;
+        // TODO: Implement file filtering based on pattern
+      });
+
+      // Initial render
+      updateAll();
+    });
+
+    // ========================================
+    // MOBILE MENU
+    // ========================================
+    function toggleMobileMenu() {
+      const navLinks = document.getElementById('navLinks');
+      navLinks.classList.toggle('open');
+    }
+    // Random background switcher
+    (function() {
+      const backgrounds = [
+        "img/horizon 1.png",
+        "img/horizon 2.png",
+        "img/horizon 3.png",
+        "img/landscape 1.png",
+        "img/landscape 2.png",
+        "img/landscape 3.png"
+      ];
+      const randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+
+      // Find and update the body::before background
+      const style = document.createElement("style");
+      style.textContent = `
+        body::before {
+          background: url("${randomBg}") center/cover no-repeat fixed !important;
+        }
+      `;
+      document.head.appendChild(style);
+    })();
+
+
+    // Apply random flow directions to page elements
+    document.addEventListener('DOMContentLoaded', function() {
+      const directions = ['flow-left', 'flow-right', 'flow-top', 'flow-bottom'];
+      const elements = document.querySelectorAll('body > *:not(script):not(style)');
+
+      elements.forEach((element, index) => {
+        const randomDirection = directions[Math.floor(Math.random() * directions.length)];
+        const delay = index * 0.05; // Stagger elements slightly (50ms per element)
+        element.classList.add(randomDirection);
+        element.style.animationDelay = delay + 's';
+      });
+    });
+  </script>
+</body>
+</html>

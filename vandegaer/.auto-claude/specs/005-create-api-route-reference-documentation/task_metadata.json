@@ -1,0 +1,8 @@
+{
+  "sourceType": "ideation",
+  "ideationType": "documentation_gaps",
+  "ideaId": "doc-004",
+  "rationale": "API route documentation is fundamental for frontend developers, API consumers, and testers. Without it, discovering available functionality requires code archaeology. As SocialBit grows to support multiple platforms (Instagram, TikTok, Facebook), having a clear API reference becomes essential.",
+  "category": "documentation",
+  "priority": "medium"
+}

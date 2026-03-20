@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔌 API Connection Lab - SocialBit</title>
+
+  <!-- Jungle Theme CSS -->
+  <link rel="stylesheet" href="public/assets/jungle-theme.css">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    body {
+      /* Flow-in animation - background shows first, content flows in after 1s */
+      animation: none; /* Body itself does not animate */
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      padding-top: 80px; /* Space for fixed nav - standardized */
+    }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: linear-gradient(135deg, rgba(13, 27, 14, 0.95), rgba(26, 58, 31, 0.95));
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(46, 204, 113, 0.3);
+      padding: 1rem 2rem;
+    }
+
+    .nav-content {
+      max-width: 1600px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+
+    .nav-logo-icon {
+      font-size: 2rem;
+    }
+
+    .nav-logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--jungle-glow);
+      text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .nav-link {
+      color: #7fda89;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--jungle-glow), var(--jungle-accent));
+      transition: width 0.3s;
+    }
+
+    .nav-link:hover {
+      color: var(--jungle-glow);
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    .nav-link.active {
+      color: var(--jungle-glow);
+    }
+
+    .nav-link.active::after {
+      width: 100%;
+    }
+
+    /* Mobile menu toggle */
+    .mobile-menu-btn {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--jungle-glow);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, rgba(13, 27, 14, 0.98), rgba(26, 58, 31, 0.98));
+        flex-direction: column;
+        padding: 1rem 2rem;
+        gap: 1rem;
+        border-bottom: 1px solid rgba(46, 204, 113, 0.3);
+      }
+
+      .nav-links.open {
+        display: flex;
+      }
+
+      .mobile-menu-btn {
+        display: block;
+      }
+    }
+
+    /* Jungle landscape background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('img/landscape 2.png') center/cover no-repeat fixed;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      background: linear-gradient(135deg, rgba(26, 58, 31, 0.9) 0%, rgba(13, 27, 14, 0.9) 100%);
+      border: 2px solid var(--jungle-accent);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 0 20px rgba(46, 204, 113, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(46, 204, 113, 0.1) 0%, transparent 70%);
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .header-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-shadow: 0 0 10px var(--jungle-glow);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #7fda89;
+      font-style: italic;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    .api-card {
+      background: linear-gradient(135deg, rgba(10, 14, 10, 0.9) 0%, rgba(26, 58, 31, 0.6) 100%);
+      border: 1px solid var(--jungle-accent);
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .api-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+      border-color: var(--jungle-glow);
+    }
+
+    .api-card.connected {
+      border-color: var(--jungle-glow);
+      box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+    }
+
+    .api-card.error {
+      border-color: var(--jungle-danger);
+      box-shadow: 0 0 20px rgba(231, 76, 60, 0.3);
+    }
+
+    .api-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(46, 204, 113, 0.3);
+    }
+
+    .api-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--jungle-glow);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-dot.connected {
+      background: var(--jungle-accent);
+      box-shadow: 0 0 10px var(--jungle-accent);
+    }
+
+    .status-dot.disconnected {
+      background: var(--jungle-danger);
+      box-shadow: 0 0 10px var(--jungle-danger);
+    }
+
+    .status-dot.testing {
+      background: var(--jungle-warning);
+      box-shadow: 0 0 10px var(--jungle-warning);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .label {
+      display: block;
+      font-size: 12px;
+      color: #7fda89;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .input {
+      width: 100%;
+      padding: 12px;
+      background: var(--terminal-bg);
+      border: 1px solid var(--jungle-accent);
+      border-radius: 6px;
+      color: var(--terminal-text);
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: var(--jungle-glow);
+      box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+    }
+
+    .input::placeholder {
+      color: #4a6f4f;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--jungle-accent) 0%, #27ae60 100%);
+      border: none;
+      border-radius: 6px;
+      color: var(--jungle-dark);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+    }
+
+    .btn-block {
+      width: 100%;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(46, 204, 113, 0.5);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #555 0%, #666 100%);
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, var(--jungle-danger) 0%, #c0392b 100%);
+      color: white;
+    }
+
+    .response-box {
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--terminal-bg);
+      border: 1px solid var(--jungle-accent);
+      border-radius: 6px;
+      font-size: 12px;
+      line-height: 1.6;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .response-box.show {
+      display: block;
+    }
+
+    .response-box.success {
+      border-color: var(--jungle-accent);
+    }
+
+    .response-box.error {
+      border-color: var(--jungle-danger);
+    }
+
+    .code-block {
+      background: rgba(0, 0, 0, 0.5);
+      padding: 12px;
+      border-radius: 4px;
+      margin-top: 8px;
+      overflow-x: auto;
+    }
+
+    .hint-box {
+      background: rgba(243, 156, 18, 0.1);
+      border-left: 3px solid var(--jungle-warning);
+      padding: 12px;
+      margin-top: 16px;
+      font-size: 12px;
+      line-height: 1.6;
+      border-radius: 4px;
+    }
+
+    .hint-title {
+      font-weight: 700;
+      color: var(--jungle-warning);
+      margin-bottom: 6px;
+    }
+
+    .docs-link {
+      color: var(--jungle-glow);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--jungle-glow);
+    }
+
+    .docs-link:hover {
+      color: var(--jungle-accent);
+      border-bottom-style: solid;
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .metric-item {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid rgba(46, 204, 113, 0.3);
+    }
+
+    .metric-label {
+      font-size: 10px;
+      color: #7fda89;
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--jungle-glow);
+    }
+    /* Background fade-in animation - full quality to normal opacity */
+    body::before {
+      animation: bgFadeIn 0.75s ease-out forwards;
+    }
+
+    @keyframes bgFadeIn {
+      from {
+        opacity: 1;
+      }
+      to {
+        opacity: 0.15;
+      }
+    }
+
+    /* Hide all elements initially */
+    body > *:not(script):not(style) {
+      opacity: 0;
+    }
+
+    /* Random flow-in animations from different directions */
+    @keyframes flowFromLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes flowFromRight {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes flowFromTop {
+      from {
+        opacity: 0;
+        transform: translateY(-100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes flowFromBottom {
+      from {
+        opacity: 0;
+        transform: translateY(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .flow-left {
+      animation: flowFromLeft 0.75s ease-out forwards;
+    }
+
+    .flow-right {
+      animation: flowFromRight 0.75s ease-out forwards;
+    }
+
+    .flow-top {
+      animation: flowFromTop 0.75s ease-out forwards;
+    }
+
+    .flow-bottom {
+      animation: flowFromBottom 0.75s ease-out forwards;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-content">
+      <a href="index.html" class="nav-logo">
+        <span class="nav-logo-icon"><i class="fas fa-leaf"></i></span>
+        <span class="nav-logo-text">SocialBit</span>
+      </a>
+
+      <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+
+      <div class="nav-links" id="navLinks">
+        <a href="index-jungle.html" class="nav-link">🏠 Home</a>
+        <a href="jungle.html" class="nav-link"><i class="fas fa-leaf"></i> Dashboard</a>
+        <a href="api-connector.html" class="nav-link active"><i class="fas fa-network-wired"></i> API Lab</a>
+        <a href="codebase-playground.html" class="nav-link">🦜 Codebase</a>
+        <a href="database-playground.html" class="nav-link">🗄️ Database</a>
+        <a href="file-analyzer-demo.html" class="nav-link">📁 Analyzer</a>
+        <a href="public/index.html" class="nav-link">📊 Main App</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header">
+      <div class="header-content">
+        <h1 class="title">
+          <span><i class="fas fa-network-wired"></i></span>
+          <span>API CONNECTION LAB</span>
+          <span>🧪</span>
+        </h1>
+        <p class="subtitle">// Configure and test API integrations - Developer mode</p>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- TikTok API -->
+      <div class="api-card" id="tiktok-card">
+        <div class="api-header">
+          <div class="api-title">
+            <span>📱</span>
+            <span>TikTok API v2</span>
+          </div>
+          <span class="status-dot disconnected" id="tiktok-status"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="label">Client Key</label>
+          <input type="text" class="input" id="tiktok-client-key" placeholder="awxxxxxxxxxxxxxxxxxx">
+        </div>
+
+        <div class="form-group">
+          <label class="label">Client Secret</label>
+          <input type="password" class="input" id="tiktok-client-secret" placeholder="Your client secret">
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" onclick="startTikTokOAuth()">🚀 Start OAuth Flow</button>
+          <button class="btn btn-secondary" onclick="checkTikTokStatus()">🔍 Check Status</button>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-danger" onclick="disconnectTikTok()" id="tiktok-disconnect-btn" style="display: none;"><i class="fas fa-unlink"></i> Disconnect</button>
+          <button class="btn btn-secondary" onclick="syncTikTokPosts()" id="tiktok-sync-btn" style="display: none;">📥 Sync Posts</button>
+        </div>
+
+        <div class="response-box" id="tiktok-response"></div>
+
+        <div class="hint-box">
+          <div class="hint-title">💡 OAuth Flow Instructions:</div>
+          1. Click <strong>"Start OAuth Flow"</strong> to authorize TikTok<br>
+          2. Login to TikTok and grant permissions<br>
+          3. You'll be redirected back automatically<br>
+          4. Click "Check Status" to verify connection<br>
+          5. Use "Sync Posts" to fetch your TikTok content<br>
+          <br>
+          <div style="font-size: 11px; color: #7fda89;">
+            ℹ️ OAuth scopes: user.info.basic, user.info.profile, user.info.stats, video.list<br>
+            ℹ️ Redirect URI: https://socialbit.g-bit.be/public/api/tiktok/callback
+          </div>
+        </div>
+      </div>
+
+      <!-- Instagram Graph API -->
+      <div class="api-card" id="instagram-card">
+        <div class="api-header">
+          <div class="api-title">
+            <span>📸</span>
+            <span>Instagram Graph API</span>
+          </div>
+          <span class="status-dot disconnected" id="instagram-status"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="label">App ID</label>
+          <input type="text" class="input" id="instagram-app-id" placeholder="Your Meta App ID">
+        </div>
+
+        <div class="form-group">
+          <label class="label">App Secret</label>
+          <input type="password" class="input" id="instagram-app-secret" placeholder="Your Meta App Secret">
+        </div>
+
+        <div class="form-group">
+          <label class="label">Access Token (Long-lived)</label>
+          <input type="text" class="input" id="instagram-token" placeholder="Paste your long-lived access token">
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" onclick="testInstagram()">🧪 Test Connection</button>
+          <button class="btn btn-secondary" onclick="saveInstagram()">💾 Save Config</button>
+        </div>
+
+        <div class="response-box" id="instagram-response"></div>
+
+        <div class="hint-box">
+          <div class="hint-title">💡 Setup Hints:</div>
+          1. Go to <a href="https://developers.facebook.com/" target="_blank" class="docs-link">Meta Developers</a><br>
+          2. Create app, add Instagram Basic Display<br>
+          3. Get access token using Graph API Explorer<br>
+          4. Exchange for long-lived token (60 days)
+        </div>
+      </div>
+
+      <!-- Metricool API -->
+      <div class="api-card" id="metricool-card">
+        <div class="api-header">
+          <div class="api-title">
+            <span>📊</span>
+            <span>Metricool API</span>
+          </div>
+          <span class="status-dot disconnected" id="metricool-status"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="label">API Key (userToken)</label>
+          <input type="text" class="input" id="metricool-api-key" placeholder="Your Metricool API key">
+        </div>
+
+        <div class="form-group">
+          <label class="label">User ID</label>
+          <input type="text" class="input" id="metricool-user-id" placeholder="Your Metricool User ID">
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" onclick="testMetricool()">🧪 Test Connection</button>
+          <button class="btn btn-secondary" onclick="saveMetricool()">💾 Save Config</button>
+        </div>
+
+        <div class="response-box" id="metricool-response"></div>
+
+        <div class="metric-grid" id="metricool-metrics" style="display: none;">
+          <div class="metric-item">
+            <div class="metric-label">Connected Accounts</div>
+            <div class="metric-value" id="metricool-accounts-count">--</div>
+          </div>
+          <div class="metric-item">
+            <div class="metric-label">Platforms</div>
+            <div class="metric-value" id="metricool-platforms">--</div>
+          </div>
+        </div>
+
+        <div class="hint-box">
+          <div class="hint-title">💡 Setup Hints:</div>
+          1. Upgrade to <strong>Advanced plan</strong> ($49/mo)<br>
+          2. Go to Settings → Integrations → API<br>
+          3. Generate API key<br>
+          4. Multi-platform: TikTok, Instagram, Facebook, YouTube
+        </div>
+      </div>
+
+      <!-- Fathom Analytics -->
+      <div class="api-card" id="fathom-card">
+        <div class="api-header">
+          <div class="api-title">
+            <span>📈</span>
+            <span>Fathom Analytics</span>
+          </div>
+          <span class="status-dot disconnected" id="fathom-status"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="label">API Token</label>
+          <input type="text" class="input" id="fathom-token" placeholder="Your Fathom API token">
+        </div>
+
+        <div class="form-group">
+          <label class="label">Site ID</label>
+          <input type="text" class="input" id="fathom-site-id" placeholder="XXXXXXXX">
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" onclick="testFathom()">🧪 Test Connection</button>
+          <button class="btn btn-secondary" onclick="saveFathom()">💾 Save Config</button>
+        </div>
+
+        <div class="response-box" id="fathom-response"></div>
+
+        <div class="hint-box">
+          <div class="hint-title">💡 Setup Hints:</div>
+          1. Go to <a href="https://app.usefathom.com/" target="_blank" class="docs-link">Fathom Dashboard</a><br>
+          2. Settings → API → Create new token<br>
+          3. Copy Site ID from site settings<br>
+          4. Privacy-first analytics, no cookies
+        </div>
+      </div>
+
+      <!-- Google Business -->
+      <div class="api-card" id="google-card">
+        <div class="api-header">
+          <div class="api-title">
+            <span>🏢</span>
+            <span>Google Business API</span>
+          </div>
+          <span class="status-dot disconnected" id="google-status"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="label">OAuth Client ID</label>
+          <input type="text" class="input" id="google-client-id" placeholder="xxxxx.apps.googleusercontent.com">
+        </div>
+
+        <div class="form-group">
+          <label class="label">OAuth Client Secret</label>
+          <input type="password" class="input" id="google-client-secret" placeholder="Your client secret">
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" onclick="testGoogle()">🧪 Test Connection</button>
+          <button class="btn btn-secondary" onclick="saveGoogle()">💾 Save Config</button>
+        </div>
+
+        <div class="response-box" id="google-response"></div>
+
+        <div class="hint-box">
+          <div class="hint-title">💡 Setup Hints:</div>
+          1. Go to <a href="https://console.cloud.google.com/" target="_blank" class="docs-link">Google Cloud Console</a><br>
+          2. Enable "Google My Business API"<br>
+          3. Create OAuth 2.0 credentials<br>
+          4. Verify business location ownership
+        </div>
+      </div>
+
+      <!-- Facebook Graph API -->
+      <div class="api-card" id="facebook-card">
+        <div class="api-header">
+          <div class="api-title">
+            <span>👥</span>
+            <span>Facebook Graph API</span>
+          </div>
+          <span class="status-dot disconnected" id="facebook-status"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="label">Page Access Token</label>
+          <input type="text" class="input" id="facebook-token" placeholder="Paste your page access token">
+        </div>
+
+        <div class="form-group">
+          <label class="label">Page ID</label>
+          <input type="text" class="input" id="facebook-page-id" placeholder="Your Facebook Page ID">
+        </div>
+
+        <div class="btn-group">
+          <button class="btn" onclick="testFacebook()">🧪 Test Connection</button>
+          <button class="btn btn-secondary" onclick="saveFacebook()">💾 Save Config</button>
+        </div>
+
+        <div class="response-box" id="facebook-response"></div>
+
+        <div class="hint-box">
+          <div class="hint-title">💡 Setup Hints:</div>
+          1. Use same Meta app as Instagram<br>
+          2. Get Page Access Token from Graph API Explorer<br>
+          3. Request permissions: <code>pages_read_engagement, pages_read_user_content</code><br>
+          4. Exchange for never-expiring token
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // TikTok OAuth Flow
+    function startTikTokOAuth() {
+      const responseBox = document.getElementById('tiktok-response');
+      const statusDot = document.getElementById('tiktok-status');
+
+      statusDot.className = 'status-dot testing';
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>🚀 Redirecting to TikTok authorization...</div>';
+
+      // Redirect to OAuth authorize endpoint
+      setTimeout(() => {
+        window.location.href = '/api/tiktok/authorize';
+      }, 500);
+    }
+
+    // Check TikTok connection status
+    async function checkTikTokStatus() {
+      const responseBox = document.getElementById('tiktok-response');
+      const statusDot = document.getElementById('tiktok-status');
+      const card = document.getElementById('tiktok-card');
+      const disconnectBtn = document.getElementById('tiktok-disconnect-btn');
+      const syncBtn = document.getElementById('tiktok-sync-btn');
+
+      statusDot.className = 'status-dot testing';
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>🔍 Checking TikTok connection status...</div>';
+
+      try {
+        const response = await fetch('/api/tiktok/status', {
+          headers: {
+            'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '')
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.connection_status === 'connected') {
+          card.classList.add('connected');
+          card.classList.remove('error');
+          statusDot.className = 'status-dot connected';
+          disconnectBtn.style.display = 'block';
+          syncBtn.style.display = 'block';
+
+          responseBox.innerHTML = `
+            <div style="color: var(--jungle-accent);">✓ TikTok Connected!</div>
+            <div class="code-block">
+              Status: ${data.connection_status}<br>
+              Open ID: ${data.open_id || 'N/A'}<br>
+              Last Sync: ${data.last_sync || 'Never'}<br>
+              Token Expires: ${data.token_expires_at || 'N/A'}
+            </div>
+          `;
+          responseBox.className = 'response-box show success';
+        } else {
+          card.classList.remove('connected');
+          statusDot.className = 'status-dot disconnected';
+          disconnectBtn.style.display = 'none';
+          syncBtn.style.display = 'none';
+
+          responseBox.innerHTML = `
+            <div style="color: var(--jungle-warning);">⚠ Not connected</div>
+            <div class="code-block">
+              Status: ${data.connection_status}<br>
+              <br>
+              Click "Start OAuth Flow" to connect your TikTok account
+            </div>
+          `;
+          responseBox.className = 'response-box show';
+        }
+      } catch (error) {
+        card.classList.remove('connected');
+        card.classList.add('error');
+        statusDot.className = 'status-dot disconnected';
+        disconnectBtn.style.display = 'none';
+        syncBtn.style.display = 'none';
+
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-danger);">✗ Status check failed</div>
+          <div class="code-block">Error: ${error.message}</div>
+        `;
+        responseBox.className = 'response-box show error';
+      }
+    }
+
+    // Disconnect TikTok
+    async function disconnectTikTok() {
+      if (!confirm('Are you sure you want to disconnect TikTok? You will need to re-authorize to sync posts.')) {
+        return;
+      }
+
+      const responseBox = document.getElementById('tiktok-response');
+      const statusDot = document.getElementById('tiktok-status');
+      const card = document.getElementById('tiktok-card');
+
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div><i class="fas fa-spinner fa-spin"></i> Disconnecting TikTok...</div>';
+
+      try {
+        const response = await fetch('/api/tiktok/disconnect', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '')
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        card.classList.remove('connected');
+        statusDot.className = 'status-dot disconnected';
+        document.getElementById('tiktok-disconnect-btn').style.display = 'none';
+        document.getElementById('tiktok-sync-btn').style.display = 'none';
+
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-accent);">✓ Disconnected successfully</div>
+          <div class="code-block">
+            ${data.message}<br>
+            Tokens deleted: ${data.tokens_deleted}
+          </div>
+        `;
+        responseBox.className = 'response-box show success';
+      } catch (error) {
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-danger);">✗ Disconnect failed</div>
+          <div class="code-block">Error: ${error.message}</div>
+        `;
+        responseBox.className = 'response-box show error';
+      }
+    }
+
+    // Sync TikTok posts
+    async function syncTikTokPosts() {
+      const responseBox = document.getElementById('tiktok-response');
+      const statusDot = document.getElementById('tiktok-status');
+
+      statusDot.className = 'status-dot testing';
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>📥 Syncing TikTok posts...</div>';
+
+      try {
+        const response = await fetch('/api/tiktok/sync', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || '')
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        statusDot.className = 'status-dot connected';
+
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-accent);">✓ Sync completed!</div>
+          <div class="code-block">
+            Posts synced: ${data.posts_synced || data.total || 0}<br>
+            New posts: ${data.new_posts || 0}<br>
+            Updated posts: ${data.updated_posts || 0}
+          </div>
+        `;
+        responseBox.className = 'response-box show success';
+      } catch (error) {
+        statusDot.className = 'status-dot connected';
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-danger);">✗ Sync failed</div>
+          <div class="code-block">Error: ${error.message}</div>
+        `;
+        responseBox.className = 'response-box show error';
+      }
+    }
+
+    // Check for OAuth callback parameters on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      if (urlParams.has('tiktok')) {
+        const responseBox = document.getElementById('tiktok-response');
+        const statusDot = document.getElementById('tiktok-status');
+        const card = document.getElementById('tiktok-card');
+
+        if (urlParams.get('tiktok') === 'connected') {
+          card.classList.add('connected');
+          statusDot.className = 'status-dot connected';
+          responseBox.className = 'response-box show success';
+          responseBox.innerHTML = `
+            <div style="color: var(--jungle-accent);">✓ TikTok OAuth successful!</div>
+            <div class="code-block">
+              Your TikTok account has been connected successfully.<br>
+              App Token: ${urlParams.get('token')?.substring(0, 20)}...<br>
+              <br>
+              Click "Check Status" to view details or "Sync Posts" to fetch your content.
+            </div>
+          `;
+
+          // Auto-check status after successful OAuth
+          setTimeout(() => checkTikTokStatus(), 1000);
+        } else if (urlParams.get('tiktok') === 'error') {
+          card.classList.add('error');
+          statusDot.className = 'status-dot disconnected';
+          responseBox.className = 'response-box show error';
+          responseBox.innerHTML = `
+            <div style="color: var(--jungle-danger);">✗ TikTok OAuth failed</div>
+            <div class="code-block">
+              Error: ${decodeURIComponent(urlParams.get('message') || 'Unknown error')}<br>
+              <br>
+              Please try again or check your TikTok app credentials.
+            </div>
+          `;
+        }
+
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    });
+
+    // Test Instagram API
+    async function testInstagram() {
+      const responseBox = document.getElementById('instagram-response');
+      const statusDot = document.getElementById('instagram-status');
+      const token = document.getElementById('instagram-token').value;
+
+      if (!token) {
+        responseBox.className = 'response-box show error';
+        responseBox.innerHTML = '<div style="color: var(--jungle-danger);">✗ Please enter an access token</div>';
+        return;
+      }
+
+      statusDot.className = 'status-dot testing';
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>🧪 Testing Instagram Graph API...</div>';
+
+      // Test with real API
+      try {
+        const response = await fetch(`https://graph.instagram.com/me?fields=id,username&access_token=${token}`);
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error.message);
+        }
+
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-accent);">✓ Connection successful!</div>
+          <div class="code-block">
+            Username: ${data.username}<br>
+            User ID: ${data.id}<br>
+            Token: Valid ✓
+          </div>
+        `;
+        responseBox.className = 'response-box show success';
+        statusDot.className = 'status-dot connected';
+      } catch (error) {
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-danger);">✗ Connection failed</div>
+          <div class="code-block">Error: ${error.message}</div>
+        `;
+        responseBox.className = 'response-box show error';
+        statusDot.className = 'status-dot disconnected';
+      }
+    }
+
+    // Test Metricool API
+    async function testMetricool() {
+      const responseBox = document.getElementById('metricool-response');
+      const statusDot = document.getElementById('metricool-status');
+      const card = document.getElementById('metricool-card');
+      const apiKey = document.getElementById('metricool-api-key').value;
+      const userId = document.getElementById('metricool-user-id').value;
+      const metricsGrid = document.getElementById('metricool-metrics');
+
+      if (!apiKey || !userId) {
+        responseBox.className = 'response-box show error';
+        responseBox.innerHTML = '<div style="color: var(--jungle-danger);">✗ Please enter both API key and User ID</div>';
+        return;
+      }
+
+      statusDot.className = 'status-dot testing';
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>🧪 Testing Metricool API...</div>';
+
+      try {
+        const response = await fetch('/public/api/metricool/test', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            api_key: apiKey,
+            user_id: userId
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error?.message || 'Connection failed');
+        }
+
+        // Success - show profiles
+        card.classList.add('connected');
+        statusDot.className = 'status-dot connected';
+        metricsGrid.style.display = 'grid';
+
+        // Update metrics
+        document.getElementById('metricool-accounts-count').textContent = data.profiles_count || 0;
+
+        const platforms = [...new Set(data.profiles.map(p => p.network))];
+        document.getElementById('metricool-platforms').textContent = platforms.join(', ');
+
+        // Show profile list
+        const profileList = data.profiles.map(p =>
+          `${p.network}: ${p.username || p.name}`
+        ).join('<br>');
+
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-accent);">✓ Connection successful!</div>
+          <div class="code-block">
+            Profiles connected: ${data.profiles_count}<br>
+            <br>
+            ${profileList}
+          </div>
+        `;
+        responseBox.className = 'response-box show success';
+      } catch (error) {
+        card.classList.remove('connected');
+        card.classList.add('error');
+        statusDot.className = 'status-dot disconnected';
+        metricsGrid.style.display = 'none';
+
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-danger);">✗ Connection failed</div>
+          <div class="code-block">Error: ${error.message}</div>
+        `;
+        responseBox.className = 'response-box show error';
+      }
+    }
+
+    // Test Fathom API
+    async function testFathom() {
+      const responseBox = document.getElementById('fathom-response');
+      const statusDot = document.getElementById('fathom-status');
+      const token = document.getElementById('fathom-token').value;
+      const siteId = document.getElementById('fathom-site-id').value;
+
+      if (!token || !siteId) {
+        responseBox.className = 'response-box show error';
+        responseBox.innerHTML = '<div style="color: var(--jungle-danger);">✗ Please enter both API token and Site ID</div>';
+        return;
+      }
+
+      statusDot.className = 'status-dot testing';
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>🧪 Testing Fathom Analytics API...</div>';
+
+      try {
+        const response = await fetch(`https://api.usefathom.com/v1/sites/${siteId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-accent);">✓ Connection successful!</div>
+          <div class="code-block">
+            Site: ${data.name || 'Unknown'}<br>
+            Site ID: ${siteId}<br>
+            Token: Valid ✓
+          </div>
+        `;
+        responseBox.className = 'response-box show success';
+        statusDot.className = 'status-dot connected';
+      } catch (error) {
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-danger);">✗ Connection failed</div>
+          <div class="code-block">Error: ${error.message}</div>
+        `;
+        responseBox.className = 'response-box show error';
+        statusDot.className = 'status-dot disconnected';
+      }
+    }
+
+    // Test Google Business API
+    async function testGoogle() {
+      const responseBox = document.getElementById('google-response');
+      const statusDot = document.getElementById('google-status');
+
+      statusDot.className = 'status-dot testing';
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>🧪 Testing Google Business API...</div>';
+
+      setTimeout(() => {
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-warning);">⚠ OAuth flow required</div>
+          <div class="code-block">
+            Google Business API requires OAuth 2.0 flow<br>
+            <br>
+            Implementation needed:<br>
+            1. OAuth authorization endpoint<br>
+            2. Token exchange handler<br>
+            3. Refresh token storage
+          </div>
+        `;
+        responseBox.className = 'response-box show';
+        statusDot.className = 'status-dot testing';
+      }, 1500);
+    }
+
+    // Test Facebook API
+    async function testFacebook() {
+      const responseBox = document.getElementById('facebook-response');
+      const statusDot = document.getElementById('facebook-status');
+      const token = document.getElementById('facebook-token').value;
+      const pageId = document.getElementById('facebook-page-id').value;
+
+      if (!token || !pageId) {
+        responseBox.className = 'response-box show error';
+        responseBox.innerHTML = '<div style="color: var(--jungle-danger);">✗ Please enter both token and Page ID</div>';
+        return;
+      }
+
+      statusDot.className = 'status-dot testing';
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>🧪 Testing Facebook Graph API...</div>';
+
+      try {
+        const response = await fetch(`https://graph.facebook.com/v18.0/${pageId}?fields=id,name,fan_count&access_token=${token}`);
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error.message);
+        }
+
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-accent);">✓ Connection successful!</div>
+          <div class="code-block">
+            Page: ${data.name}<br>
+            Page ID: ${data.id}<br>
+            Fans: ${data.fan_count?.toLocaleString() || 'N/A'}<br>
+            Token: Valid ✓
+          </div>
+        `;
+        responseBox.className = 'response-box show success';
+        statusDot.className = 'status-dot connected';
+      } catch (error) {
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-danger);">✗ Connection failed</div>
+          <div class="code-block">Error: ${error.message}</div>
+        `;
+        responseBox.className = 'response-box show error';
+        statusDot.className = 'status-dot disconnected';
+      }
+    }
+
+    // Save functions - Store credentials in database
+    function saveTikTok() {
+      alert('TikTok OAuth flow required - use OAuth endpoints');
+    }
+
+    async function saveInstagram() {
+      const responseBox = document.getElementById('instagram-response');
+      const statusDot = document.getElementById('instagram-status');
+      const card = document.getElementById('instagram-card');
+
+      const appId = document.getElementById('instagram-app-id').value;
+      const appSecret = document.getElementById('instagram-app-secret').value;
+      const token = document.getElementById('instagram-token').value;
+
+      if (!token) {
+        responseBox.className = 'response-box show error';
+        responseBox.innerHTML = '<div style="color: var(--jungle-danger);">✗ Access token is required</div>';
+        return;
+      }
+
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>💾 Saving Instagram credentials...</div>';
+
+      try {
+        const response = await fetch('/api/instagram/credentials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            app_id: appId,
+            app_secret: appSecret,
+            access_token: token
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          responseBox.innerHTML = `
+            <div style="color: var(--jungle-accent);">✓ Credentials saved successfully!</div>
+            <div class="code-block">
+              Status: Ready for data collection<br>
+              Saved at: ${new Date().toLocaleTimeString()}
+            </div>
+          `;
+          responseBox.className = 'response-box show success';
+          statusDot.className = 'status-dot connected';
+          card.className = 'api-card connected';
+        } else {
+          throw new Error(data.error || 'Failed to save credentials');
+        }
+      } catch (error) {
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-danger);">✗ ${error.message}</div>
+        `;
+        responseBox.className = 'response-box show error';
+      }
+    }
+
+    async function saveMetricool() {
+      const apiKey = document.getElementById('metricool-api-key').value;
+      const userId = document.getElementById('metricool-user-id').value;
+      const responseBox = document.getElementById('metricool-response');
+
+      if (!apiKey || !userId) {
+        responseBox.className = 'response-box show error';
+        responseBox.innerHTML = '<div style="color: var(--jungle-danger);">✗ Please enter both API key and User ID</div>';
+        return;
+      }
+
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>💾 Saving credentials...</div>';
+
+      try {
+        const response = await fetch('/public/api/metricool/save', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            api_key: apiKey,
+            user_id: userId
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error?.message || 'Failed to save credentials');
+        }
+
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-accent);">✓ Credentials saved successfully!</div>
+          <div class="code-block">
+            ${data.message}<br>
+            <br>
+            You can now use the scheduled sync script or manual sync.
+          </div>
+        `;
+        responseBox.className = 'response-box show success';
+      } catch (error) {
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-danger);">✗ Save failed</div>
+          <div class="code-block">Error: ${error.message}</div>
+        `;
+        responseBox.className = 'response-box show error';
+      }
+    }
+
+    async function saveFathom() {
+      const responseBox = document.getElementById('fathom-response');
+      const statusDot = document.getElementById('fathom-status');
+      const token = document.getElementById('fathom-token').value;
+      const siteId = document.getElementById('fathom-site-id').value;
+
+      if (!token || !siteId) {
+        responseBox.className = 'response-box show error';
+        responseBox.innerHTML = '<div style="color: var(--jungle-danger);">✗ Please fill in all fields</div>';
+        return;
+      }
+
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>💾 Saving Fathom credentials to database...</div>';
+
+      try {
+        const response = await fetch('/api/analytics/fathom/credentials', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            api_token: token,
+            site_id: siteId
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || 'Failed to save credentials');
+        }
+
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-accent);">✓ Credentials saved successfully!</div>
+          <div class="code-block">
+            Site ID: ${siteId}<br>
+            Status: Ready for data collection<br>
+            Saved at: ${new Date().toLocaleTimeString()}
+          </div>
+        `;
+        responseBox.className = 'response-box show success';
+        statusDot.className = 'status-dot connected';
+      } catch (error) {
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-danger);">✗ Failed to save credentials</div>
+          <div class="code-block">Error: ${error.message}</div>
+        `;
+        responseBox.className = 'response-box show error';
+        statusDot.className = 'status-dot disconnected';
+      }
+    }
+
+    function saveGoogle() {
+      alert('Google Business OAuth flow implementation needed');
+    }
+
+    async function saveFacebook() {
+      const responseBox = document.getElementById('facebook-response');
+      const statusDot = document.getElementById('facebook-status');
+      const card = document.getElementById('facebook-card');
+
+      const token = document.getElementById('facebook-token').value;
+      const pageId = document.getElementById('facebook-page-id').value;
+
+      if (!token || !pageId) {
+        responseBox.className = 'response-box show error';
+        responseBox.innerHTML = '<div style="color: var(--jungle-danger);">✗ Both token and Page ID are required</div>';
+        return;
+      }
+
+      responseBox.className = 'response-box show';
+      responseBox.innerHTML = '<div>💾 Saving Facebook credentials...</div>';
+
+      try {
+        const response = await fetch('/api/facebook/credentials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            access_token: token,
+            page_id: pageId
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          responseBox.innerHTML = `
+            <div style="color: var(--jungle-accent);">✓ Credentials saved successfully!</div>
+            <div class="code-block">
+              Page ID: ${pageId}<br>
+              Status: Ready for data collection<br>
+              Saved at: ${new Date().toLocaleTimeString()}
+            </div>
+          `;
+          responseBox.className = 'response-box show success';
+          statusDot.className = 'status-dot connected';
+          card.className = 'api-card connected';
+        } else {
+          throw new Error(data.error || 'Failed to save credentials');
+        }
+      } catch (error) {
+        responseBox.innerHTML = `
+          <div style="color: var(--jungle-danger);">✗ ${error.message}</div>
+        `;
+        responseBox.className = 'response-box show error';
+      }
+    }
+    // Mobile menu toggle
+    function toggleMobileMenu() {
+      const navLinks = document.getElementById('navLinks');
+      navLinks.classList.toggle('open');
+    }
+    // Random background switcher
+    (function() {
+      const backgrounds = [
+        "img/horizon 1.png",
+        "img/horizon 2.png",
+        "img/horizon 3.png",
+        "img/landscape 1.png",
+        "img/landscape 2.png",
+        "img/landscape 3.png"
+      ];
+      const randomBg = backgrounds[Math.floor(Math.random() * backgrounds.length)];
+
+      // Find and update the body::before background
+      const style = document.createElement("style");
+      style.textContent = `
+        body::before {
+          background: url("${randomBg}") center/cover no-repeat fixed !important;
+        }
+      `;
+      document.head.appendChild(style);
+    })();
+
+// Apply random flow directions to page elements    document.addEventListener('DOMContentLoaded', function() {      const directions = ['flow-left', 'flow-right', 'flow-top', 'flow-bottom'];      const elements = document.querySelectorAll('body > *:not(script):not(style)');      elements.forEach((element, index) => {        const randomDirection = directions[Math.floor(Math.random() * directions.length)];        const delay = index * 0.05; // Stagger elements slightly (50ms per element)        element.classList.add(randomDirection);        element.style.animationDelay = delay + 's';      });    });
+  </script>
+</body>
+</html>

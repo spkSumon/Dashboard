@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SocialBit - Actieplan 2026-02-07</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-left: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        h3 {
+            color: #555;
+            margin-top: 25px;
+            margin-bottom: 15px;
+        }
+
+        .priority-critical {
+            background: #fee;
+            border-left: 4px solid #e74c3c;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .priority-high {
+            background: #fef5e7;
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .priority-medium {
+            background: #e8f8f5;
+            border-left: 4px solid #27ae60;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .priority-low {
+            background: #f0f0f0;
+            border-left: 4px solid #95a5a6;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .badge-critical {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .badge-high {
+            background: #f39c12;
+            color: white;
+        }
+
+        .badge-medium {
+            background: #27ae60;
+            color: white;
+        }
+
+        .badge-low {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .task-item {
+            background: #f9f9f9;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+
+        .task-item label {
+            cursor: pointer;
+            display: flex;
+            align-items: start;
+        }
+
+        .task-item input[type="checkbox"] {
+            margin-right: 12px;
+            margin-top: 4px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .task-item:hover {
+            background: #f0f0f0;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .code-block code {
+            display: block;
+            white-space: pre-wrap;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background: #d1ecf1;
+            border: 1px solid #17a2b8;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .success-box {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #34495e;
+            color: white;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: white;
+            margin: 0;
+            font-size: 2em;
+        }
+
+        .stat-card p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+        }
+
+        @media print {
+            body {
+                background: white;
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            .task-item input[type="checkbox"] {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 SocialBit - Actieplan Configuratie Optimalisatie</h1>
+
+        <div class="info-box">
+            <strong>📅 Datum:</strong> 7 februari 2026<br>
+            <strong>👥 Team:</strong> 4-agent analyse team (socialbit-implementation-planning)<br>
+            <strong>📊 Status:</strong> Analyse compleet - Wacht op goedkeuring
+        </div>
+
+        <div class="summary-stats">
+            <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h3>4</h3>
+                <p>Kritieke Security Issues</p>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h3>358</h3>
+                <p>Regels te besparen in CLAUDE.md</p>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <h3>~6h</h3>
+                <p>Totale implementatietijd</p>
+            </div>
+            <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <h3>LOW</h3>
+                <p>Risico niveau (alles veilig)</p>
+            </div>
+        </div>
+
+        <h2>🚨 PRIORITEIT 1: SECURITY FIXES (DOE EERST!)</h2>
+
+        <div class="warning-box">
+            <strong>⚠️ BELANGRIJK:</strong> Voer deze security fixes uit VOOR je nieuwe files commit naar Git!
+        </div>
+
+        <div class="priority-critical">
+            <h3><span class="badge badge-critical">🔴 KRITIEK</span> 1. GitHub Token Rotatie (5-10 min)</h3>
+
+            <p><strong>Probleem:</strong> GitHub token <code>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</code> staat in documentatie files die nog niet gecommit zijn.</p>
+
+            <p><strong>Gevonden in:</strong></p>
+            <ul>
+                <li><code>docs/CRITICAL_QA_ANALYSIS_REPORT.md</code> (UNTRACKED)</li>
+                <li><code>actions.md</code> (UNTRACKED)</li>
+            </ul>
+
+            <p><strong>Risico:</strong> Als je deze files commit zonder token te roteren, komt de token in je Git geschiedenis (public repo!).</p>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 1:</strong> Ga naar <a href="https://github.com/settings/tokens" target="_blank">https://github.com/settings/tokens</a></span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 2:</strong> Vind token met naam "socialbit-live" of beschrijving met oude token</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 3:</strong> Klik "Delete" om oude token te verwijderen</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 4:</strong> Klik "Generate new token" → "Classic"</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 5:</strong> Vul in: Note: "SocialBit Development", Expiration: 90 days</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 6:</strong> Selecteer scopes: <code>repo</code> (alle sub-items)</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 7:</strong> Klik "Generate token" en kopieer de nieuwe token (begint met <code>ghp_</code>)</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 8:</strong> Update <code>.auto-claude/.env</code> regel 22 met nieuwe token</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 9:</strong> Test met: <code>gh auth status</code> (moet "Logged in" tonen)</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 10:</strong> Verwijder oude token uit <code>docs/CRITICAL_QA_ANALYSIS_REPORT.md</code> (vervang met "gho_[REDACTED]")</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 11:</strong> Verwijder oude token uit <code>actions.md</code> (vervang met "gho_[REDACTED]")</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="priority-critical">
+            <h3><span class="badge badge-critical">🔴 KRITIEK</span> 2. Database Password Wijzigen (15-20 min)</h3>
+
+            <p><strong>Probleem:</strong> Production database password <code>MiNiMiN1L5uv5n!</code> staat in <code>config/app.php</code> dat AL in Git geschiedenis zit (commit bcb7dfa).</p>
+
+            <p><strong>Risico:</strong> Iedereen met toegang tot de repo kan database wachtwoord zien en volledige database toegang krijgen.</p>
+
+            <div class="warning-box">
+                <strong>⚠️ LET OP:</strong> Password staat in Git history en kan niet verwijderd worden zonder history rewrite. Beste oplossing: Wijzig password op server.
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 1:</strong> Log in op Plesk: <a href="https://socialbit.g-bit.be:8443" target="_blank">https://socialbit.g-bit.be:8443</a></span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 2:</strong> Ga naar "Databases" → Selecteer database <code>g-bit_socialbit</code></span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 3:</strong> Klik "User Management" → Selecteer user <code>g-bit_socialbit</code></span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 4:</strong> Genereer nieuw sterk password (20+ karakters, mix van letters/cijfers/symbolen)</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 5:</strong> Klik "Change Password" en sla nieuwe password op in password manager</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 6:</strong> Update <code>config/app.php</code> regel 44 met nieuwe password</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 7:</strong> Test website: <a href="https://socialbit.g-bit.be/" target="_blank">https://socialbit.g-bit.be/</a> (moet laden zonder errors)</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 8:</strong> Add <code>config/app.php</code> to <code>.gitignore</code></span>
+                </label>
+            </div>
+
+            <div class="code-block"><code># In .gitignore, add:
+config/app.php</code></div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 9:</strong> Remove from Git tracking: <code>git rm --cached config/app.php</code></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="priority-high">
+            <h3><span class="badge badge-high">🟡 MEDIUM</span> 3. TikTok API Credentials (10-15 min)</h3>
+
+            <p><strong>Probleem:</strong> TikTok Client Secret <code>Gj3r1gpO1qP8dct7oVTaCZyDbmUxXPGM</code> staat in Git geschiedenis.</p>
+
+            <p><strong>Risico:</strong> Middelmatig - account is momenteel blocked, maar credentials zijn exposed.</p>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 1:</strong> Log in op TikTok Developer Portal</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 2:</strong> Ga naar je SocialBit app → "Basic Information"</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 3:</strong> Klik "Regenerate" bij Client Secret</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 4:</strong> Kopieer nieuwe Client Key en Client Secret</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 5:</strong> Update <code>config/app.php</code> regels 18-19 met nieuwe credentials</span>
+                </label>
+            </div>
+        </div>
+
+        <h2>📋 PRIORITEIT 2: CLAUDE.MD OPTIMIZATION (4 uur)</h2>
+
+        <div class="priority-high">
+            <h3><span class="badge badge-high">🟠 HOOG</span> CLAUDE.md Verkorten (593 → 235 regels)</h3>
+
+            <div class="info-box">
+                <strong>📊 Huidige staat:</strong> 593 regels (197% over aanbevolen limiet!)<br>
+                <strong>🎯 Doel:</strong> <250 regels (ideaal: 235 regels)<br>
+                <strong>✅ Risico:</strong> LOW - Niets wordt verwijderd, alleen verplaatst naar dedicated docs<br>
+                <strong>⏱️ Tijd:</strong> 4 uur (verspreid over 4 dagen voor review)
+            </strong>
+
+            <p><strong>Waarom dit belangrijk is:</strong></p>
+            <ul>
+                <li>Context degradation is de #1 failure mode voor AI agents</li>
+                <li>Bij 593 regels verliest Claude ~50% van de instructies</li>
+                <li>Officiële Anthropic aanbeveling: <150-300 regels</li>
+            </ul>
+
+            <h4>📤 Te Verplaatsen Secties</h4>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nieuw Bestand</th>
+                        <th>Inhoud</th>
+                        <th>Regels</th>
+                        <th>Besparing</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>docs/PROJECT_STRUCTURE.md</code></td>
+                        <td>Volledige directory tree</td>
+                        <td>93</td>
+                        <td>92 regels</td>
+                    </tr>
+                    <tr>
+                        <td><code>docs/DATABASE.md</code></td>
+                        <td>Schema details, tabellen, views</td>
+                        <td>53</td>
+                        <td>38 regels</td>
+                    </tr>
+                    <tr>
+                        <td><code>docs/CODING_STANDARDS.md</code></td>
+                        <td>Code patterns & voorbeelden</td>
+                        <td>62</td>
+                        <td>42 regels</td>
+                    </tr>
+                    <tr>
+                        <td><code>docs/INTEGRATIONS.md</code></td>
+                        <td>API details, collection schedules</td>
+                        <td>55</td>
+                        <td>40 regels</td>
+                    </tr>
+                    <tr>
+                        <td><code>docs/FEATURES.md</code></td>
+                        <td>Feature specifications</td>
+                        <td>104</td>
+                        <td>94 regels</td>
+                    </tr>
+                    <tr>
+                        <td><code>docs/DEVELOPMENT.md</code></td>
+                        <td>Testing, Git workflow</td>
+                        <td>44</td>
+                        <td>38 regels</td>
+                    </tr>
+                    <tr>
+                        <td><code>docs/ARCHITECTURE.md</code></td>
+                        <td>Design rationale</td>
+                        <td>27</td>
+                        <td>27 regels</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3"><strong>TOTAAL</strong></td>
+                        <td><strong>371 regels</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h4>✅ Implementatie Stappen</h4>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Dag 1:</strong> Maak 7 nieuwe docs files aan (zie claude-md-optimizer rapport voor inhoud)</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Dag 2:</strong> Review nieuwe docs - controleer dat alle info correct verplaatst is</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Dag 3:</strong> Update CLAUDE.md (vervang secties met korte samenvatting + link naar docs)</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Dag 4:</strong> Test met fresh agent - kan agent alle nodige info vinden?</span>
+                </label>
+            </div>
+
+            <div class="success-box">
+                <strong>✅ Veiligheid:</strong> Alle kritische context blijft behouden:
+                <ul>
+                    <li>✅ Mission & Vision</li>
+                    <li>✅ Current Priorities</li>
+                    <li>✅ DO/DON'T constraints</li>
+                    <li>✅ Agent guidelines</li>
+                    <li>✅ Database credentials</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>📦 PRIORITEIT 3: SERENA DEPRECATION (30 min)</h2>
+
+        <div class="priority-medium">
+            <h3><span class="badge badge-medium">🟢 MEDIUM</span> .serena/ Directory Archiveren</h3>
+
+            <p><strong>Status:</strong> ✅ VEILIG TE ARCHIVEREN</p>
+            <p><strong>Bevinding:</strong> 90% van content is outdated (laatste update: 2025-12-31)</p>
+
+            <div class="warning-box">
+                <strong>⚠️ LET OP:</strong> Serena denkt dat Migration 006 nog moet gebeuren, maar je zit al bij Migration 007!
+            </div>
+
+            <h4>📝 Unieke Waardevolle Informatie (Extracten)</h4>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Extract 1:</strong> <code>.serena/memories/suggested_commands.md</code> → <code>docs/WINDOWS_DEVELOPMENT_GUIDE.md</code></span>
+                </label>
+            </div>
+
+            <div class="code-block"><code># Windows/PowerShell commands voor XAMPP
+# C:\xampp3 specific setup
+# Database backup procedures
+# Etc.</code></div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Extract 2:</strong> <code>.serena/memories/task_completion_checklist.md</code> → <code>docs/CODE_QUALITY_CHECKLIST.md</code></span>
+                </label>
+            </div>
+
+            <div class="code-block"><code># 14-step quality gate checklist
+# Code review criteria
+# Testing verification
+# Etc.</code></div>
+
+            <h4>🗄️ Archive Procedure</h4>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 1:</strong> Maak archive directory</span>
+                </label>
+            </div>
+
+            <div class="code-block"><code>mkdir docs\archive\serena-2026-02-07</code></div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 2:</strong> Verplaats .serena/ naar archive</span>
+                </label>
+            </div>
+
+            <div class="code-block"><code>move .serena docs\archive\serena-2026-02-07\</code></div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 3:</strong> Verifieer website werkt nog (geen Serena dependencies)</span>
+                </label>
+            </div>
+
+            <div class="task-item">
+                <label>
+                    <input type="checkbox">
+                    <span><strong>Stap 4:</strong> Test agents - kunnen ze nog steeds CLAUDE.md lezen?</span>
+                </label>
+            </div>
+
+            <div class="info-box">
+                <strong>🔙 Rollback:</strong> Als iets niet werkt:
+                <code>move docs\archive\serena-2026-02-07\.serena .</code>
+            </div>
+        </div>
+
+        <h2>📊 SAMENVATTING & TIJDSINSCHATTING</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Prioriteit</th>
+                    <th>Actie</th>
+                    <th>Tijd</th>
+                    <th>Risico</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="badge badge-critical">🔴 KRITIEK</span></td>
+                    <td>GitHub Token Rotatie</td>
+                    <td>10 min</td>
+                    <td>LOW</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-critical">🔴 KRITIEK</span></td>
+                    <td>Database Password Wijzigen</td>
+                    <td>20 min</td>
+                    <td>LOW</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-high">🟡 MEDIUM</span></td>
+                    <td>TikTok Credentials</td>
+                    <td>15 min</td>
+                    <td>LOW</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-high">🟠 HOOG</span></td>
+                    <td>CLAUDE.md Optimization</td>
+                    <td>4 uur</td>
+                    <td>LOW</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-medium">🟢 MEDIUM</span></td>
+                    <td>Serena Deprecation</td>
+                    <td>30 min</td>
+                    <td>LOW</td>
+                </tr>
+                <tr>
+                    <td colspan="2"><strong>TOTAAL</strong></td>
+                    <td><strong>~6 uur</strong></td>
+                    <td><strong>LOW</strong></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>📚 REFERENTIE DOCUMENTATIE</h2>
+
+        <p>Gedetailleerde rapporten beschikbaar voor deep-dive:</p>
+
+        <ul>
+            <li>📄 <code>docs/SECURITY_AUDIT_REPORT.md</code> - 600+ regels security analyse</li>
+            <li>📄 <code>docs/SERENA_DEPRECATION_ANALYSIS.md</code> - 30+ pagina's Serena analyse</li>
+            <li>📄 <code>docs/AI_AGENT_BEST_PRACTICES.md</code> - 1,369 regels best practices (van eerdere audit)</li>
+            <li>📄 <code>docs/CRITICAL_QA_ANALYSIS_REPORT.md</code> - Cross-validation rapport (van eerdere audit)</li>
+        </ul>
+
+        <h2>✅ GOEDKEURING & UITVOERING</h2>
+
+        <div class="info-box">
+            <p><strong>👤 Review door:</strong> Bjorn</p>
+            <p><strong>📅 Datum goedkeuring:</strong> _______________</p>
+            <p><strong>✍️ Handtekening:</strong> _______________</p>
+        </div>
+
+        <div class="task-item">
+            <label>
+                <input type="checkbox">
+                <span><strong>GOEDGEKEURD:</strong> Ik heb dit actieplan gelezen en goedgekeurd voor uitvoering</span>
+            </label>
+        </div>
+
+        <div class="task-item">
+            <label>
+                <input type="checkbox">
+                <span><strong>SECURITY UITGEVOERD:</strong> Alle security fixes zijn uitgevoerd en getest</span>
+            </label>
+        </div>
+
+        <div class="task-item">
+            <label>
+                <input type="checkbox">
+                <span><strong>CLAUDE.MD GEOPTIMALISEERD:</strong> CLAUDE.md is verkort naar <250 regels</span>
+            </label>
+        </div>
+
+        <div class="task-item">
+            <label>
+                <input type="checkbox">
+                <span><strong>SERENA GEARCHIVEERD:</strong> .serena/ directory is veilig gearchiveerd</span>
+            </label>
+        </div>
+
+        <div class="success-box">
+            <h3>🎯 Volgende Stappen Na Goedkeuring</h3>
+            <ol>
+                <li>Start met Security Fixes (kritiek - voor commits!)</li>
+                <li>Test alle wijzigingen lokaal</li>
+                <li>Voer CLAUDE.md optimization uit (spread over 4 dagen)</li>
+                <li>Archiveer Serena wanneer CLAUDE.md klaar is</li>
+                <li>Commit alle wijzigingen met duidelijke commit messages</li>
+                <li>Update actions.md met voltooide taken</li>
+            </ol>
+        </div>
+
+        <hr style="margin: 40px 0;">
+
+        <p style="text-align: center; color: #888; font-size: 0.9em;">
+            <strong>Generated by:</strong> SocialBit Implementation Planning Team<br>
+            <strong>Date:</strong> 2026-02-07<br>
+            <strong>Team Lead:</strong> Claude Sonnet 4.5<br>
+            <strong>Agents:</strong> claude-md-optimizer, security-auditor, serena-planner
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+{
+  "task_description": "Optimize TikTok CSV import - implement batch processing to reduce database queries from 3000+ to ~20 for 1000 rows",
+  "scoped_services": ["backend"],
+  "files_to_modify": {
+    "backend": [
+      "src/Services/GenericCsvImporter.php",
+      "src/Services/TikTokCsvImporter.php",
+      "src/Controllers/ImportController.php"
+    ]
+  },
+  "files_to_reference": [
+    "src/Core/Database.php",
+    "scripts/000_create_database_schema.sql"
+  ],
+  "patterns": {
+    "transaction_pattern": "begin_transaction() -> try { ... commit() } catch { rollback() }",
+    "prepared_statement_pattern": "$conn->prepare(sql) -> bind_param(types, ...values) -> execute()",
+    "upsert_pattern": "INSERT ... ON DUPLICATE KEY UPDATE",
+    "header_normalization": "lowercase, trim, replace spaces with underscores, strip BOM",
+    "return_format": "['processed' => n, 'skipped' => m, 'format' => '...']"
+  },
+  "existing_implementations": {
+    "description": "GenericCsvImporter already handles multi-format CSV import with format detection",
+    "current_approach": "Row-by-row: 3 queries per row (posts upsert + getPostId + metrics insert) plus 2-3 per hashtag",
+    "target_approach": "Batch: collect 50-100 rows, multi-row INSERT, bulk hashtag processing",
+    "relevant_files": [
+      "src/Services/GenericCsvImporter.php",
+      "src/Services/TikTokCsvImporter.php"
+    ]
+  },
+  "database_tables": {
+    "posts": "platform, platform_post_id, post_url, caption, etc - unique on (platform, platform_post_id)",
+    "metrics_history": "post_id, views, likes, comments, shares, saves, reach, impressions, snapshot_date",
+    "hashtag_performance": "hashtag, platform, total_posts, total_views, total_likes - unique on (hashtag, platform)",
+    "post_hashtags": "post_id, hashtag_id - many-to-many junction",
+    "import_history": "filename, platform, import_type, rows_imported, rows_skipped"
+  },
+  "constraints": {
+    "no_external_libraries": true,
+    "vanilla_php_only": true,
+    "prepared_statements_required": true,
+    "backward_compatibility_required": true,
+    "memory_limit": "64MB for 10k rows",
+    "time_target": "<5 seconds for 1000 rows"
+  },
+  "created_at": "2025-12-30T20:47:31.263871",
+  "updated_at": "2025-12-30T21:00:00.000000"
+}

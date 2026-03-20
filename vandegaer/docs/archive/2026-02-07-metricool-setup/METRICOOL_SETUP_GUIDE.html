@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Metricool Setup Guide - SocialBit Analytics</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0b1020 0%, #1a1f35 100%);
+      color: rgba(255,255,255,0.92);
+      line-height: 1.6;
+      padding: 16px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding-bottom: 40px;
+    }
+
+    header {
+      text-align: center;
+      padding: 32px 20px;
+      border-bottom: 2px solid rgba(109,40,217,0.3);
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6d28d9, #22d3ee);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 20px;
+    }
+
+    .meta {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .badge--must-do {
+      background: rgba(239,68,68,0.15);
+      border-color: rgba(239,68,68,0.3);
+      color: #fca5a5;
+    }
+
+    .badge--recommended {
+      background: rgba(16,185,129,0.15);
+      border-color: rgba(16,185,129,0.3);
+      color: #6ee7b7;
+    }
+
+    .badge--optional {
+      background: rgba(59,130,246,0.15);
+      border-color: rgba(59,130,246,0.3);
+      color: #93c5fd;
+    }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.7);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(109,40,217,0.4);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, rgba(109,40,217,0.3), rgba(34,211,238,0.2));
+      border-color: rgba(109,40,217,0.6);
+      color: rgba(255,255,255,0.95);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Sections */
+    .section {
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .icon--blue { background: rgba(59,130,246,0.2); }
+    .icon--green { background: rgba(16,185,129,0.2); }
+    .icon--yellow { background: rgba(245,158,11,0.2); }
+    .icon--purple { background: rgba(168,85,247,0.2); }
+    .icon--orange { background: rgba(249,115,22,0.2); }
+    .icon--pink { background: rgba(236,72,153,0.2); }
+    .icon--cyan { background: rgba(34,211,238,0.2); }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      margin: 20px 0 12px;
+    }
+
+    /* Lists */
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      padding: 8px 0 8px 24px;
+      position: relative;
+      font-size: 14px;
+      line-height: 1.5;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    li:hover {
+      background: rgba(255,255,255,0.03);
+    }
+
+    li:before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: #10b981;
+      font-weight: bold;
+    }
+
+    li.has-comment {
+      background: rgba(109,40,217,0.08);
+      border-left: 2px solid rgba(109,40,217,0.4);
+      padding-left: 22px;
+    }
+
+    /* Comment System */
+    .comment-toggle {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 16px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      cursor: pointer;
+    }
+
+    li:hover .comment-toggle {
+      opacity: 0.6;
+    }
+
+    .comment-toggle:hover {
+      opacity: 1 !important;
+    }
+
+    li.has-comment .comment-toggle {
+      opacity: 0.8;
+    }
+
+    .comment-box {
+      display: none;
+      margin-top: 8px;
+      padding: 10px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(109,40,217,0.3);
+      border-radius: 8px;
+    }
+
+    .comment-box.open {
+      display: block;
+    }
+
+    .comment-input {
+      width: 100%;
+      min-height: 60px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      background: rgba(0,0,0,0.3);
+      color: rgba(255,255,255,0.92);
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    .comment-input:focus {
+      outline: none;
+      border-color: rgba(109,40,217,0.6);
+    }
+
+    .comment-input::placeholder {
+      color: rgba(255,255,255,0.4);
+    }
+
+    .comment-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .comment-btn {
+      padding: 5px 12px;
+      font-size: 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.8);
+      transition: background 0.2s;
+    }
+
+    .comment-btn:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    .comment-btn--save {
+      background: rgba(16,185,129,0.2);
+      color: #6ee7b7;
+    }
+
+    .comment-btn--save:hover {
+      background: rgba(16,185,129,0.3);
+    }
+
+    /* Platform Cards */
+    .platform-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .platform-card {
+      background: rgba(0,0,0,0.3);
+      padding: 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .platform-card:hover {
+      border-color: rgba(109,40,217,0.4);
+      box-shadow: 0 8px 24px rgba(109,40,217,0.2);
+      transform: translateY(-2px);
+    }
+
+    .platform-card h4 {
+      font-size: 16px;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #6d28d9, #22d3ee);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Steps */
+    .step {
+      margin-bottom: 24px;
+      padding: 16px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      border-left: 3px solid rgba(109,40,217,0.5);
+    }
+
+    .step-number {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #6d28d9, #22d3ee);
+      color: white;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 32px;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .step-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.95);
+      margin-bottom: 10px;
+    }
+
+    .step-content {
+      margin-left: 42px;
+      color: rgba(255,255,255,0.85);
+    }
+
+    /* Info Boxes */
+    .info-box {
+      padding: 16px;
+      border-radius: 10px;
+      margin: 16px 0;
+    }
+
+    .info-box.tip {
+      background: rgba(59,130,246,0.1);
+      border-left: 3px solid #3b82f6;
+    }
+
+    .info-box.warning {
+      background: rgba(245,158,11,0.1);
+      border-left: 3px solid #f59e0b;
+    }
+
+    .info-box.success {
+      background: rgba(16,185,129,0.1);
+      border-left: 3px solid #10b981;
+    }
+
+    .info-box strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+      color: rgba(255,255,255,0.95);
+    }
+
+    /* Tables */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      font-size: 14px;
+    }
+
+    .comparison-table th {
+      background: rgba(0,0,0,0.3);
+      font-weight: 600;
+      color: rgba(255,255,255,0.95);
+    }
+
+    .comparison-table tr:hover {
+      background: rgba(255,255,255,0.03);
+    }
+
+    /* Code */
+    code {
+      background: rgba(0,0,0,0.4);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+      border: 1px solid rgba(255,255,255,0.1);
+      font-family: 'Courier New', monospace;
+      color: #22d3ee;
+    }
+
+    /* Checklist */
+    .checklist li:before {
+      content: "✓";
+      color: #10b981;
+    }
+
+    /* Comment Counter */
+    .comment-count {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      background: linear-gradient(135deg, #6d28d9, #22d3ee);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(109,40,217,0.4);
+      z-index: 1000;
+      font-size: 14px;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    .action-btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+
+    .action-btn--save {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+    }
+
+    .action-btn--export {
+      background: linear-gradient(135deg, #6d28d9, #22d3ee);
+      color: white;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 30px 20px;
+      color: rgba(255,255,255,0.5);
+      font-size: 13px;
+      margin-top: 40px;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 26px;
+      }
+
+      .section {
+        padding: 18px;
+      }
+
+      .platform-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .tab-nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+        bottom: 10px;
+        right: 10px;
+      }
+
+      .comment-count {
+        bottom: 160px;
+      }
+    }
+
+    a {
+      color: #22d3ee;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    a:hover {
+      color: #6d28d9;
+      text-decoration: underline;
+    }
+
+    strong {
+      color: rgba(255,255,255,0.95);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🚀 Metricool Setup Guide</h1>
+      <p class="subtitle">Complete step-by-step guide voor het opzetten van Metricool voor jouw social media analytics</p>
+      <div class="meta">
+        <span class="badge">Laatste update: 7 februari 2026</span>
+        <span class="badge badge--must-do">⚠️ Essentieel</span>
+        <span class="badge badge--recommended">✅ Aanbevolen</span>
+        <span class="badge badge--optional">💡 Optioneel</span>
+      </div>
+    </header>
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="overview">📋 Overzicht</button>
+      <button class="tab-btn" data-tab="setup">🎯 Account Setup</button>
+      <button class="tab-btn" data-tab="platforms">🔗 Platforms Koppelen</button>
+      <button class="tab-btn" data-tab="analytics">📊 Analytics</button>
+      <button class="tab-btn" data-tab="competitors">🔍 Concurrenten</button>
+      <button class="tab-btn" data-tab="scheduling">📅 Scheduling</button>
+      <button class="tab-btn" data-tab="advanced">⚡ Geavanceerd</button>
+      <button class="tab-btn" data-tab="troubleshooting">🔧 Troubleshooting</button>
+      <button class="tab-btn" data-tab="resources">📚 Resources</button>
+    </div>
+
+    <!-- Tab: Overview -->
+    <div class="tab-content active" id="overview">
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--purple">📋</div>
+          <h2>Overzicht</h2>
+        </div>
+        <p>Metricool is een all-in-one social media management platform waarmee je analytics kunt volgen, posts kunt plannen en concurrenten kunt vergelijken - allemaal vanaf één dashboard.</p>
+
+        <div class="info-box tip">
+          <strong>💡 Waarom Metricool?</strong>
+          <ul style="margin-left: 20px; margin-top: 10px;">
+            <li>Gratis plan met 11 social media kanalen</li>
+            <li>Real-time analytics voor TikTok, Instagram, Facebook en meer</li>
+            <li>Concurrent analyse (zie wat jouw concurrenten doen)</li>
+            <li>Beste post tijden op basis van jouw data</li>
+            <li>Alles in één overzichtelijk dashboard</li>
+          </ul>
+        </div>
+
+        <h3>Prioriteit Levels</h3>
+        <ul>
+          <li><span class="badge badge--must-do">⚠️ MUST DO</span> Essentieel - stel dit nu in</li>
+          <li><span class="badge badge--recommended">✅ RECOMMENDED</span> Sterk aanbevolen - stel dit binnen 1 week in</li>
+          <li><span class="badge badge--optional">💡 OPTIONAL</span> Nice-to-have - stel dit later in wanneer je meer ervaring hebt</li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--green">✅</div>
+          <h2>Checklist: Eerste 24 Uur</h2>
+        </div>
+        <ul class="checklist">
+          <li>Account aanmaken op metricool.com</li>
+          <li>Brand configureren (jouw bedrijf/klant naam)</li>
+          <li>Instagram + Facebook + TikTok koppelen</li>
+          <li>Brand Summary dashboard openen en verkennen</li>
+          <li>3 concurrenten toevoegen aan Competitor Analysis</li>
+          <li>Best Times to Post bekijken en noteren</li>
+          <li>Hashtag Analytics checken - top 5 hashtags noteren</li>
+          <li>Optioneel: Eerste test post schedulen voor morgen</li>
+        </ul>
+
+        <div class="info-box success">
+          <strong>🎉 Na deze setup</strong>
+          Heb je een volledig werkend social media analytics dashboard. Metricool begint nu automatisch data te verzamelen. Kom over 7 dagen terug om trends te zien!
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Account Setup -->
+    <div class="tab-content" id="setup">
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--blue">🎯</div>
+          <h2>Fase 1: Account Aanmaken (5 minuten)</h2>
+        </div>
+        <span class="badge badge--must-do">⚠️ MUST DO</span>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">1</span>
+            Ga naar Metricool en maak een gratis account
+          </div>
+          <div class="step-content">
+            <p>Bezoek <a href="https://metricool.com" target="_blank">metricool.com</a> en klik op "Start Free"</p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Email adres en wachtwoord invoeren</li>
+              <li>Of login met Google/Facebook voor snellere setup</li>
+              <li>Email verificatie afronden</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">2</span>
+            Kies jouw "Brand" naam
+          </div>
+          <div class="step-content">
+            <p>Een "Brand" in Metricool = één business/klant met meerdere social media accounts</p>
+            <div class="info-box tip">
+              <strong>💡 Tip voor multi-tenant gebruik:</strong>
+              Als je meerdere klanten hebt, maak dan één Brand per klant. Bijvoorbeeld:
+              <ul style="margin-left: 20px; margin-top: 10px;">
+                <li>Brand 1: "Bakkerij Jansen"</li>
+                <li>Brand 2: "Fitness Studio Amsterdam"</li>
+                <li>Brand 3: "Restaurant De Smulpaap"</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box success">
+          <strong>✅ Gratis Plan Limits:</strong>
+          <ul style="margin-left: 20px; margin-top: 10px;">
+            <li>1 Brand (upgrade voor meer)</li>
+            <li>11 social media kanalen per Brand</li>
+            <li>100 scheduled posts per maand</li>
+            <li>Basis analytics voor alle platforms</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Platforms Koppelen -->
+    <div class="tab-content" id="platforms">
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--cyan">🔗</div>
+          <h2>Fase 2: Social Media Platforms Koppelen (15 minuten)</h2>
+        </div>
+        <span class="badge badge--must-do">⚠️ MUST DO</span>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">3</span>
+            Koppel jouw belangrijkste platforms
+          </div>
+          <div class="step-content">
+            <p>Ga naar <code>Settings → Connections</code> en koppel elk platform:</p>
+          </div>
+        </div>
+
+        <div class="platform-grid">
+          <div class="platform-card">
+            <h4>📸 Instagram</h4>
+            <p><strong>Wat je nodig hebt:</strong></p>
+            <ul style="margin-left: 15px; margin-top: 8px; font-size: 0.9rem;">
+              <li>Instagram Business of Creator account</li>
+              <li>Gekoppeld aan Facebook Page</li>
+            </ul>
+            <p style="margin-top: 10px; font-size: 0.9rem;"><strong>Login met:</strong> Facebook account</p>
+          </div>
+
+          <div class="platform-card">
+            <h4>📘 Facebook</h4>
+            <p><strong>Wat je nodig hebt:</strong></p>
+            <ul style="margin-left: 15px; margin-top: 8px; font-size: 0.9rem;">
+              <li>Facebook Business Page</li>
+              <li>Admin rechten</li>
+            </ul>
+            <p style="margin-top: 10px; font-size: 0.9rem;"><strong>Login met:</strong> Facebook account met admin access</p>
+          </div>
+
+          <div class="platform-card">
+            <h4>🎵 TikTok</h4>
+            <p><strong>Wat je nodig hebt:</strong></p>
+            <ul style="margin-left: 15px; margin-top: 8px; font-size: 0.9rem;">
+              <li>TikTok Business account</li>
+              <li>Public profiel</li>
+            </ul>
+            <p style="margin-top: 10px; font-size: 0.9rem;"><strong>Login met:</strong> TikTok credentials</p>
+          </div>
+
+          <div class="platform-card">
+            <h4>💼 LinkedIn</h4>
+            <p><strong>Wat je nodig hebt:</strong></p>
+            <ul style="margin-left: 15px; margin-top: 8px; font-size: 0.9rem;">
+              <li>LinkedIn Company Page</li>
+              <li>Admin rechten</li>
+            </ul>
+            <p style="margin-top: 10px; font-size: 0.9rem;"><strong>Login met:</strong> LinkedIn account</p>
+          </div>
+
+          <div class="platform-card">
+            <h4>🐦 X (Twitter)</h4>
+            <p><strong>Wat je nodig hebt:</strong></p>
+            <ul style="margin-left: 15px; margin-top: 8px; font-size: 0.9rem;">
+              <li>X/Twitter account</li>
+              <li>App permissions toestaan</li>
+            </ul>
+            <p style="margin-top: 10px; font-size: 0.9rem;"><strong>Login met:</strong> Twitter credentials</p>
+          </div>
+
+          <div class="platform-card">
+            <h4>📍 Google Business</h4>
+            <p><strong>Wat je nodig hebt:</strong></p>
+            <ul style="margin-left: 15px; margin-top: 8px; font-size: 0.9rem;">
+              <li>Google Business Profile</li>
+              <li>Owner/Manager access</li>
+            </ul>
+            <p style="margin-top: 10px; font-size: 0.9rem;"><strong>Login met:</strong> Google account</p>
+          </div>
+        </div>
+
+        <div class="info-box warning">
+          <strong>⚠️ Belangrijke Permissies:</strong>
+          Metricool vraagt om verschillende permissies. <strong>Accepteer alle gevraagde permissies</strong> anders werken analytics en scheduling niet correct. Metricool gebruikt alleen read/write permissies voor analytics en posting - geen toegang tot persoonlijke berichten.
+        </div>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">4</span>
+            Controleer of alles correct verbonden is
+          </div>
+          <div class="step-content">
+            <ul class="checklist">
+              <li>Alle platforms tonen groene "Connected" status</li>
+              <li>Account namen zijn correct (bijv. @jouwbedrijf)</li>
+              <li>Analytics data begint binnen te komen (kan 5-10 minuten duren)</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Analytics -->
+    <div class="tab-content" id="analytics">
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--purple">📊</div>
+          <h2>Fase 3: Dashboard & Analytics Configureren (10 minuten)</h2>
+        </div>
+        <span class="badge badge--recommended">✅ RECOMMENDED</span>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">5</span>
+            Verken het "Brand Summary" dashboard
+          </div>
+          <div class="step-content">
+            <p>Dit is jouw hoofd-overzicht met alle belangrijke metrics:</p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li><strong>Community Growth:</strong> Hoeveel nieuwe followers per platform</li>
+              <li><strong>Engagement Rate:</strong> Likes, comments, shares (% van followers)</li>
+              <li><strong>Reach & Impressions:</strong> Hoeveel mensen je bereikt</li>
+              <li><strong>Top Posts:</strong> Best presterende content</li>
+            </ul>
+            <div class="info-box tip">
+              <strong>💡 Tip:</strong> Selecteer een datum range (bijv. "Last 30 days") om trends te zien. Vergelijk met vorige periode voor "vs last month" inzichten.
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">6</span>
+            Stel "Best Times to Post" in
+          </div>
+          <div class="step-content">
+            <p>Ga naar <code>Analytics → Best Times</code></p>
+            <p>Metricool analyseert wanneer jouw audience het meest actief is en geeft aanbevelingen per platform.</p>
+            <div class="info-box success">
+              <strong>✅ Waarom dit belangrijk is:</strong>
+              Posts op het juiste moment krijgen gemiddeld 2-3× meer engagement. Metricool's AI analyseert jouw historische data om jouw unieke beste tijden te vinden.
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">7</span>
+            Bekijk hashtag analytics
+          </div>
+          <div class="step-content">
+            <p>Ga naar <code>Analytics → Hashtags</code></p>
+            <p>Zie welke hashtags de meeste engagement genereren voor jouw content.</p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Sorteer op "Most Engagement"</li>
+              <li>Identificeer 5-10 hashtags die consistent goed presteren</li>
+              <li>Sla deze op voor hergebruik in toekomstige posts</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Competitors -->
+    <div class="tab-content" id="competitors">
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--orange">🔍</div>
+          <h2>Fase 4: Concurrent Analyse Instellen (15 minuten)</h2>
+        </div>
+        <span class="badge badge--recommended">✅ RECOMMENDED</span>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">8</span>
+            Voeg concurrenten toe
+          </div>
+          <div class="step-content">
+            <p>Ga naar <code>Analytics → Competitors</code></p>
+            <p><strong>Wat je kunt tracken:</strong></p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Community growth van concurrenten</li>
+              <li>Post frequency (hoe vaak posten ze?)</li>
+              <li>Top performing content van concurrenten</li>
+              <li>Engagement rates vergelijken</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="info-box tip">
+          <strong>💡 Gratis vs Premium Competitor Analysis:</strong>
+          <table class="comparison-table">
+            <tr>
+              <th>Platform</th>
+              <th>Gratis Plan</th>
+              <th>Premium Plan</th>
+            </tr>
+            <tr>
+              <td>Instagram</td>
+              <td>✅ Basis competitor data</td>
+              <td>✅ Full analytics + top posts</td>
+            </tr>
+            <tr>
+              <td>Facebook</td>
+              <td>✅ Basis competitor data</td>
+              <td>✅ Full analytics + top posts</td>
+            </tr>
+            <tr>
+              <td>TikTok</td>
+              <td>✅ Basis competitor data</td>
+              <td>✅ Full analytics + top posts</td>
+            </tr>
+            <tr>
+              <td>YouTube</td>
+              <td>❌ Niet beschikbaar</td>
+              <td>✅ Full analytics</td>
+            </tr>
+            <tr>
+              <td>X (Twitter)</td>
+              <td>❌ Niet beschikbaar</td>
+              <td>✅ Full analytics</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">9</span>
+            Gebruik concurrent inzichten voor jouw strategie
+          </div>
+          <div class="step-content">
+            <p><strong>Actiepunten op basis van concurrent data:</strong></p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Post frequentie: Als concurrenten 5× per week posten en jij 2×, overweeg te verhogen</li>
+              <li>Content types: Wat voor content werkt bij hen? (Reels, carousels, video's)</li>
+              <li>Posting tijden: Wanneer posten succesvolle concurrenten?</li>
+              <li>Hashtag strategie: Welke hashtags gebruiken zij?</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Scheduling -->
+    <div class="tab-content" id="scheduling">
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--green">📅</div>
+          <h2>Fase 5: Content Planning & Scheduling (Optioneel)</h2>
+        </div>
+        <span class="badge badge--optional">💡 OPTIONAL</span>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">10</span>
+            Gebruik de "Planner" voor content scheduling
+          </div>
+          <div class="step-content">
+            <p>Ga naar <code>Planner</code> in het hoofdmenu</p>
+            <p><strong>Voordelen van vooruit plannen:</strong></p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Consistente posting (algoritmes belonen regelmatigheid)</li>
+              <li>Batch creation: Maak meerdere posts in één sessie</li>
+              <li>Cross-posting: Plan dezelfde content voor meerdere platforms</li>
+              <li>Beste tijden: Metricool stelt automatisch beste tijden voor</li>
+            </ul>
+            <div class="info-box warning">
+              <strong>⚠️ Gratis plan limiet:</strong> 100 scheduled posts per maand. Plan strategisch - kies kwaliteit boven kwantiteit.
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">11</span>
+            Creëer je eerste scheduled post
+          </div>
+          <div class="step-content">
+            <ol style="margin-left: 20px;">
+              <li>Klik op een datum/tijd in de Planner calendar</li>
+              <li>Selecteer platform(s) waar je wilt posten</li>
+              <li>Upload afbeelding/video en schrijf caption</li>
+              <li>Voeg hashtags toe (gebruik best performing hashtags)</li>
+              <li>Kies "Schedule" of gebruik "Best Time" suggestie</li>
+            </ol>
+            <div class="info-box tip">
+              <strong>💡 Pro Tip - 2026 Posting Frequentie:</strong>
+              <ul style="margin-left: 20px; margin-top: 10px;">
+                <li><strong>TikTok:</strong> Dagelijks (algoritme beloont consistentie)</li>
+                <li><strong>Instagram Reels:</strong> 3-5× per week</li>
+                <li><strong>Instagram Feed:</strong> 2-3× per week</li>
+                <li><strong>Facebook:</strong> Dagelijks of 5× per week</li>
+                <li><strong>LinkedIn:</strong> 2-3× per week (kwaliteit > kwantiteit)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Advanced -->
+    <div class="tab-content" id="advanced">
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--pink">⚡</div>
+          <h2>Fase 6: Geavanceerde Features (Later)</h2>
+        </div>
+        <span class="badge badge--optional">💡 OPTIONAL</span>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">12</span>
+            Ads Manager (Premium feature)
+          </div>
+          <div class="step-content">
+            <p>Koppel <strong>Facebook Ads</strong> en <strong>Google Ads</strong> voor unified campaign tracking:</p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Track ad spend en ROI in één dashboard</li>
+              <li>Vergelijk organische vs betaalde performance</li>
+              <li>Zie welke ads de beste conversies genereren</li>
+            </ul>
+            <p style="margin-top: 10px; opacity: 0.7;"><em>Alleen beschikbaar in Premium plan ($12-79/maand)</em></p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">13</span>
+            Team Collaboration (Premium feature)
+          </div>
+          <div class="step-content">
+            <p>Voor agencies die meerdere klanten beheren:</p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Voeg teamleden toe met verschillende rechten</li>
+              <li>Client approval workflows voor content</li>
+              <li>White-label reports voor klanten</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-title">
+            <span class="step-number">14</span>
+            Custom Reports (Premium feature)
+          </div>
+          <div class="step-content">
+            <p>Genereer PDF/Excel reports voor klanten of management:</p>
+            <ul style="margin-left: 20px; margin-top: 10px;">
+              <li>Selecteer metrics die jij wilt tonen</li>
+              <li>Branded reports met jouw logo</li>
+              <li>Automatische maandelijkse email verzending</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--yellow">💡</div>
+          <h2>2026 Social Media Best Practices (Metricool Data)</h2>
+        </div>
+
+        <h3>Platform Trends</h3>
+        <table class="comparison-table">
+          <tr>
+            <th>Platform</th>
+            <th>2026 Trend</th>
+            <th>Aanbeveling</th>
+          </tr>
+          <tr>
+            <td><strong>Facebook</strong></td>
+            <td>+51% reach increase, +57% impressions</td>
+            <td>Video-first content werkt excellent. Post dagelijks.</td>
+          </tr>
+          <tr>
+            <td><strong>Instagram Reels</strong></td>
+            <td>Decline in views (saturated market)</td>
+            <td>Focus op kwaliteit > kwantiteit. Unieke content wint.</td>
+          </tr>
+          <tr>
+            <td><strong>TikTok</strong></td>
+            <td>Consistent high engagement (3.7% avg)</td>
+            <td>Dagelijks posten = beste resultaten. Algoritme beloont consistentie.</td>
+          </tr>
+          <tr>
+            <td><strong>LinkedIn</strong></td>
+            <td>Competition surge, maar hoge engagement voor goede content</td>
+            <td>2-3× per week, focus op thought leadership en authentieke verhalen.</td>
+          </tr>
+          <tr>
+            <td><strong>YouTube</strong></td>
+            <td>Views increase (langere content trending)</td>
+            <td>Investeer in long-form content (8-15 min) + Shorts mix.</td>
+          </tr>
+        </table>
+
+        <h3>Content Strategie 2026</h3>
+        <ul style="margin-left: 20px;">
+          <li><strong>Video is koning:</strong> Video content krijgt 2-3× meer engagement dan static posts</li>
+          <li><strong>Cross-posting werkt:</strong> Repurpose content across platforms (TikTok → Reels → YouTube Shorts)</li>
+          <li><strong>Best posting tijden:</strong> Gebruik Metricool's "Best Times" - uniek per account</li>
+          <li><strong>Hashtags:</strong> 5-10 relevante hashtags optimaal (niet 30+)</li>
+          <li><strong>Consistency:</strong> Regelmatige posting (3-7× per week) > sporadisch viral gaan</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tab: Troubleshooting -->
+    <div class="tab-content" id="troubleshooting">
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--orange">🔧</div>
+          <h2>Veelvoorkomende Problemen & Oplossingen</h2>
+        </div>
+
+        <h3>Instagram koppeling faalt</h3>
+        <p><strong>Probleem:</strong> "Unable to connect Instagram account"</p>
+        <p><strong>Oplossing:</strong></p>
+        <ul style="margin-left: 20px;">
+          <li>✅ Zorg dat je een <strong>Business</strong> of <strong>Creator</strong> account hebt (geen Personal)</li>
+          <li>✅ Instagram moet gekoppeld zijn aan een Facebook Page</li>
+          <li>✅ Log in met het Facebook account dat admin is van die Page</li>
+        </ul>
+
+        <h3>TikTok analytics tonen geen data</h3>
+        <p><strong>Probleem:</strong> "No data available"</p>
+        <p><strong>Oplossing:</strong></p>
+        <ul style="margin-left: 20px;">
+          <li>✅ Account moet een <strong>TikTok Business account</strong> zijn</li>
+          <li>✅ Profiel moet <strong>Public</strong> zijn (geen Private)</li>
+          <li>✅ Wacht 24 uur - nieuwe accounts hebben geen historische data</li>
+        </ul>
+
+        <h3>Scheduled posts worden niet gepost</h3>
+        <p><strong>Probleem:</strong> Post staat nog steeds "Scheduled" terwijl tijd verstreken is</p>
+        <p><strong>Oplossing:</strong></p>
+        <ul style="margin-left: 20px;">
+          <li>✅ Check of platform nog steeds connected is (Settings → Connections)</li>
+          <li>✅ Sommige platforms (TikTok) vereisen "notification" approval op je telefoon</li>
+          <li>✅ Check "Failed Posts" voor error messages</li>
+        </ul>
+
+        <h3>Gratis plan limiet bereikt</h3>
+        <p><strong>Probleem:</strong> "You've reached your monthly limit"</p>
+        <p><strong>Oplossing:</strong></p>
+        <ul style="margin-left: 20px;">
+          <li>Wacht tot volgende maand (limiet reset automatisch)</li>
+          <li>Of: Upgrade naar Premium ($12/maand voor 500 posts)</li>
+          <li>Focus op kwaliteit: Schedule alleen je beste content</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tab: Resources -->
+    <div class="tab-content" id="resources">
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--blue">📚</div>
+          <h2>Handige Resources</h2>
+        </div>
+
+        <h3>Metricool Officiële Documentatie</h3>
+        <ul style="margin-left: 20px;">
+          <li><a href="https://help.metricool.com/en/article/getting-started-with-metricool-start-guide-faqs-1al21xc/" target="_blank">Official Getting Started Guide</a></li>
+          <li><a href="https://metricool.com/metricool-mega-tutorial/" target="_blank">Metricool Mega Tutorial (Video)</a></li>
+          <li><a href="https://help.metricool.com/en/article/how-to-connect-social-media-and-ad-platforms-to-metricool-o8xq71/" target="_blank">Platform Connection Guide</a></li>
+          <li><a href="https://metricool.com/social-media-analytics-with-metricool/" target="_blank">Analytics Feature Overview</a></li>
+        </ul>
+
+        <h3>2026 Social Media Research</h3>
+        <ul style="margin-left: 20px;">
+          <li><a href="https://metricool.com/social-media-study/" target="_blank">Metricool's 2026 Social Media Study</a></li>
+          <li><a href="https://metricool.com/press-release-2026-social-media-study/" target="_blank">2026 Platform Trends & Insights</a></li>
+          <li><a href="https://metricool.com/ultimate-social-media-manager-guide/" target="_blank">Complete Social Media Manager Guide</a></li>
+        </ul>
+
+        <h3>Competitor Analysis</h3>
+        <ul style="margin-left: 20px;">
+          <li><a href="https://help.metricool.com/en/article/competitor-analysis-1vs9jxy/" target="_blank">Competitor Analysis Feature Guide</a></li>
+          <li><a href="https://metricool.com/instagram-competitors-with-metricool/" target="_blank">Instagram Competitor Analysis Tutorial</a></li>
+          <li><a href="https://metricool.com/compare-competitors-metricool/" target="_blank">Compare Competitors Guide</a></li>
+        </ul>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="icon icon--green">🎯</div>
+          <h2>Quick Reference: Nu vs Later</h2>
+        </div>
+
+        <h3>🚀 Stel NU in (Deze Week)</h3>
+        <ul class="checklist">
+          <li>Account aanmaken + Brand configureren</li>
+          <li>Instagram, Facebook, TikTok koppelen (minimaal 3 platforms)</li>
+          <li>Brand Summary dashboard verkennen</li>
+          <li>Best Times to Post bekijken</li>
+          <li>Top 3 concurrenten toevoegen aan Competitor Analysis</li>
+        </ul>
+
+        <h3>📅 Binnen 2 Weken</h3>
+        <ul class="checklist">
+          <li>LinkedIn en andere platforms koppelen</li>
+          <li>Eerste batch content schedulen (test de Planner)</li>
+          <li>Hashtag analytics analyseren en beste hashtags opslaan</li>
+          <li>Concurrent strategie verfijnen (post frequentie, content types)</li>
+        </ul>
+
+        <h3>💎 Later (Als Budget Beschikbaar)</h3>
+        <ul class="checklist">
+          <li>Upgrade naar Premium voor X/YouTube competitor analysis</li>
+          <li>Ads Manager koppelen voor paid campaign tracking</li>
+          <li>Team collaboration features activeren</li>
+          <li>Custom reporting voor klanten opzetten</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p><strong>SocialBit Analytics Platform</strong></p>
+      <p>Metricool Setup Guide | Laatste update: 7 februari 2026</p>
+      <p style="margin-top: 15px;">
+        <em>Voor vragen over deze guide of SocialBit: Check CLAUDE.md in het project</em>
+      </p>
+    </div>
+  </div>
+
+  <!-- Fixed Action Buttons -->
+  <div class="action-buttons">
+    <button class="action-btn action-btn--save" id="saveBtn">💾 Opslaan</button>
+    <button class="action-btn action-btn--export" id="exportBtn">📥 Export</button>
+  </div>
+
+  <script>
+    // ========================================
+    // Tab System
+    // ========================================
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.dataset.tab;
+
+        // Update active states
+        tabButtons.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+
+        btn.classList.add('active');
+        document.getElementById(targetTab).classList.add('active');
+
+        // Save active tab to localStorage
+        localStorage.setItem('metricool_active_tab', targetTab);
+      });
+    });
+
+    // Restore active tab from localStorage
+    const savedTab = localStorage.getItem('metricool_active_tab');
+    if (savedTab) {
+      const savedBtn = document.querySelector(`[data-tab="${savedTab}"]`);
+      if (savedBtn) savedBtn.click();
+    }
+
+    // ========================================
+    // Comment System for Bulletpoints
+    // ========================================
+    let commentCount = 0;
+
+    function initComments() {
+      const allLi = document.querySelectorAll('.section ul li, .step-content ul li');
+
+      allLi.forEach((li, index) => {
+        // Skip if already initialized
+        if (li.dataset.commentId) return;
+
+        // Generate unique ID for this item
+        const itemId = `metricool_comment_${index}_${li.textContent.slice(0, 30).replace(/[^a-z0-9]/gi, '_')}`;
+        li.dataset.commentId = itemId;
+
+        // Add comment toggle button
+        const toggle = document.createElement('span');
+        toggle.className = 'comment-toggle';
+        toggle.innerHTML = '💬';
+        toggle.title = 'Add comment';
+        li.appendChild(toggle);
+
+        // Create comment box
+        const commentBox = document.createElement('div');
+        commentBox.className = 'comment-box';
+        commentBox.innerHTML = `
+          <textarea class="comment-input" placeholder="Jouw opmerking, vraag of wijziging op dit punt..."></textarea>
+          <div class="comment-actions">
+            <button class="comment-btn comment-btn--save">💾 Opslaan</button>
+            <button class="comment-btn comment-btn--clear">🗑️ Wissen</button>
+            <button class="comment-btn comment-btn--close">Sluiten</button>
+          </div>
+        `;
+        li.appendChild(commentBox);
+
+        // Load saved comment
+        const savedComment = localStorage.getItem(itemId);
+        if (savedComment) {
+          commentBox.querySelector('.comment-input').value = savedComment;
+          li.classList.add('has-comment');
+          commentCount++;
+        }
+
+        // Toggle comment box
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = commentBox.classList.contains('open');
+
+          // Close all other comment boxes
+          document.querySelectorAll('.comment-box.open').forEach(box => {
+            box.classList.remove('open');
+          });
+
+          // Toggle this one
+          if (!isOpen) {
+            commentBox.classList.add('open');
+            commentBox.querySelector('.comment-input').focus();
+          }
+        });
+
+        // Save button
+        commentBox.querySelector('.comment-btn--save').addEventListener('click', () => {
+          const textarea = commentBox.querySelector('.comment-input');
+          const comment = textarea.value.trim();
+
+          if (comment) {
+            localStorage.setItem(itemId, comment);
+            if (!li.classList.contains('has-comment')) {
+              li.classList.add('has-comment');
+              commentCount++;
+            }
+            updateCommentCount();
+
+            // Show feedback
+            const btn = commentBox.querySelector('.comment-btn--save');
+            const originalText = btn.textContent;
+            btn.textContent = '✅ Opgeslagen!';
+            setTimeout(() => {
+              btn.textContent = originalText;
+            }, 1500);
+          } else {
+            alert('Vul eerst een opmerking in!');
+          }
+        });
+
+        // Clear button
+        commentBox.querySelector('.comment-btn--clear').addEventListener('click', () => {
+          if (confirm('Weet je zeker dat je deze opmerking wil wissen?')) {
+            localStorage.removeItem(itemId);
+            commentBox.querySelector('.comment-input').value = '';
+            if (li.classList.contains('has-comment')) {
+              li.classList.remove('has-comment');
+              commentCount--;
+            }
+            updateCommentCount();
+            commentBox.classList.remove('open');
+          }
+        });
+
+        // Close button
+        commentBox.querySelector('.comment-btn--close').addEventListener('click', () => {
+          commentBox.classList.remove('open');
+        });
+
+        // Auto-save on input
+        let autoSaveTimeout;
+        commentBox.querySelector('.comment-input').addEventListener('input', () => {
+          clearTimeout(autoSaveTimeout);
+          autoSaveTimeout = setTimeout(() => {
+            const comment = commentBox.querySelector('.comment-input').value.trim();
+            if (comment) {
+              localStorage.setItem(itemId, comment);
+              if (!li.classList.contains('has-comment')) {
+                li.classList.add('has-comment');
+                commentCount++;
+                updateCommentCount();
+              }
+            }
+          }, 1000);
+        });
+      });
+
+      updateCommentCount();
+    }
+
+    // Update comment counter badge
+    function updateCommentCount() {
+      let badge = document.querySelector('.comment-count');
+
+      if (commentCount > 0) {
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.className = 'comment-count';
+          document.body.appendChild(badge);
+        }
+        badge.textContent = `💬 ${commentCount} opmerking${commentCount !== 1 ? 'en' : ''}`;
+      } else if (badge) {
+        badge.remove();
+      }
+    }
+
+    // ========================================
+    // Save & Export Functionality
+    // ========================================
+    function collectAllData() {
+      const data = {
+        timestamp: new Date().toISOString(),
+        document: 'Metricool Setup Guide',
+        date: '2026-02-07',
+        active_tab: localStorage.getItem('metricool_active_tab') || 'overview',
+        comments: {},
+        summary: {
+          total_comments: 0
+        }
+      };
+
+      // Collect comments
+      const allLi = document.querySelectorAll('.section ul li[data-comment-id], .step-content ul li[data-comment-id]');
+      allLi.forEach(li => {
+        const itemId = li.dataset.commentId;
+        const comment = localStorage.getItem(itemId);
+        if (comment) {
+          const text = li.textContent.replace('💬', '').trim();
+          data.comments[itemId] = {
+            item: text,
+            comment: comment
+          };
+          data.summary.total_comments++;
+        }
+      });
+
+      return data;
+    }
+
+    // Save button
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const data = collectAllData();
+      localStorage.setItem('metricool_guide_data', JSON.stringify(data));
+
+      const btn = document.getElementById('saveBtn');
+      btn.textContent = '✅ Opgeslagen!';
+      setTimeout(() => {
+        btn.textContent = '💾 Opslaan';
+      }, 2000);
+
+      console.log('📋 Data opgeslagen:', data);
+    });
+
+    // Export button
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const data = collectAllData();
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `metricool-setup-guide-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      alert('📥 JSON bestand gedownload!');
+    });
+
+    // ========================================
+    // Initialize
+    // ========================================
+    document.addEventListener('DOMContentLoaded', () => {
+      initComments();
+    });
+
+    // Keyboard shortcut: ESC to close comment boxes
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.comment-box.open').forEach(box => {
+          box.classList.remove('open');
+        });
+      }
+    });
+  </script>
+</body>
+</html>

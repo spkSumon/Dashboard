@@ -1,0 +1,48 @@
+{
+  "existing_features": [],
+  "tech_stack": [],
+  "target_audience": "Marketing agencies and social media managers in Belgium and Europe who manage multiple clients and need cross-platform analytics",
+  "planned_features": [
+    "User Authentication System",
+    "LinkedIn Analytics Integration",
+    "Multi-Tenant Client Management",
+    "TikTok Analytics Integration",
+    "Affordable Agency Pricing Model",
+    "Content Calendar & Planning",
+    "Twitter/X Analytics Integration",
+    "Background Job Queue System",
+    "CI/CD Pipeline",
+    "AI-Powered Hashtag Suggestions",
+    "Self-Hosted Deployment Option",
+    "Analytics Dashboard UI",
+    "YouTube Analytics Integration",
+    "AI Content Suggestions",
+    "Facebook Page Analytics Integration",
+    "Google Analytics 4 Integration",
+    "Custom Report Builder",
+    "White-Label Agency Branding",
+    "Website Analytics Integration (Fathom)",
+    "Smart Filtering & Alert System",
+    "Best Time to Post Analysis",
+    "Cross-Platform Content Groups",
+    "Multi-Language Support",
+    "Instagram Graph API Integration",
+    "Team Collaboration Features",
+    "Security Hardening",
+    "Redis Caching Layer",
+    "Automated PDF Report Generation",
+    "Competitor Tracking & Benchmarking",
+    "Error Logging & Monitoring",
+    "Specification: TikTok CSV Import Optimization"
+  ],
+  "graph_hints": {},
+  "config": {
+    "enabled_types": [
+      "documentation_gaps"
+    ],
+    "include_roadmap_context": true,
+    "include_kanban_context": true,
+    "max_ideas_per_type": 5
+  },
+  "created_at": "2025-12-30T22:09:37.054337"
+}

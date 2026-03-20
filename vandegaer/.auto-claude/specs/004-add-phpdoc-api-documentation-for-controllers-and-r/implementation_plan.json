@@ -1,0 +1,13 @@
+{
+  "feature": "Add PHPDoc API Documentation for Controllers and Repositories",
+  "description": "Controllers (ImportController, PostController, AuthController, etc.) and Repositories lack comprehensive PHPDoc blocks. For example, ImportController.tiktok() has no documentation of the expected $_FILES structure, response format, or possible error responses. PostRepository methods are missing parameter types and return type documentation.",
+  "created_at": "2025-12-30T21:14:16.461Z",
+  "updated_at": "2026-01-14T12:00:57.116Z",
+  "status": "human_review",
+  "planStatus": "review",
+  "phases": [],
+  "workflow_type": "development",
+  "services_involved": [],
+  "final_acceptance": [],
+  "spec_file": "spec.md"
+}

@@ -1,0 +1,8 @@
+{
+  "sourceType": "ideation",
+  "ideationType": "documentation_gaps",
+  "ideaId": "doc-002",
+  "rationale": "CSV import is a primary feature for getting data into SocialBit. Marketing agencies will need clear documentation of expected column names (e.g., Content_ID, Bereik, Platform, Datum) and sample CSV files. Without this, users will experience import failures and frustration.",
+  "category": "documentation",
+  "priority": "high"
+}

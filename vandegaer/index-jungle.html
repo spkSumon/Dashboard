@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SocialBit - Jungle Analytics</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Custom Tailwind Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            jungle: {
+              darkest: '#0a1f0f',
+              dark: '#0d1b0e',
+              medium: '#1a3a1f',
+              accent: '#2ecc71',
+              glow: '#39ff14',
+              gold: '#ffd700',
+              orange: '#ff9500',
+              amber: '#ffb84d',
+              turquoise: '#40e0d0',
+            }
+          },
+          fontFamily: {
+            display: ['Righteous', 'sans-serif'],
+            body: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Righteous&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Jungle Theme CSS -->
+  <link rel="stylesheet" href="public/assets/jungle-theme.css">
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(135deg, #0a1f0f 0%, #0d1b0e 50%, #1a3a1f 100%);
+      overflow-x: hidden;
+      overflow-y: auto;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    /* Jungle landscape background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('img/landscape 1.png') center/cover no-repeat fixed;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Animated background leaves */
+    .jungle-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .leaf {
+      position: absolute;
+      font-size: 2rem;
+      opacity: 0.1;
+      animation: float 20s infinite ease-in-out;
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-30px) rotate(10deg);
+      }
+    }
+
+    .leaf:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+    .leaf:nth-child(2) { top: 20%; left: 80%; animation-delay: 2s; }
+    .leaf:nth-child(3) { top: 40%; left: 20%; animation-delay: 4s; }
+    .leaf:nth-child(4) { top: 60%; left: 70%; animation-delay: 6s; }
+    .leaf:nth-child(5) { top: 80%; left: 40%; animation-delay: 8s; }
+    .leaf:nth-child(6) { top: 30%; left: 60%; animation-delay: 3s; }
+    .leaf:nth-child(7) { top: 70%; left: 15%; animation-delay: 5s; }
+    .leaf:nth-child(8) { top: 50%; left: 85%; animation-delay: 7s; }
+
+    /* Glowing particles */
+    .firefly {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: #39ff14;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #39ff14, 0 0 20px #39ff14;
+      animation: drift 15s infinite ease-in-out;
+      opacity: 0;
+    }
+
+    @keyframes drift {
+      0%, 100% {
+        transform: translate(0, 0);
+        opacity: 0;
+      }
+      10%, 90% {
+        opacity: 1;
+      }
+      50% {
+        transform: translate(100px, -200px);
+      }
+    }
+
+    .firefly:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; }
+    .firefly:nth-child(2) { left: 30%; top: 60%; animation-delay: 2s; }
+    .firefly:nth-child(3) { left: 60%; top: 40%; animation-delay: 4s; }
+    .firefly:nth-child(4) { left: 80%; top: 70%; animation-delay: 6s; }
+    .firefly:nth-child(5) { left: 20%; top: 80%; animation-delay: 8s; }
+    .firefly:nth-child(6) { left: 90%; top: 30%; animation-delay: 3s; }
+
+    /* Gradient glow effect */
+    .glow-text {
+      text-shadow: 0 0 20px rgba(57, 255, 20, 0.5), 0 0 40px rgba(46, 204, 113, 0.3);
+    }
+
+    /* Card hover effects */
+    .feature-card {
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(57, 255, 20, 0.1) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+
+    .feature-card:hover::before {
+      opacity: 1;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(57, 255, 20, 0.3), 0 0 60px rgba(46, 204, 113, 0.2);
+    }
+
+    /* Navigation animation */
+    .nav-link {
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #39ff14, #2ecc71);
+      transition: width 0.3s;
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    /* Hero animation */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-in-up {
+      animation: fadeInUp 0.8s ease-out forwards;
+      opacity: 0;
+    }
+
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+    .delay-500 { animation-delay: 0.5s; }
+
+    /* Scroll reveal */
+    .scroll-reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s ease-out;
+    }
+
+    .scroll-reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Button pulse effect */
+    .btn-pulse {
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 40px rgba(57, 255, 20, 0.7);
+      }
+    }
+
+    /* Mobile menu */
+    .mobile-menu {
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .mobile-menu.open {
+      transform: translateX(0);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #0a1f0f;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #2ecc71, #39ff14);
+      border-radius: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #39ff14, #2ecc71);
+    }
+  </style>
+</head>
+<body class="text-gray-100 antialiased">
+
+  <!-- Animated jungle background -->
+  <div class="jungle-bg">
+    <!-- Floating leaves -->
+    <div class="leaf"><i class="fas fa-leaf"></i></div>
+    <div class="leaf"><i class="fas fa-cannabis"></i></div>
+    <div class="leaf"><i class="fas fa-leaf"></i></div>
+    <div class="leaf"><i class="fas fa-seedling"></i></div>
+    <div class="leaf"><i class="fas fa-leaf"></i></div>
+    <div class="leaf"><i class="fas fa-cannabis"></i></div>
+    <div class="leaf"><i class="fas fa-leaf"></i></div>
+    <div class="leaf"><i class="fas fa-seedling"></i></div>
+
+    <!-- Glowing fireflies -->
+    <div class="firefly"></div>
+    <div class="firefly"></div>
+    <div class="firefly"></div>
+    <div class="firefly"></div>
+    <div class="firefly"></div>
+    <div class="firefly"></div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-jungle-dark/80 border-b border-jungle-accent/20">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3">
+          <div class="text-3xl text-jungle-glow"><i class="fas fa-leaf"></i></div>
+          <div>
+            <h1 class="text-2xl font-display text-jungle-glow">SocialBit</h1>
+            <p class="text-xs text-jungle-accent/70">Jungle Analytics</p>
+          </div>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <div class="hidden md:flex items-center space-x-8">
+          <a href="#home" class="nav-link text-sm font-medium text-gray-300 hover:text-jungle-glow">Home</a>
+          <a href="#features" class="nav-link text-sm font-medium text-gray-300 hover:text-jungle-glow">Features</a>
+          <a href="#tools" class="nav-link text-sm font-medium text-gray-300 hover:text-jungle-glow">Tools</a>
+          <a href="#docs" class="nav-link text-sm font-medium text-gray-300 hover:text-jungle-glow">Docs</a>
+          <button onclick="window.location.href='jungle.html'" class="px-6 py-2 bg-gradient-to-r from-jungle-accent to-jungle-glow text-jungle-dark font-semibold rounded-full hover:scale-105 transition-transform">
+            Launch Dashboard
+          </button>
+        </div>
+
+        <!-- Mobile menu button -->
+        <button id="mobile-menu-btn" class="md:hidden text-jungle-glow">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 bottom-0 w-64 bg-jungle-dark/95 backdrop-blur-lg md:hidden z-50">
+      <div class="p-6">
+        <button id="close-menu-btn" class="absolute top-6 right-6 text-jungle-glow">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+
+        <div class="flex flex-col space-y-6 mt-12">
+          <a href="#home" class="text-lg font-medium text-gray-300 hover:text-jungle-glow">Home</a>
+          <a href="#features" class="text-lg font-medium text-gray-300 hover:text-jungle-glow">Features</a>
+          <a href="#tools" class="text-lg font-medium text-gray-300 hover:text-jungle-glow">Tools</a>
+          <a href="#docs" class="text-lg font-medium text-gray-300 hover:text-jungle-glow">Docs</a>
+          <button onclick="window.location.href='jungle.html'" class="px-6 py-3 bg-gradient-to-r from-jungle-accent to-jungle-glow text-jungle-dark font-semibold rounded-full">
+            Launch Dashboard
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="home" class="relative min-h-screen flex items-center justify-center pt-20 px-6">
+    <div class="max-w-6xl mx-auto text-center relative z-10">
+      <div class="fade-in-up">
+        <div class="inline-block mb-4 px-4 py-2 bg-jungle-accent/20 border border-jungle-accent/40 rounded-full">
+          <span class="text-jungle-glow text-sm font-medium"><i class="fas fa-seedling"></i> Live in Production</span>
+        </div>
+      </div>
+
+      <h1 class="fade-in-up delay-100 text-6xl md:text-8xl font-display text-transparent bg-clip-text bg-gradient-to-r from-jungle-glow via-jungle-orange to-jungle-amber glow-text mb-6" style="text-shadow: 0 0 30px rgba(57,255,20,0.4), 0 0 50px rgba(255,149,0,0.5);">
+        Survive the<br/>Social Jungle
+      </h1>
+
+      <p class="fade-in-up delay-200 text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-8 leading-relaxed">
+        Real-time analytics, API integrations, and actionable insights for your social media empire. Built for developers who refuse to get lost in the data wilderness.
+      </p>
+
+      <div class="fade-in-up delay-300 flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+        <a href="jungle.html" class="btn-pulse px-8 py-4 bg-gradient-to-r from-jungle-orange to-jungle-amber text-jungle-dark font-bold rounded-full hover:scale-110 transition-all text-lg" style="box-shadow: 0 0 30px rgba(255,149,0,0.6);">
+          <i class="fas fa-leaf"></i> Enter the Dashboard
+        </a>
+        <a href="api-connector.html" class="px-8 py-4 border-2 border-jungle-orange text-jungle-orange font-bold rounded-full hover:bg-jungle-orange hover:text-jungle-dark transition-all text-lg">
+          <i class="fas fa-network-wired"></i> Connect APIs
+        </a>
+      </div>
+
+      <!-- Stats -->
+      <div class="fade-in-up delay-400 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+        <div class="p-6 bg-jungle-medium/40 backdrop-blur-sm border border-jungle-accent/30 rounded-2xl">
+          <div class="text-4xl font-display text-jungle-glow mb-2">25+</div>
+          <div class="text-sm text-gray-400">Posts Tracked</div>
+        </div>
+        <div class="p-6 bg-jungle-medium/40 backdrop-blur-sm border border-jungle-accent/30 rounded-2xl">
+          <div class="text-4xl font-display text-jungle-glow mb-2">71</div>
+          <div class="text-sm text-gray-400">Hashtags</div>
+        </div>
+        <div class="p-6 bg-jungle-medium/40 backdrop-blur-sm border border-jungle-accent/30 rounded-2xl">
+          <div class="text-4xl font-display text-jungle-glow mb-2">6</div>
+          <div class="text-sm text-gray-400">API Sources</div>
+        </div>
+        <div class="p-6 bg-jungle-medium/40 backdrop-blur-sm border border-jungle-accent/30 rounded-2xl">
+          <div class="text-4xl font-display text-jungle-glow mb-2">24/7</div>
+          <div class="text-sm text-gray-400">Live Monitoring</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Decorative gradient orbs -->
+    <div class="absolute top-1/4 left-10 w-96 h-96 bg-jungle-accent/10 rounded-full filter blur-3xl"></div>
+    <div class="absolute bottom-1/4 right-10 w-96 h-96 bg-jungle-glow/10 rounded-full filter blur-3xl"></div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="relative py-24 px-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16 scroll-reveal">
+        <h2 class="text-5xl md:text-6xl font-display text-transparent bg-clip-text bg-gradient-to-r from-jungle-turquoise via-jungle-glow to-jungle-orange mb-4">
+          Survival Tools
+        </h2>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+          Everything you need to navigate the social media wilderness
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Feature 1 -->
+        <div class="feature-card p-8 bg-gradient-to-br from-jungle-medium/60 to-jungle-dark/80 backdrop-blur-lg border border-jungle-accent/30 rounded-3xl scroll-reveal">
+          <div class="text-5xl mb-6"><i class="fas fa-compass"></i></div>
+          <h3 class="text-2xl font-display text-jungle-glow mb-4">Real-Time Analytics</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Live tracking of views, engagement, completion rates, and algorithm-impacting metrics across all platforms.
+          </p>
+          <ul class="space-y-2 text-sm text-gray-500">
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Auto-refresh every 30s</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Survival threat levels</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Terminal-style logging</li>
+          </ul>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="feature-card p-8 bg-gradient-to-br from-jungle-medium/60 to-jungle-dark/80 backdrop-blur-lg border border-jungle-accent/30 rounded-3xl scroll-reveal">
+          <div class="text-5xl mb-6"><i class="fas fa-globe-americas"></i></div>
+          <h3 class="text-2xl font-display text-jungle-glow mb-4">Multi-API Integration</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Connect TikTok, Instagram, Facebook, Metricool, Fathom Analytics, and Google Business in one unified platform.
+          </p>
+          <ul class="space-y-2 text-sm text-gray-500">
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> OAuth 2.0 flows</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Live connection testing</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Developer-friendly hints</li>
+          </ul>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="feature-card p-8 bg-gradient-to-br from-jungle-medium/60 to-jungle-dark/80 backdrop-blur-lg border border-jungle-accent/30 rounded-3xl scroll-reveal">
+          <div class="text-5xl mb-6"><i class="fas fa-chart-area"></i></div>
+          <h3 class="text-2xl font-display text-jungle-glow mb-4">Visual Dashboard Builder</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Drag-and-drop interface to create custom dashboards. No code required, fully customizable.
+          </p>
+          <ul class="space-y-2 text-sm text-gray-500">
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> 4+ chart types</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Export configurations</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Real database data</li>
+          </ul>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="feature-card p-8 bg-gradient-to-br from-jungle-medium/60 to-jungle-dark/80 backdrop-blur-lg border border-jungle-accent/30 rounded-3xl scroll-reveal">
+          <div class="text-5xl mb-6"><i class="fas fa-hashtag"></i></div>
+          <h3 class="text-2xl font-display text-jungle-glow mb-4">Hashtag Intelligence</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Track 71+ hashtags with performance analytics, engagement rates, and strategic recommendations.
+          </p>
+          <ul class="space-y-2 text-sm text-gray-500">
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Avg views per tag</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Strong/weak status</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Usage frequency</li>
+          </ul>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="feature-card p-8 bg-gradient-to-br from-jungle-medium/60 to-jungle-dark/80 backdrop-blur-lg border border-jungle-accent/30 rounded-3xl scroll-reveal">
+          <div class="text-5xl mb-6"><i class="fas fa-crown"></i></div>
+          <h3 class="text-2xl font-display text-jungle-glow mb-4">Top Post Tracking</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Identify your survivors - posts with highest engagement, views, and completion rates across platforms.
+          </p>
+          <ul class="space-y-2 text-sm text-gray-500">
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Safe/warning/critical</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Cross-platform ranking</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Engagement breakdown</li>
+          </ul>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="feature-card p-8 bg-gradient-to-br from-jungle-medium/60 to-jungle-dark/80 backdrop-blur-lg border border-jungle-accent/30 rounded-3xl scroll-reveal">
+          <div class="text-5xl mb-6"><i class="fas fa-globe-americas"></i></div>
+          <h3 class="text-2xl font-display text-jungle-glow mb-4">Website Correlation</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Link social posts to website traffic using Fathom Analytics and Google Business referral data.
+          </p>
+          <ul class="space-y-2 text-sm text-gray-500">
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Traffic attribution</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Bounce rate tracking</li>
+            <li class="flex items-center"><span class="text-jungle-accent mr-2">✓</span> Conversion goals</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tools Section -->
+  <section id="tools" class="relative py-24 px-6 bg-jungle-dark/40">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16 scroll-reveal">
+        <h2 class="text-5xl md:text-6xl font-display text-transparent bg-clip-text bg-gradient-to-r from-jungle-turquoise via-jungle-glow to-jungle-orange mb-4">
+          Your Arsenal
+        </h2>
+        <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+          Three powerful tools, one unified platform
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <!-- Tool 1: Jungle Dashboard -->
+        <a href="jungle.html" class="feature-card block p-8 bg-gradient-to-br from-jungle-medium/80 to-jungle-dark/90 backdrop-blur-xl border-2 border-jungle-accent/40 rounded-3xl group">
+          <div class="text-6xl mb-6 group-hover:scale-110 transition-transform"><i class="fas fa-leaf"></i></div>
+          <h3 class="text-3xl font-display text-jungle-glow mb-4">Jungle Dashboard</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Live survival monitoring with real-time metrics, threat levels, and terminal console output.
+          </p>
+          <div class="inline-flex items-center text-jungle-accent font-semibold group-hover:text-jungle-glow">
+            Launch Dashboard
+            <svg class="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Tool 2: API Connector -->
+        <a href="api-connector.html" class="feature-card block p-8 bg-gradient-to-br from-jungle-medium/80 to-jungle-dark/90 backdrop-blur-xl border-2 border-jungle-accent/40 rounded-3xl group">
+          <div class="text-6xl mb-6 group-hover:scale-110 transition-transform"><i class="fas fa-network-wired"></i></div>
+          <h3 class="text-3xl font-display text-jungle-glow mb-4">API Connection Lab</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Test and configure 6 API integrations with live validation and developer-friendly error messages.
+          </p>
+          <div class="inline-flex items-center text-jungle-accent font-semibold group-hover:text-jungle-glow">
+            Connect APIs
+            <svg class="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Tool 3: Main Application -->
+        <a href="public/index.html" class="feature-card block p-8 bg-gradient-to-br from-jungle-medium/80 to-jungle-dark/90 backdrop-blur-xl border-2 border-jungle-accent/40 rounded-3xl group">
+          <div class="text-6xl mb-6 group-hover:scale-110 transition-transform"><i class="fas fa-chart-area"></i></div>
+          <h3 class="text-3xl font-display text-jungle-glow mb-4">Main Analytics App</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Production dashboard with real client data, multi-tenant support, and full social media analytics.
+          </p>
+          <div class="inline-flex items-center text-jungle-accent font-semibold group-hover:text-jungle-glow">
+            Launch App
+            <svg class="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Tool 4: Codebase Playground -->
+        <a href="codebase-playground.html" class="feature-card block p-8 bg-gradient-to-br from-jungle-medium/80 to-jungle-dark/90 backdrop-blur-xl border-2 border-jungle-accent/40 rounded-3xl group">
+          <div class="mb-6 group-hover:scale-110 transition-transform flex justify-center">
+            <img src="img/icon parrot.png" alt="Parrot" class="w-24 h-24 object-contain" style="filter: drop-shadow(0 0 20px rgba(57,255,20,0.4));">
+          </div>
+          <h3 class="text-3xl font-display text-jungle-glow mb-4">Codebase Explorer</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Interactive code analysis playground with file tree, security audits, and AI prompt generation.
+          </p>
+          <div class="inline-flex items-center text-jungle-accent font-semibold group-hover:text-jungle-glow">
+            Explore Code
+            <svg class="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Tool 5: Database Playground -->
+        <a href="database-playground.html" class="feature-card block p-8 bg-gradient-to-br from-jungle-medium/80 to-jungle-dark/90 backdrop-blur-xl border-2 border-jungle-accent/40 rounded-3xl group">
+          <div class="mb-6 group-hover:scale-110 transition-transform flex justify-center">
+            <img src="img/icon totem.png" alt="Totem" class="w-24 h-24 object-contain" style="filter: drop-shadow(0 0 20px rgba(57,255,20,0.4));">
+          </div>
+          <h3 class="text-3xl font-display text-jungle-glow mb-4">Database Playground</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            ER diagrams, schema explorer, migration timeline, and SQL optimization prompt generation.
+          </p>
+          <div class="inline-flex items-center text-jungle-accent font-semibold group-hover:text-jungle-glow">
+            Explore Schema
+            <svg class="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Tool 6: API Playground -->
+        <a href="api-playground.html" class="feature-card block p-8 bg-gradient-to-br from-jungle-medium/80 to-jungle-dark/90 backdrop-blur-xl border-2 border-jungle-accent/40 rounded-3xl group">
+          <div class="mb-6 group-hover:scale-110 transition-transform flex justify-center">
+            <img src="img/icon monkey.png" alt="Monkey" class="w-24 h-24 object-contain" style="filter: drop-shadow(0 0 20px rgba(57,255,20,0.4));">
+          </div>
+          <h3 class="text-3xl font-display text-jungle-glow mb-4">API Playground</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Interactive API endpoint explorer with live testing, documentation, and prompt generation.
+          </p>
+          <div class="inline-flex items-center text-jungle-accent font-semibold group-hover:text-jungle-glow">
+            Test APIs
+            <svg class="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </div>
+        </a>
+
+        <!-- Tool 7: File Analyzer -->
+        <a href="file-analyzer-demo.html" class="feature-card block p-8 bg-gradient-to-br from-jungle-medium/80 to-jungle-dark/90 backdrop-blur-xl border-2 border-jungle-accent/40 rounded-3xl group">
+          <div class="mb-6 group-hover:scale-110 transition-transform flex justify-center">
+            <img src="img/icon eye.png" alt="Eye" class="w-24 h-24 object-contain" style="filter: drop-shadow(0 0 20px rgba(57,255,20,0.4));">
+          </div>
+          <h3 class="text-3xl font-display text-jungle-glow mb-4">File Analyzer</h3>
+          <p class="text-gray-400 leading-relaxed mb-6">
+            Project structure analyzer with file metrics, category filters, and AI-ready prompt generation.
+          </p>
+          <div class="inline-flex items-center text-jungle-accent font-semibold group-hover:text-jungle-glow">
+            Analyze Files
+            <svg class="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+            </svg>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="relative py-24 px-6">
+    <div class="max-w-4xl mx-auto text-center scroll-reveal">
+      <div class="p-12 bg-gradient-to-br from-jungle-medium/60 to-jungle-dark/80 backdrop-blur-xl border border-jungle-accent/40 rounded-3xl">
+        <div class="text-6xl mb-6"><i class="fas fa-seedling"></i></div>
+        <h2 class="text-4xl md:text-5xl font-display text-transparent bg-clip-text bg-gradient-to-r from-jungle-turquoise via-jungle-orange to-jungle-amber mb-6">
+          Ready to Conquer the Jungle?
+        </h2>
+        <p class="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
+          Join developers who refuse to get lost in social media analytics. Start tracking, optimizing, and dominating today.
+        </p>
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a href="jungle.html" class="btn-pulse px-8 py-4 bg-gradient-to-r from-jungle-orange to-jungle-amber text-jungle-dark font-bold rounded-full hover:scale-110 transition-all text-lg" style="box-shadow: 0 0 30px rgba(255,149,0,0.6);">
+            Launch Dashboard Now
+          </a>
+          <a href="api-connector.html" class="px-8 py-4 border-2 border-jungle-accent text-jungle-accent font-bold rounded-full hover:bg-jungle-accent hover:text-jungle-dark transition-all text-lg">
+            Setup API Connections
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="relative py-12 px-6 border-t border-jungle-accent/20">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid md:grid-cols-4 gap-8 mb-8">
+        <div>
+          <div class="flex items-center space-x-3 mb-4">
+            <div class="text-3xl"><i class="fas fa-leaf"></i></div>
+            <div>
+              <h3 class="text-xl font-display text-jungle-glow">SocialBit</h3>
+              <p class="text-xs text-jungle-accent/70">Jungle Analytics</p>
+            </div>
+          </div>
+          <p class="text-sm text-gray-500">
+            Survive and thrive in the social media wilderness.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-jungle-accent mb-4">Tools</h4>
+          <ul class="space-y-2 text-sm text-gray-500">
+            <li><a href="jungle.html" class="hover:text-jungle-glow transition">Jungle Dashboard</a></li>
+            <li><a href="api-connector.html" class="hover:text-jungle-glow transition">API Connector</a></li>
+            <li><a href="public/index.html" class="hover:text-jungle-glow transition">Main Analytics App</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-jungle-accent mb-4">Integrations</h4>
+          <ul class="space-y-2 text-sm text-gray-500">
+            <li>TikTok API v2</li>
+            <li>Instagram Graph API</li>
+            <li>Facebook Graph API</li>
+            <li>Metricool</li>
+            <li>Fathom Analytics</li>
+            <li>Google Business</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-semibold text-jungle-accent mb-4">Resources</h4>
+          <ul class="space-y-2 text-sm text-gray-500">
+            <li><a href="docs/README.md" class="hover:text-jungle-glow transition">Documentation</a></li>
+            <li><a href="CLAUDE.md" class="hover:text-jungle-glow transition">Project Guide</a></li>
+            <li><a href="actions.md" class="hover:text-jungle-glow transition">Change Log</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pt-8 border-t border-jungle-accent/20 text-center text-sm text-gray-500">
+        <p>Built with <i class="fas fa-leaf text-jungle-glow"></i> by developers, for developers. Powered by vanilla PHP, MySQL, and jungle vibes.</p>
+        <p class="mt-2">© 2026 SocialBit - All rights reserved</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const closeMenuBtn = document.getElementById('close-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+
+    mobileMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.add('open');
+    });
+
+    closeMenuBtn.addEventListener('click', () => {
+      mobileMenu.classList.remove('open');
+    });
+
+    // Close menu on link click
+    document.querySelectorAll('#mobile-menu a').forEach(link => {
+      link.addEventListener('click', () => {
+        mobileMenu.classList.remove('open');
+      });
+    });
+
+    // Scroll reveal animation
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.scroll-reveal').forEach(el => {
+      observer.observe(el);
+    });
+
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+
+    // Parallax effect on scroll
+    window.addEventListener('scroll', () => {
+      const scrolled = window.pageYOffset;
+      const leaves = document.querySelectorAll('.leaf');
+      leaves.forEach((leaf, index) => {
+        const speed = 0.5 + (index * 0.1);
+        leaf.style.transform = `translateY(${scrolled * speed}px) rotate(${scrolled * 0.1}deg)`;
+      });
+    });
+  </script>
+</body>
+</html>

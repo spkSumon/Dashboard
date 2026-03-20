@@ -1,0 +1,9 @@
+{
+  "files": [
+    ".auto-claude-status",
+    ".claude_settings.json",
+    "src/Services/GenericCsvImporter.php",
+    "src/Services/TikTokCsvImporter.php"
+  ],
+  "last_updated": "2025-12-30T21:46:40.122534"
+}

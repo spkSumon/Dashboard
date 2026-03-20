@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script>
+    // Dynamische base href - werkt op beide omgevingen
+    (function() {
+      var path = window.location.pathname;
+      var base = path.substring(0, path.lastIndexOf('/') + 1) || '/';
+      document.write('<base href="' + base + '" />');
+    })();
+  </script>
+  <title>Giuditta Analytics</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand__logo" aria-hidden="true"></div>
+        <div class="brand__meta">
+          <div class="brand__name" id="brandName">La Giuditta</div>
+          <div class="brand__tag">Social Media Overzicht</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav__item" href="#/overview" data-route="/overview">
+          <span class="nav__dot"></span> Overzicht
+        </a>
+        <a class="nav__item" href="#/posts" data-route="/posts">
+          <span class="nav__dot"></span> Posts
+        </a>
+        <a class="nav__item" href="#/glossary" data-route="/glossary">
+          <span class="nav__dot"></span> Woordenlijst
+        </a>
+        <a class="nav__item" href="#/settings" data-route="/settings">
+          <span class="nav__dot"></span> Instellingen
+        </a>
+      </nav>
+
+      <div class="sidebar__footer">
+        <div class="mini muted">SocialBit Analytics v1.0</div>
+        <div class="mini muted" id="envHint">Gemaakt voor La Giuditta</div>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar__left">
+          <h1 class="title" id="pageTitle">Overzicht</h1>
+          <div class="subtitle muted" id="pageSubtitle">Hoe doet je social media het?</div>
+        </div>
+
+        <div class="topbar__right">
+          <div class="pill">
+            <span class="pill__dot"></span>
+            <span id="authBadge">Niet ingelogd</span>
+          </div>
+
+          <button class="btn btn--ghost" id="brandBtn" type="button" title="Branding">
+            Brand
+          </button>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <section class="content">
+
+        <!-- OVERVIEW -->
+        <section class="page" id="page-overview" data-page="/overview">
+          <!-- Filters -->
+          <div class="card" style="margin-bottom: 14px;">
+            <div class="card__head">
+              <h2 class="h2">Filters</h2>
+              <span class="badge">Live</span>
+            </div>
+
+            <div class="form row wrap">
+              <label class="field">
+                <span class="field__label">Platform</span>
+                <select id="platformFilter" class="input">
+                  <option value="">Alle</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="facebook">Facebook</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Periode</span>
+                <select id="datePreset" class="input">
+                  <option value="last7">Laatste 7 dagen</option>
+                  <option value="last30" selected>Laatste 30 dagen</option>
+                  <option value="last90">Laatste 90 dagen</option>
+                  <option value="thisMonth">Deze maand</option>
+                  <option value="lastMonth">Vorige maand</option>
+                  <option value="thisYear">Dit jaar</option>
+                  <option value="allTime">Vanaf het begin</option>
+                  <option value="custom">Aangepaste periode</option>
+                </select>
+              </label>
+
+              <div id="customDateRange" class="field" style="display: none; gap: 8px;">
+                <div class="row small-gap">
+                  <label class="field" style="margin: 0;">
+                    <span class="field__label">Van</span>
+                    <input type="date" id="fromDate" class="input" />
+                  </label>
+                  <label class="field" style="margin: 0;">
+                    <span class="field__label">Tot</span>
+                    <input type="date" id="toDate" class="input" />
+                  </label>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- KPI Cards -->
+          <div class="grid grid--kpi">
+            <div class="card kpi">
+              <div class="kpi__label muted" title="Het totaal aantal mensen dat je posts heeft gezien">Aantal mensen bereikt</div>
+              <div class="kpi__value" id="kpiViews">—</div>
+              <div class="kpi__hint muted">Hoeveel mensen zagen je posts</div>
+            </div>
+            <div class="card kpi">
+              <div class="kpi__label muted" title="Totaal aantal hartjes op al je posts">Aantal likes</div>
+              <div class="kpi__value" id="kpiLikes">—</div>
+              <div class="kpi__hint muted">Totaal aantal likes</div>
+            </div>
+            <div class="card kpi">
+              <div class="kpi__label muted" title="Hoeveel procent van de kijkers reageert (likes, reacties, delen)">Hoe populair?</div>
+              <div class="kpi__value" id="kpiEngagement">—</div>
+              <div class="kpi__hint muted">Percentage mensen dat reageerde</div>
+              <div class="kpi__context" id="kpiEngagementContext"></div>
+            </div>
+            <div class="card kpi">
+              <div class="kpi__label muted" title="Hoeveel posts je in deze periode hebt geplaatst">Aantal posts</div>
+              <div class="kpi__value" id="kpiPosts">—</div>
+              <div class="kpi__hint muted">Hoeveel posts je plaatste</div>
+              <div class="kpi__context" id="kpiPostsContext"></div>
+            </div>
+          </div>
+
+          <!-- Secondary KPIs -->
+          <div class="grid grid--kpi">
+            <div class="card kpi">
+              <div class="kpi__label muted" title="Hoeveel mensen je posts hebben gezien">Gemiddeld bereik</div>
+              <div class="kpi__value" id="kpiAvgViews">—</div>
+              <div class="kpi__hint muted">Per post gemiddeld</div>
+              <div class="kpi__context" id="kpiAvgViewsContext"></div>
+            </div>
+            <div class="card kpi">
+              <div class="kpi__label muted" title="Hoeveel mensen op het hartje klikken">Gemiddeld aantal likes</div>
+              <div class="kpi__value" id="kpiAvgLikes">—</div>
+              <div class="kpi__hint muted">Per post gemiddeld</div>
+            </div>
+            <div class="card kpi">
+              <div class="kpi__label muted" title="Hoeveel mensen een reactie achterlaten">Aantal reacties</div>
+              <div class="kpi__value" id="kpiComments">—</div>
+              <div class="kpi__hint muted">Mensen die reageerden</div>
+            </div>
+            <div class="card kpi">
+              <div class="kpi__label muted" title="Hoeveel mensen je post doorsturen naar vrienden">Aantal keer gedeeld</div>
+              <div class="kpi__value" id="kpiShares">—</div>
+              <div class="kpi__hint muted">Mensen die je post doorstuurden</div>
+            </div>
+          </div>
+
+          <!-- Insights & Recommendations Card -->
+          <div class="card" style="margin-bottom: 20px;">
+            <div class="card__head">
+              <h2 class="h2">Inzichten & Aanbevelingen</h2>
+              <span class="badge badge--info">Live</span>
+            </div>
+            <div id="insightsContainer" class="insights-grid">
+              <div class="loading">Inzichten aan het laden...</div>
+            </div>
+          </div>
+
+          <!-- Hashtag Recommendations Card -->
+          <div class="card" style="margin-bottom: 20px;">
+            <div class="card__head">
+              <h2 class="h2">Aanbevolen hashtags</h2>
+              <span class="badge badge--soft">Automatisch</span>
+            </div>
+            <div id="hashtagRecommendationsContainer">
+              <div class="loading">Hashtag aanbevelingen laden...</div>
+            </div>
+          </div>
+
+          <!-- Website Traffic Card -->
+          <div class="card" style="margin-bottom: 20px;">
+            <div class="card__head">
+              <h2 class="h2">Website Verkeer</h2>
+              <span class="badge badge--info">Fathom Analytics</span>
+            </div>
+
+            <!-- Website KPIs -->
+            <div class="grid grid--kpi" style="margin-bottom: 20px;">
+              <div class="card kpi">
+                <div class="kpi__label muted">Totaal Bezoeken</div>
+                <div class="kpi__value" id="websiteVisits">—</div>
+                <div class="kpi__hint muted">Laatste 30 dagen</div>
+              </div>
+              <div class="card kpi">
+                <div class="kpi__label muted">Unieke Bezoekers</div>
+                <div class="kpi__value" id="websiteUniques">—</div>
+                <div class="kpi__hint muted">Mensen die je site bezochten</div>
+              </div>
+              <div class="card kpi">
+                <div class="kpi__label muted">Gem. Sessieduur</div>
+                <div class="kpi__value" id="websiteAvgDuration">—</div>
+                <div class="kpi__hint muted">Hoelang blijven mensen?</div>
+              </div>
+              <div class="card kpi">
+                <div class="kpi__label muted">Bouncepercentage</div>
+                <div class="kpi__value" id="websiteBounceRate">—</div>
+                <div class="kpi__hint muted">Verlaten direct</div>
+              </div>
+            </div>
+
+            <!-- Traffic Chart & Referrers Grid -->
+            <div class="grid grid--2">
+              <div class="card">
+                <div class="card__head">
+                  <h2 class="h2">Verkeer over tijd</h2>
+                  <span class="muted mini">Dagelijks overzicht</span>
+                </div>
+                <canvas id="websiteTrafficChart"></canvas>
+              </div>
+
+              <div class="card">
+                <div class="card__head">
+                  <h2 class="h2">Van social media</h2>
+                  <span class="muted mini">Top bronnen</span>
+                </div>
+                <div id="topReferrersContainer">
+                  <div class="loading">Bronnen laden...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts Row 1: Platform Distribution + Timeline -->
+          <div class="grid grid--2">
+            <div class="card">
+              <div class="card__head">
+                <h2 class="h2">Waar plaats je posts?</h2>
+                <span class="muted mini">TikTok, Instagram, Facebook</span>
+              </div>
+              <canvas id="chartPlatformDist" style="max-height: 300px;"></canvas>
+            </div>
+
+            <div class="card">
+              <div class="card__head">
+                <h2 class="h2">Prestaties over tijd</h2>
+                <span class="muted mini">Bereik en likes per dag</span>
+              </div>
+              <canvas id="chartTimeline"></canvas>
+            </div>
+          </div>
+
+          <!-- Charts Row 2: Top Posts + Hashtags -->
+          <div class="grid grid--2">
+            <div class="card">
+              <div class="card__head">
+                <h2 class="h2">Je beste posts</h2>
+                <span class="muted mini">Top 10 meest bekeken</span>
+              </div>
+              <canvas id="chartTopPosts"></canvas>
+            </div>
+
+            <div class="card">
+              <div class="card__head">
+                <h2 class="h2">Beste hashtags</h2>
+                <span class="muted mini">Welke hashtags werken goed?</span>
+              </div>
+              <canvas id="chartHashtags"></canvas>
+            </div>
+          </div>
+
+          <!-- Charts Row 3: Post Types + Engagement Rate -->
+          <div class="grid grid--2">
+            <div class="card">
+              <div class="card__head">
+                <h2 class="h2">Soorten posts</h2>
+                <span class="muted mini">Video's, foto's, stories...</span>
+              </div>
+              <canvas id="chartPostTypes" style="max-height: 300px;"></canvas>
+            </div>
+
+            <div class="card">
+              <div class="card__head">
+                <h2 class="h2">Populariteit over tijd</h2>
+                <span class="muted mini">Worden je posts populairder?</span>
+              </div>
+              <canvas id="chartEngagementRate"></canvas>
+            </div>
+          </div>
+        </section>
+
+        <!-- POSTS -->
+        <section class="page" id="page-posts" data-page="/posts">
+          <div class="card">
+            <div class="card__head">
+              <h2 class="h2">Je posts</h2>
+              <span class="muted mini">Alle geplaatste berichten</span>
+            </div>
+
+            <!-- Search & Filter -->
+            <div class="row wrap" style="margin-bottom: 16px;">
+              <label class="field">
+                <span class="field__label">Zoek in posts</span>
+                <input type="text" id="postSearchInput" class="input" placeholder="Zoek op caption, hashtag, topic..." />
+              </label>
+
+              <label class="field">
+                <span class="field__label">Platform filter</span>
+                <select id="postPlatformFilter" class="input">
+                  <option value="">Alle platforms</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="facebook">Facebook</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Sorteer op</span>
+                <select id="postSortBy" class="input">
+                  <option value="date_desc">Nieuwste eerst</option>
+                  <option value="date_asc">Oudste eerst</option>
+                  <option value="views_desc">Meeste views</option>
+                  <option value="likes_desc">Meeste likes</option>
+                  <option value="engagement_desc">Hoogste engagement</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="table-wrap">
+              <table id="postsTable" class="table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Platform</th>
+                    <th>Caption</th>
+                    <th>Datum</th>
+                    <th>Views</th>
+                    <th>Likes</th>
+                    <th>Engagement</th>
+                    <th>Acties</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+
+            <div id="postsStats" class="muted mini" style="margin-top: 12px;">
+              <span id="postsCount">0 posts</span> gevonden
+            </div>
+          </div>
+
+          <div class="grid grid--2">
+            <!-- CSV import -->
+            <section class="card">
+              <div class="card__head">
+                <h2 class="h2">Importeer je posts</h2>
+                <span class="badge badge--soft">TikTok & Instagram</span>
+              </div>
+
+              <form id="importForm" class="row wrap">
+                <input type="file" id="csvFile" accept=".csv" class="input" required />
+                <button type="submit" class="btn">Upload bestand</button>
+              </form>
+              <p id="importStatus" class="muted"></p>
+
+              <div class="divider"></div>
+
+              <div class="muted mini">
+                <strong>Hoe doe je dit?</strong><br>
+                1. Ga naar TikTok Studio of Instagram Insights<br>
+                2. Download je statistieken als CSV bestand<br>
+                3. Upload het bestand hier<br>
+                <br>
+                Het systeem herkent automatisch welk platform het is.
+              </div>
+            </section>
+
+            <!-- Post editor -->
+            <section class="card" id="postEditor">
+              <div class="card__head">
+                <h2 class="h2">Post aanpassen</h2>
+                <span class="muted mini">Notities toevoegen</span>
+              </div>
+
+              <form id="postLoadForm" class="row wrap">
+                <input type="number" id="editPostId" placeholder="Post nummer" class="input" required />
+                <button type="submit" class="btn btn--ghost">Zoek post</button>
+              </form>
+
+              <pre id="postDump" class="pre"></pre>
+
+              <form id="postEditForm" class="row wrap">
+                <input type="text" id="editPostType" placeholder="Type (reel/story/foto)" class="input" />
+                <input type="text" id="editTopic" placeholder="Onderwerp (bv. pizza, dessert)" class="input" />
+                <input type="text" id="editHashtags" placeholder="Hashtags" class="input" />
+                <input type="text" id="editInternalCaption" placeholder="Eigen beschrijving" class="input" />
+                <input type="text" id="editInternalNotes" placeholder="Notities (alleen voor jou)" class="input" />
+                <button type="submit" class="btn">Opslaan</button>
+              </form>
+              <p id="postEditStatus" class="muted"></p>
+            </section>
+          </div>
+        </section>
+
+        <!-- ANALYTICS -->
+        <section class="page" id="page-analytics" data-page="/analytics">
+          <section class="card" id="analytics">
+            <div class="card__head">
+              <h2 class="h2">Gedetailleerde statistieken</h2>
+              <span class="muted mini">Extra inzichten over je posts</span>
+            </div>
+
+            <div class="row wrap">
+              <label class="field">
+                <span class="field__label">Zoek hashtag</span>
+                <input type="text" id="trendHashtag" class="input" placeholder="bv. pizza, giuditta, napels" />
+              </label>
+              <button type="button" id="loadTrendBtn" class="btn btn--ghost">Bekijk trend</button>
+            </div>
+
+            <pre id="analyticsDump" class="pre"></pre>
+          </section>
+        </section>
+
+        <!-- PLANNING -->
+        <section class="page" id="page-planning" data-page="/planning">
+          <section class="card" id="planning">
+            <div class="card__head">
+              <h2 class="h2">Content planning</h2>
+              <span class="muted mini">Plan je posts vooruit</span>
+            </div>
+
+            <form id="planningForm" class="row wrap">
+              <input type="hidden" id="planningId" />
+
+              <label class="field">
+                <span class="field__label">Waar plaats je dit?</span>
+                <select id="planningPlatform" class="input">
+                  <option value="">(kies platform)</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="tiktok">TikTok</option>
+                  <option value="facebook">Facebook</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Status</span>
+                <select id="planningStatus" class="input">
+                  <option value="draft">Idee</option>
+                  <option value="scheduled">Ingepland</option>
+                  <option value="published">Geplaatst</option>
+                  <option value="cancelled">Geannuleerd</option>
+                </select>
+              </label>
+
+              <label class="field">
+                <span class="field__label">Wanneer plaatsen?</span>
+                <input type="datetime-local" id="planningWhen" class="input" />
+              </label>
+
+              <input type="text" id="planningType" placeholder="Type (reel/story/foto)" class="input" />
+              <input type="text" id="planningTitle" placeholder="Titel" class="input" />
+              <input type="text" id="planningTopic" placeholder="Onderwerp (bv. pizza margherita)" class="input" />
+              <input type="text" id="planningHashtags" placeholder="Hashtags (bv. #pizza #napels)" class="input" />
+              <input type="number" id="planningPostId" placeholder="Link naar bestaande post (optioneel)" class="input" />
+              <input type="text" id="planningNotes" placeholder="Notities" class="input" />
+
+              <button type="submit" class="btn">Opslaan</button>
+              <button type="button" id="planningClearBtn" class="btn btn--ghost">Nieuw item</button>
+            </form>
+
+            <div class="row space">
+              <button type="button" id="planningLoadBtn" class="btn btn--ghost">Toon alle geplande posts</button>
+              <span id="planningStatusText" class="muted"></span>
+            </div>
+
+            <pre id="planningDump" class="pre"></pre>
+          </section>
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="page" id="page-settings" data-page="/settings">
+          <div class="grid grid--2">
+            <section class="card">
+              <div class="card__head">
+                <h2 class="h2">Inloggen</h2>
+                <span class="muted mini">Beveiligd toegang</span>
+              </div>
+
+              <form id="loginForm" class="row wrap">
+                <input type="text" id="username" class="input" placeholder="Gebruikersnaam" required />
+                <input type="password" id="password" class="input" placeholder="Wachtwoord" required />
+                <button type="submit" class="btn">Inloggen</button>
+              </form>
+              <p id="loginStatus" class="muted"></p>
+            </section>
+
+            <section class="card">
+              <div class="card__head">
+                <h2 class="h2">Koppelingen</h2>
+                <span class="badge badge--soft">Social Media</span>
+              </div>
+
+              <p class="muted">Koppel je social media accounts voor automatische updates.</p>
+
+              <form id="settingsForm" class="row wrap">
+                <input type="text" id="settingKey" class="input" placeholder="Platform (bv. instagram)" required />
+                <input type="text" id="settingValue" class="input" placeholder="Toegangscode" required />
+                <button type="submit" class="btn">Koppelen</button>
+              </form>
+
+              <div class="row space">
+                <button id="loadSettingsBtn" type="button" class="btn btn--ghost">Toon koppelingen</button>
+                <span id="settingsStatus" class="muted"></span>
+              </div>
+
+              <pre id="settingsDump" class="pre"></pre>
+            </section>
+          </div>
+
+          <section class="card">
+            <div class="card__head">
+              <h2 class="h2">Personaliseer je dashboard</h2>
+              <span class="muted mini">Maak het van jou</span>
+            </div>
+
+            <div class="branding-grid">
+              <!-- Preview -->
+              <div class="branding-preview">
+                <div class="branding-preview__label muted mini">Preview</div>
+                <div class="brand brand--preview">
+                  <div class="brand__logo" aria-hidden="true"></div>
+                  <div class="brand__meta">
+                    <div class="brand__name" id="brandNamePreview">La Giuditta</div>
+                    <div class="brand__tag">Social Media Overzicht</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Settings -->
+              <div class="branding-settings">
+                <label class="field">
+                  <span class="field__label">Naam van je zaak</span>
+                  <input type="text" id="brandNameInput" class="input" placeholder="Bv. La Giuditta" style="width: 100%;" />
+                  <span class="muted mini">Deze naam zie je in de linker zijbalk</span>
+                </label>
+
+                <label class="field">
+                  <span class="field__label">Kies je kleur</span>
+                  <div class="color-picker-group">
+                    <input type="color" id="brandAccentInput" class="input input--color" value="#6d28d9" />
+                    <span class="color-hex" id="colorHex">#6d28d9</span>
+                  </div>
+                  <span class="muted mini">De kleur van knoppen en accenten</span>
+                </label>
+
+                <div class="field">
+                  <span class="field__label">Populaire kleuren</span>
+                  <div class="color-presets">
+                    <button type="button" class="color-preset" data-color="#6d28d9" style="background: #6d28d9;" title="Paars"></button>
+                    <button type="button" class="color-preset" data-color="#ef4444" style="background: #ef4444;" title="Rood"></button>
+                    <button type="button" class="color-preset" data-color="#10b981" style="background: #10b981;" title="Groen"></button>
+                    <button type="button" class="color-preset" data-color="#3b82f6" style="background: #3b82f6;" title="Blauw"></button>
+                    <button type="button" class="color-preset" data-color="#f59e0b" style="background: #f59e0b;" title="Oranje"></button>
+                    <button type="button" class="color-preset" data-color="#ec4899" style="background: #ec4899;" title="Roze"></button>
+                  </div>
+                </div>
+
+                <div class="row wrap">
+                  <button type="button" class="btn" id="saveBrandBtn">Opslaan</button>
+                  <button type="button" class="btn btn--ghost" id="resetBrandBtn">Reset naar default</button>
+                  <span class="muted mini" id="brandStatus"></span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card__head">
+              <h2 class="h2">TikTok koppelen</h2>
+              <span class="badge" id="tiktokBadge">Niet gekoppeld</span>
+            </div>
+
+            <div id="tiktokStatus">
+              <p class="muted">
+                <strong>Status:</strong> <span id="connectionStatus">Niet verbonden</span>
+              </p>
+              <p class="muted">
+                <strong>Laatste update:</strong> <span id="lastSync">Nooit</span>
+              </p>
+            </div>
+
+            <div class="row wrap">
+              <button type="button" class="btn" id="btnConnectTikTok">
+                Koppel je TikTok account
+              </button>
+
+              <button type="button" class="btn btn--ghost" id="btnSyncTikTok" disabled>
+                Update nu
+              </button>
+
+              <button type="button" class="btn btn--ghost" id="btnDisconnectTikTok" disabled style="display:none">
+                Ontkoppel account
+              </button>
+            </div>
+
+            <div id="syncResults" class="muted" style="margin-top: 1rem;"></div>
+
+            <p class="muted" style="margin-top: 1rem;">
+              Koppel je TikTok Business account om automatisch je cijfers binnen te halen, zonder handmatig bestanden te uploaden.
+            </p>
+          </section>
+        </section>
+
+        <!-- GLOSSARY -->
+        <section class="page" id="page-glossary" data-page="/glossary">
+          <div class="card">
+            <div class="card__head">
+              <h2 class="h2">Woordenlijst</h2>
+              <span class="muted mini">Uitleg van termen en statistieken</span>
+            </div>
+
+            <!-- Search & Category Filter -->
+            <div class="row wrap" style="margin-bottom: 16px;">
+              <label class="field">
+                <span class="field__label">Zoek term</span>
+                <input type="text" id="glossarySearchInput" class="input" placeholder="Zoek op term of definitie..." />
+              </label>
+
+              <label class="field">
+                <span class="field__label">Categorie</span>
+                <select id="glossaryCategoryFilter" class="input">
+                  <option value="">Alle categorieën</option>
+                  <option value="algorithm">Algoritme</option>
+                  <option value="metrics">Statistieken</option>
+                  <option value="platforms">Platforms</option>
+                  <option value="general">Algemeen</option>
+                </select>
+              </label>
+            </div>
+
+            <!-- Terms Grid -->
+            <div id="glossaryTermsGrid" class="glossary-grid">
+              <div class="loading">Termen aan het laden...</div>
+            </div>
+
+            <div id="glossaryStats" class="muted mini" style="margin-top: 12px;">
+              <span id="glossaryCount">0 termen</span> gevonden
+            </div>
+          </div>
+        </section>
+
+      </section>
+    </main>
+
+    <!-- Post Detail Modal -->
+    <div id="postDetailModal" class="modal">
+      <div class="modal__overlay" onclick="closePostDetail()"></div>
+      <div class="modal__content">
+        <div class="modal__header">
+          <h2 class="modal__title" id="postDetailTitle">Post Details</h2>
+          <button class="modal__close" onclick="closePostDetail()" type="button">&times;</button>
+        </div>
+        <div class="modal__body" id="postDetailBody">
+          <div class="loading">Loading post details...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/app.js"></script>
+  <script src="assets/term-linking.js"></script>
+</body>
+</html>

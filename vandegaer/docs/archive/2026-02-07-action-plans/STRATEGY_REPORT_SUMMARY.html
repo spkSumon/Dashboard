@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SocialBit Strategy Report - 6-Expert Analyse</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0b1020 0%, #1a1f35 100%);
+      color: rgba(255,255,255,0.92);
+      line-height: 1.6;
+      padding: 16px;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding-bottom: 40px;
+    }
+
+    header {
+      text-align: center;
+      padding: 24px 0 32px;
+      border-bottom: 2px solid rgba(109,40,217,0.3);
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6d28d9, #22d3ee);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .meta {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+
+    .badge--critical {
+      background: rgba(239,68,68,0.15);
+      border-color: rgba(239,68,68,0.3);
+      color: #fca5a5;
+    }
+
+    .badge--success {
+      background: rgba(16,185,129,0.15);
+      border-color: rgba(16,185,129,0.3);
+      color: #6ee7b7;
+    }
+
+    .section {
+      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .icon--blue { background: rgba(59,130,246,0.2); }
+    .icon--green { background: rgba(16,185,129,0.2); }
+    .icon--yellow { background: rgba(245,158,11,0.2); }
+    .icon--purple { background: rgba(168,85,247,0.2); }
+    .icon--orange { background: rgba(249,115,22,0.2); }
+    .icon--pink { background: rgba(236,72,153,0.2); }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.85);
+      margin: 16px 0 8px;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      padding: 8px 0 8px 24px;
+      position: relative;
+      font-size: 14px;
+      line-height: 1.5;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    li:hover {
+      background: rgba(255,255,255,0.03);
+    }
+
+    li:before {
+      content: "→";
+      position: absolute;
+      left: 0;
+      color: #10b981;
+      font-weight: bold;
+    }
+
+    li.critical:before {
+      content: "🚨";
+    }
+
+    li.success:before {
+      content: "✅";
+    }
+
+    li.warning:before {
+      content: "⚠️";
+    }
+
+    li.has-comment {
+      background: rgba(109,40,217,0.08);
+      border-left: 2px solid rgba(109,40,217,0.4);
+      padding-left: 22px;
+    }
+
+    .comment-toggle {
+      display: inline-block;
+      margin-left: 8px;
+      font-size: 16px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      cursor: pointer;
+    }
+
+    li:hover .comment-toggle {
+      opacity: 0.6;
+    }
+
+    .comment-toggle:hover {
+      opacity: 1 !important;
+    }
+
+    li.has-comment .comment-toggle {
+      opacity: 0.8;
+    }
+
+    .comment-box {
+      display: none;
+      margin-top: 8px;
+      padding: 8px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(109,40,217,0.3);
+      border-radius: 8px;
+    }
+
+    .comment-box.open {
+      display: block;
+    }
+
+    .comment-input {
+      width: 100%;
+      min-height: 60px;
+      padding: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      background: rgba(0,0,0,0.3);
+      color: rgba(255,255,255,0.92);
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    .comment-input:focus {
+      outline: none;
+      border-color: rgba(109,40,217,0.6);
+    }
+
+    .comment-input::placeholder {
+      color: rgba(255,255,255,0.4);
+    }
+
+    .comment-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .comment-btn {
+      padding: 4px 10px;
+      font-size: 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.8);
+    }
+
+    .comment-btn:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    .comment-btn--save {
+      background: rgba(16,185,129,0.2);
+      color: #6ee7b7;
+    }
+
+    .comment-btn--save:hover {
+      background: rgba(16,185,129,0.3);
+    }
+
+    .comment-count {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #6d28d9, #22d3ee);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 999px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(109,40,217,0.4);
+      z-index: 1000;
+      font-size: 14px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin: 16px 0;
+    }
+
+    .stat {
+      background: rgba(0,0,0,0.3);
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6d28d9, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .questions {
+      background: linear-gradient(135deg, rgba(239,68,68,0.1), rgba(109,40,217,0.1));
+      border: 2px solid rgba(239,68,68,0.3);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 24px 0;
+    }
+
+    .question {
+      background: rgba(0,0,0,0.3);
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .question:last-child {
+      margin-bottom: 0;
+    }
+
+    .question-label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: block;
+      color: rgba(255,255,255,0.95);
+    }
+
+    .question-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(0,0,0,0.3);
+      color: rgba(255,255,255,0.92);
+      font-size: 14px;
+    }
+
+    .question-input:focus {
+      outline: none;
+      border-color: rgba(109,40,217,0.6);
+      box-shadow: 0 0 0 3px rgba(109,40,217,0.15);
+    }
+
+    textarea.question-input {
+      min-height: 80px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .cta {
+      background: linear-gradient(135deg, #6d28d9, #22d3ee);
+      border: none;
+      border-radius: 12px;
+      padding: 14px 24px;
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 16px;
+      box-shadow: 0 10px 30px rgba(109,40,217,0.3);
+    }
+
+    .cta:active {
+      transform: scale(0.98);
+    }
+
+    code {
+      background: rgba(0,0,0,0.4);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      border: 1px solid rgba(255,255,255,0.1);
+      font-family: 'Courier New', monospace;
+    }
+
+    .timeline {
+      background: rgba(245,158,11,0.1);
+      border-left: 3px solid #f59e0b;
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 8px;
+    }
+
+    .timeline strong {
+      color: #fbbf24;
+    }
+
+    @media (max-width: 600px) {
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+
+      body {
+        padding: 12px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      .section {
+        padding: 16px;
+      }
+    }
+
+    .deliverables {
+      background: rgba(16,185,129,0.1);
+      border-left: 3px solid #10b981;
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .deliverables strong {
+      color: #6ee7b7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎯 SocialBit Strategy Report</h1>
+      <p class="subtitle">6-Expert Multi-Perspectief Analyse</p>
+      <div class="meta">
+        <span class="badge">Datum: 2026-02-07</span>
+        <span class="badge badge--success">8 Deliverables</span>
+        <span class="badge">6 Experts</span>
+      </div>
+    </header>
+
+    <!-- Executive Summary -->
+    <div class="section">
+      <div class="section-header">
+        <div class="icon icon--purple">📊</div>
+        <h2>Executive Summary</h2>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="stat-label">Performance Gain</div>
+          <div class="stat-value">24× sneller</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Implementatie</div>
+          <div class="stat-value">6 uur werk</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Realistische Timeline</div>
+          <div class="stat-value">18-24 mnd</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Documenten</div>
+          <div class="stat-value">8 docs</div>
+        </div>
+      </div>
+
+      <h3>🚨 Kritieke Bevinding</h3>
+      <ul>
+        <li class="critical">Huidige scope is <strong>te ambitieus</strong> voor solo developer</li>
+        <li class="critical">6+ platforms = 260-410 uur initieel + 270-420 uur/jaar maintenance</li>
+        <li class="success">Aanbeveling: <strong>TikTok-only MVP</strong> (6 maanden) → valideren → schalen</li>
+        <li class="success">Realistische timeline: <strong>18-24 maanden</strong> tot €10K MRR (niet 6!)</li>
+      </ul>
+
+      <div class="deliverables">
+        <strong>📄 Deliverables:</strong> 7 strategy docs + 1 SQL migration + 1 design system guide = <strong>8 documenten</strong> in <code>docs/</code>
+      </div>
+    </div>
+
+    <!-- Database Architect -->
+    <div class="section">
+      <div class="section-header">
+        <div class="icon icon--blue">🔵</div>
+        <h2>Database Architect</h2>
+      </div>
+
+      <h3>⚠️ Critical Issues</h3>
+      <ul>
+        <li class="critical"><code>client_id</code> ontbreekt in <code>metrics_history</code> - <strong>24× sneller mogelijk!</strong></li>
+        <li class="critical">Huidige queries: 1200ms → Na fix: <strong>45ms</strong></li>
+        <li class="critical">2026 algorithm metrics ontbreken: <code>watch_time</code>, <code>completion_rate</code>, <code>sends_count</code></li>
+        <li class="warning">Multi-source conflict resolution ontbreekt (CSV overschrijft API data)</li>
+      </ul>
+
+      <h3>✅ P0 Migrations (6 uur werk)</h3>
+      <ul>
+        <li>Migration 010: Add <code>client_id</code> + indexes to metrics_history</li>
+        <li>Migration 007: Add 2026 algorithm metrics (watch_time, completion_rate, etc.)</li>
+        <li>Migration 011: Composite indexes voor multi-tenant queries</li>
+        <li>Migration 014: Deduplication (content_hash, unique constraints)</li>
+      </ul>
+
+      <h3>📈 Performance Impact</h3>
+      <ul>
+        <li>Dashboard: 1200ms → 45ms (<strong>26× sneller</strong>)</li>
+        <li>Top posts: 250ms → 15ms (<strong>16× sneller</strong>)</li>
+        <li>Schaalbaar: 50 → 500+ clients (<strong>10× verbetering</strong>)</li>
+      </ul>
+
+      <div class="deliverables">
+        <strong>📄 Document:</strong> <code>docs/database-recommendations-2026-02-07.md</code> (22 migraties met DDL voorbeelden)
+      </div>
+    </div>
+
+    <!-- Social Media Expert -->
+    <div class="section">
+      <div class="section-header">
+        <div class="icon icon--green">🟢</div>
+        <h2>Social Media Expert</h2>
+      </div>
+
+      <h3>🎯 2026 Algorithm Prioriteiten</h3>
+      <ul>
+        <li class="success"><strong>Watch Time & Completion Rate</strong> - Algoritme prioriteit #1 (40-50% weight!)</li>
+        <li>TikTok: 75% completion threshold (verhoogd van 60%)</li>
+        <li>Instagram Reels: Watch time is #1 factor, skip rate <10% = goed</li>
+        <li><strong>DM Shares (sends_count)</strong> - Sterker dan likes/saves</li>
+        <li><strong>Saves Count</strong> - High-intent signal (2.1% avg, 4%+ excellent)</li>
+      </ul>
+
+      <h3>💡 Metricool = Game Changer</h3>
+      <ul>
+        <li class="success">Je hebt al Metricool account - <strong>perfect!</strong></li>
+        <li>Primair: Metricool API (dagelijks 4 AM batch) - alle platforms</li>
+        <li>Secundair: Direct APIs (wekelijks) - completion rate, DM shares</li>
+        <li>Fallback: CSV import - historische data, outages</li>
+        <li>Voordeel: 1 API voor TikTok/Instagram/Facebook/YouTube</li>
+      </ul>
+
+      <h3>📊 2026 Benchmarks</h3>
+      <ul>
+        <li>TikTok: 3.7% avg engagement (5.3%+ excellent, 75%+ completion voor FYP)</li>
+        <li>Instagram: 0.48% avg (3-6% goed, 6%+ excellent)</li>
+        <li>Facebook: 0.15% avg (organic data beperkt in 2026)</li>
+      </ul>
+
+      <h3>⚠️ Database Schema Gaps</h3>
+      <ul>
+        <li class="warning">Ontbreekt: <code>completion_rate</code>, <code>average_watch_time</code>, <code>duration</code></li>
+        <li class="warning">Ontbreekt: <code>sends_count</code> (apart van shares)</li>
+        <li class="warning">Ontbreekt: <code>profile_visits</code>, <code>skip_rate</code>, <code>follower_growth</code></li>
+        <li class="warning">Ontbreekt: <code>industry_benchmarks</code> table</li>
+      </ul>
+
+      <div class="deliverables">
+        <strong>📄 Documenten:</strong> <code>docs/2026-social-media-data-strategy.md</code> + <code>docs/PRIORITY-METRICS-SUMMARY.md</code>
+      </div>
+    </div>
+
+    <!-- Pipeline Engineer -->
+    <div class="section">
+      <div class="section-header">
+        <div class="icon icon--yellow">🟡</div>
+        <h2>Pipeline Engineer</h2>
+      </div>
+
+      <h3>🏗️ 5-Layer Pipeline Architectuur</h3>
+      <ul>
+        <li>Layer 1: Data Sources (APIs, CSV, webhooks, manual)</li>
+        <li>Layer 2: Ingestion (collectors met validatie)</li>
+        <li>Layer 3: Queue (MySQL-based job management)</li>
+        <li>Layer 4: Conflict Resolution (smart merge algoritme)</li>
+        <li>Layer 5: Storage (posts, metrics_history, data_lineage)</li>
+      </ul>
+
+      <h3>⚙️ Conflict Resolution Strategie</h3>
+      <ul>
+        <li class="success"><strong>Priority Hierarchy:</strong> API > Third-party API > CSV > Manual</li>
+        <li>Timestamp-based Last Write Wins binnen zelfde tier</li>
+        <li>Validatie regels: Detecteert spikes (>10×) en drops (>10%)</li>
+        <li>Full audit trail in nieuwe <code>data_lineage</code> table</li>
+        <li>Principe: <strong>Geen data verlies</strong> - alles wordt gelogd</li>
+      </ul>
+
+      <h3>🔧 Technology Recommendations</h3>
+      <ul>
+        <li>Queue: MySQL-based (Phase 1), migreer naar Redis bij >10K jobs/dag</li>
+        <li>Scheduler: Plesk cron jobs (4 AM batch per tenant)</li>
+        <li>Rate Limiting: Symfony Rate Limiter component (vanilla, no framework)</li>
+        <li>Libraries: Composer-based dependencies</li>
+      </ul>
+
+      <div class="timeline">
+        <strong>⏱️ Roadmap:</strong> 8 weken gefaseerd (Week 1-2: Foundation, Week 3-4: API integratie, Week 5-6: Reliability, Week 7-8: Optimization)
+      </div>
+
+      <div class="deliverables">
+        <strong>📄 Document:</strong> <code>docs/DATA_PIPELINE_ARCHITECTURE.md</code> (complete architectuur met voorbeelden)
+      </div>
+    </div>
+
+    <!-- Data Scientist -->
+    <div class="section">
+      <div class="section-header">
+        <div class="icon icon--purple">🟣</div>
+        <h2>Data Scientist</h2>
+      </div>
+
+      <h3>📊 Engagement Quality Score (EQS) - NIEUWE PRIMARY METRIC</h3>
+      <ul>
+        <li class="success">Weighted formula: <code>(likes×1 + comments×3 + shares×5 + saves×4) / views × 100</code></li>
+        <li>Waarom? Shares en saves = HIGH intent, passive likes niet</li>
+        <li>EQS < 2%: Content niet resonerend</li>
+        <li>EQS 5-10%: Goede performance</li>
+        <li>EQS > 10%: Excellent, repliceer dit!</li>
+      </ul>
+
+      <h3>🎯 Analytics Strategie</h3>
+      <ul>
+        <li><strong>Watch Time & Completion Rate</strong> - Algorithm priority #1</li>
+        <li><strong>Historical Comparison</strong> - Month-over-month met LAG() window functions</li>
+        <li><strong>Benchmark Comparison</strong> - "Je doet het 2× beter dan gemiddeld"</li>
+        <li><strong>Confidence Indicators</strong> - Sample size warnings (n<10 = low)</li>
+        <li><strong>Anomaly Detection</strong> - Viral alerts (IQR method) + performance drops (Z-score)</li>
+      </ul>
+
+      <h3>🔮 Predictive Analytics (Rule-Based)</h3>
+      <ul>
+        <li>Content Performance Prediction: Score 0-12 points VOOR posting</li>
+        <li>Factoren: Optimal time (+2), proven hashtags (+5), best format (+2), etc.</li>
+        <li>Trend Forecasting: Moving averages + linear extrapolation</li>
+        <li>Smart: Vermijd ML complexity voor MVP (implementeer later bij 1000+ posts)</li>
+      </ul>
+
+      <h3>💡 Plain Language Presentatie</h3>
+      <ul>
+        <li class="success">"Je bent 2× beter dan gemiddeld" niet "212% of median"</li>
+        <li class="success">"68% kijkt tot het einde" niet "completion_rate: 0.68"</li>
+        <li class="success">Viral Alert: "🚀 Post #1247: 18.3% engagement (4× je gemiddelde)"</li>
+        <li class="success">Performance Drop: "⚠️ Laatste 3 posts underperformden"</li>
+      </ul>
+
+      <div class="deliverables">
+        <strong>📄 Documenten:</strong> <code>docs/ANALYTICS_STRATEGY.md</code> + <code>scripts/007_analytics_enhancement.sql</code> (production-ready!)
+      </div>
+    </div>
+
+    <!-- Business User -->
+    <div class="section">
+      <div class="section-header">
+        <div class="icon icon--orange">🟠</div>
+        <h2>Business User (Niet-Technisch)</h2>
+      </div>
+
+      <h3>🚨 Top 3 Pijnpunten</h3>
+      <ul>
+        <li class="critical">Technisch jargon zonder context - "Is 4.2% goed of slecht?"</li>
+        <li class="critical">Geen actionable recommendations - alleen data dumps</li>
+        <li class="critical">Plain language ontbreekt - te veel "engagement rate"</li>
+      </ul>
+
+      <h3>💡 Prioritaire UX Aanbevelingen</h3>
+      <ul>
+        <li class="success">Context bij elke metric (benchmarks, "2× boven gemiddeld")</li>
+        <li class="success">"Insights Dashboard" met concrete actiepunten</li>
+        <li class="success">Visuele indicatoren (✅ groene pijlen omhoog, ❌ rode waarschuwingen)</li>
+        <li class="success">Wekelijkse email samenvattingen met 2-3 actie-items</li>
+        <li>Verberg technische features (CSV import, JSON dumps) van main view</li>
+      </ul>
+
+      <h3>🎯 Wat Business Users Willen Weten</h3>
+      <ul>
+        <li>"Is dit goed of slecht?" → Context met benchmarks</li>
+        <li>"Wat moet ik anders doen?" → Actionable recommendations</li>
+        <li>"Zal het mijn resultaten verbeteren?" → Predictive insights</li>
+      </ul>
+
+      <h3>🏆 Competitor Best Practices</h3>
+      <ul>
+        <li>Metricool: Context + plain language + action items</li>
+        <li>Buffer: User-friendly, basic analytics met visuele feedback</li>
+        <li>Sprout Social: AI-powered insights (OpenAI GPT), comprehensive</li>
+      </ul>
+    </div>
+
+    <!-- Devil's Advocate -->
+    <div class="section">
+      <div class="section-header">
+        <div class="icon icon--pink">🩷</div>
+        <h2>Devil's Advocate (Critical Review)</h2>
+      </div>
+
+      <h3>🚨 KRITIEKE WAARSCHUWINGEN</h3>
+      <ul>
+        <li class="critical"><strong>Scope Creep Alert:</strong> Je probeert Hootsuite te bouwen (€150K+ budget) als solo dev</li>
+        <li class="critical">Multi-platform maintenance = 25-40% van je tijd (260-410 uur/jaar)</li>
+        <li class="critical">Dit is GEEN differentiatie - Buffer/Hootsuite doen dit al</li>
+      </ul>
+
+      <h3>⚠️ Reality Checks</h3>
+      <ul>
+        <li class="warning"><strong>TikTok API:</strong> 30-40% kans op denial in 2026 (verification moeilijker)</li>
+        <li class="warning"><strong>Vanilla PHP:</strong> Bij 50-100 tenants kom je tegen plafond</li>
+        <li class="warning"><strong>Timeline:</strong> Solo SaaS = 18-24 maanden tot €10K MRR (niet 6!)</li>
+        <li class="warning"><strong>Revenue Runway:</strong> Heb je financiële buffer voor 18-24 maanden?</li>
+      </ul>
+
+      <h3>✅ AANBEVELINGEN (Descope!)</h3>
+      <ul>
+        <li class="success"><strong>Phase 1 (Maand 1-6):</strong> TikTok-only MVP (CSV + API wanneer goedgekeurd)</li>
+        <li class="success"><strong>Phase 2 (Maand 6-12):</strong> Instagram ALLEEN als €5K+ MRR behaald</li>
+        <li class="success"><strong>Phase 3 (Maand 12-24):</strong> Facebook/andere platforms</li>
+        <li class="success"><strong>Validatie:</strong> 20+ beta users, €49/maand pricing test</li>
+      </ul>
+
+      <h3>🎯 Focus op Differentiatie</h3>
+      <ul>
+        <li class="success">❌ Commodity: Multi-platform connecties (iedereen heeft dit)</li>
+        <li class="success">✅ Uniek: Industry benchmarks + actionable recommendations</li>
+        <li class="success">✅ Uniek: Plain language insights voor niet-techies</li>
+        <li class="success">✅ Uniek: Predictive scoring + anomaly detection</li>
+      </ul>
+
+      <div class="deliverables">
+        <strong>📄 Document:</strong> <code>docs/CRITICAL_RISK_ASSESSMENT.md</code> (scope realiteit + risk matrix)
+      </div>
+    </div>
+
+    <!-- Harde Vragen -->
+    <div class="questions">
+      <div class="section-header" style="border: none; padding: 0;">
+        <div class="icon icon--pink">❓</div>
+        <h2>Strategische Vragen (Beantwoord voor beslissing)</h2>
+      </div>
+
+      <div class="question">
+        <label class="question-label">1. Work je full-time of part-time aan dit project?</label>
+        <input type="text" class="question-input" placeholder="Bv: Full-time, Part-time (20 uur/week), Weekends only">
+      </div>
+
+      <div class="question">
+        <label class="question-label">2. Financial runway? (Hoeveel maanden zonder inkomsten kun je overbruggen?)</label>
+        <input type="text" class="question-input" placeholder="Bv: 6 maanden, 12 maanden, 24 maanden">
+      </div>
+
+      <div class="question">
+        <label class="question-label">3. Heb je TikTok API aanvraag al ingediend? Wat is de status?</label>
+        <textarea class="question-input" placeholder="Bv: Nog niet ingediend, In behandeling, Goedgekeurd, Afgewezen"></textarea>
+      </div>
+
+      <div class="question">
+        <label class="question-label">4. Accepteer je TikTok-only MVP voor Phase 1 (6 maanden)? ✅ AANBEVOLEN</label>
+        <select class="question-input">
+          <option value="">-- Kies een optie --</option>
+          <option value="ja">Ja, TikTok-only MVP eerst</option>
+          <option value="nee">Nee, ik wil multi-platform vanaf start</option>
+          <option value="twijfel">Ik twijfel nog</option>
+        </select>
+      </div>
+
+      <div class="question">
+        <label class="question-label">5. Accepteer je 18-24 maanden realistische timeline tot €10K MRR?</label>
+        <select class="question-input">
+          <option value="">-- Kies een optie --</option>
+          <option value="ja">Ja, accepteer 18-24 maanden</option>
+          <option value="nee">Nee, ik heb kortere timeline nodig</option>
+          <option value="onzeker">Onzeker, hangt af van...</option>
+        </select>
+      </div>
+
+      <div class="question">
+        <label class="question-label">6. Metricool plan? (Advanced plan nodig voor API access)</label>
+        <textarea class="question-input" placeholder="Welk Metricool plan heb je? Heb je API toegang?"></textarea>
+      </div>
+
+      <div class="question">
+        <label class="question-label">7. Extra Opmerkingen / Zorgen / Vragen</label>
+        <textarea class="question-input" placeholder="Andere zaken die opkomen tijdens het lezen van dit rapport... ideeën, zorgen, vragen, prioriteiten, etc." style="min-height: 120px;"></textarea>
+      </div>
+
+      <div class="row wrap" style="gap: 10px;">
+        <button class="cta" style="flex: 1; min-width: 200px;" id="saveAnswersBtn">
+          💾 Opslaan
+        </button>
+        <button class="cta" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #10b981, #22d3ee);" id="exportBtn">
+          📥 Exporteer JSON
+        </button>
+      </div>
+
+      <div class="row wrap" style="gap: 10px; margin-top: 10px;">
+        <button class="cta" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #f59e0b, #ef4444);" id="emailBtn">
+          📧 Email Naar Mezelf
+        </button>
+        <button class="cta" style="flex: 1; min-width: 200px; background: rgba(255,255,255,0.1);" id="copyBtn">
+          📋 Kopieer Naar Clipboard
+        </button>
+      </div>
+
+      <p class="muted mini" style="text-align: center; margin-top: 12px;">
+        💡 Tip: Gebruik Email of Export om je antwoorden van mobiel naar PC te krijgen
+      </p>
+    </div>
+
+    <!-- Next Steps -->
+    <div class="section">
+      <div class="section-header">
+        <div class="icon icon--green">🚀</div>
+        <h2>Aanbevolen Next Steps</h2>
+      </div>
+
+      <h3>Week 1-2: Database Quick Wins (6 uur)</h3>
+      <ul>
+        <li>Backup database</li>
+        <li>Run Migration 010 (client_id in metrics_history)</li>
+        <li>Run Migration 007 (2026 algorithm metrics)</li>
+        <li>Run Migration 011 (composite indexes)</li>
+        <li>Impact: 24× sneller, klaar voor schaling</li>
+      </ul>
+
+      <h3>Week 3-4: Metricool Integration (8-10 uur)</h3>
+      <ul>
+        <li>Verify Metricool API access (Advanced plan?)</li>
+        <li>Build <code>MetricoolApiService.php</code></li>
+        <li>Map Metricool response → SocialBit schema</li>
+        <li>Daily batch job (4 AM per tenant)</li>
+      </ul>
+
+      <h3>Week 5-6: Data Pipeline (12-15 uur)</h3>
+      <ul>
+        <li>Create <code>job_queue</code> table</li>
+        <li>Create <code>data_lineage</code> table (audit trail)</li>
+        <li>Build <code>ConflictResolverService.php</code></li>
+        <li>Validation rules (spike/drop detection)</li>
+      </ul>
+
+      <h3>Week 7-8: UX Improvements (10-12 uur)</h3>
+      <ul>
+        <li>Update dashboard met plain language</li>
+        <li>Add benchmark comparisons ("2× above average")</li>
+        <li>Visual indicators (🟢 🔴 arrows)</li>
+        <li>"Your Next Steps" recommendation cards</li>
+      </ul>
+
+      <div class="timeline">
+        <strong>⏱️ Totaal:</strong> 8 weken basis implementatie. TikTok API (optioneel Week 9-12) indien goedgekeurd.
+      </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="section">
+      <div class="section-header">
+        <div class="icon icon--blue">📈</div>
+        <h2>Key Metrics & Stats</h2>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="stat-label">Database Speedup</div>
+          <div class="stat-value">24×</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">P0 Werk</div>
+          <div class="stat-value">6 uur</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Timeline</div>
+          <div class="stat-value">18-24m</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Target MRR</div>
+          <div class="stat-value">€10K</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Beta Users</div>
+          <div class="stat-value">20+</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Pricing</div>
+          <div class="stat-value">€49/m</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Phase 1</div>
+          <div class="stat-value">TikTok</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Deliverables</div>
+          <div class="stat-value">8 docs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 24px; color: rgba(255,255,255,0.5); font-size: 13px;">
+      <p>📄 Alle documenten beschikbaar in <code>docs/</code></p>
+      <p>🤖 Gegenereerd door 6-expert team analyse (2026-02-07)</p>
+      <p>💾 Review antwoorden en neem strategische beslissingen</p>
+    </footer>
+  </div>
+
+  <script>
+    // Auto-save to localStorage
+    document.querySelectorAll('.question-input').forEach(input => {
+      const key = 'socialbit_' + input.closest('.question').querySelector('.question-label').textContent.slice(0, 20);
+
+      // Load saved value
+      const saved = localStorage.getItem(key);
+      if (saved) input.value = saved;
+
+      // Save on change
+      input.addEventListener('change', () => {
+        localStorage.setItem(key, input.value);
+      });
+    });
+
+    // Collect all data (answers + comments)
+    function collectAllData() {
+      const data = {
+        timestamp: new Date().toISOString(),
+        report: 'SocialBit Strategy Analysis',
+        date: '2026-02-07',
+        answers: {},
+        comments: {},
+        summary: {
+          total_answers: 0,
+          total_comments: 0,
+          completion: '0%'
+        }
+      };
+
+      // Collect answers
+      document.querySelectorAll('.question').forEach((q, i) => {
+        const label = q.querySelector('.question-label').textContent;
+        const input = q.querySelector('.question-input');
+        const answer = input.value.trim();
+
+        data.answers[`vraag_${i+1}`] = {
+          question: label,
+          answer: answer
+        };
+
+        if (answer) data.summary.total_answers++;
+      });
+
+      // Collect comments
+      const allLi = document.querySelectorAll('.section ul li[data-comment-id]');
+      allLi.forEach(li => {
+        const itemId = li.dataset.commentId;
+        const comment = localStorage.getItem(itemId);
+        if (comment) {
+          const text = li.textContent.replace('💬', '').trim();
+          data.comments[itemId] = {
+            finding: text,
+            comment: comment
+          };
+          data.summary.total_comments++;
+        }
+      });
+
+      // Calculate completion
+      const totalQuestions = Object.keys(data.answers).length;
+      const completion = Math.round((data.summary.total_answers / totalQuestions) * 100);
+      data.summary.completion = `${completion}%`;
+
+      return data;
+    }
+
+    // Format data as readable text
+    function formatDataAsText(data) {
+      let text = `📊 SOCIALBIT STRATEGY REPORT - ANTWOORDEN\n`;
+      text += `═══════════════════════════════════════\n\n`;
+      text += `📅 Datum: ${data.date}\n`;
+      text += `⏰ Timestamp: ${data.timestamp}\n`;
+      text += `✅ Ingevuld: ${data.summary.completion} (${data.summary.total_answers}/${Object.keys(data.answers).length} vragen)\n`;
+      text += `💬 Comments: ${data.summary.total_comments}\n\n`;
+
+      text += `\n📝 ANTWOORDEN\n`;
+      text += `${'─'.repeat(40)}\n\n`;
+
+      Object.values(data.answers).forEach((item, i) => {
+        if (item.answer) {
+          text += `${i+1}. ${item.question}\n`;
+          text += `   → ${item.answer}\n\n`;
+        }
+      });
+
+      if (data.summary.total_comments > 0) {
+        text += `\n💬 COMMENTS OP BEVINDINGEN\n`;
+        text += `${'─'.repeat(40)}\n\n`;
+
+        Object.values(data.comments).forEach((item, i) => {
+          text += `${i+1}. ${item.finding}\n`;
+          text += `   💬 ${item.comment}\n\n`;
+        });
+      }
+
+      text += `\n${'═'.repeat(40)}\n`;
+      text += `🤖 Gegenereerd door SocialBit Strategy Report\n`;
+
+      return text;
+    }
+
+    // Save button functionality
+    document.getElementById('saveAnswersBtn').addEventListener('click', () => {
+      const data = collectAllData();
+
+      localStorage.setItem('socialbit_answers_complete', JSON.stringify(data.answers));
+      localStorage.setItem('socialbit_comments', JSON.stringify(data.comments));
+
+      console.log('📋 Data opgeslagen:', data);
+
+      alert(`✅ Antwoorden opgeslagen!\n\n📊 Status:\n- ${data.summary.total_answers} vragen beantwoord\n- ${data.summary.total_comments} comments toegevoegd\n- Completion: ${data.summary.completion}\n\n💡 Gebruik nu "Exporteer" of "Email" om data te bewaren!`);
+    });
+
+    // Export to JSON file
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      const data = collectAllData();
+      const json = JSON.stringify(data, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `socialbit-strategy-answers-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      alert('📥 JSON bestand gedownload!\n\nJe kunt dit bestand:\n- Openen op je PC\n- Importeren in andere tools\n- Bewaren als backup');
+    });
+
+    // Email to self
+    document.getElementById('emailBtn').addEventListener('click', () => {
+      const data = collectAllData();
+      const textData = formatDataAsText(data);
+
+      // Create mailto link
+      const subject = encodeURIComponent(`📊 SocialBit Strategy Report - Antwoorden (${data.date})`);
+      const body = encodeURIComponent(textData);
+
+      // Check body length (some email clients have limits)
+      if (body.length > 2000) {
+        // If too long, offer JSON download instead
+        if (confirm('⚠️ Data is te groot voor email.\n\nWil je in plaats daarvan een JSON bestand downloaden?')) {
+          document.getElementById('exportBtn').click();
+          return;
+        }
+      }
+
+      window.location.href = `mailto:?subject=${subject}&body=${body}`;
+
+      setTimeout(() => {
+        alert('📧 Email app geopend!\n\n💡 Tips:\n- Vul je eigen email adres in\n- Check of alle data er staat\n- Verstuur naar jezelf');
+      }, 500);
+    });
+
+    // Copy to clipboard
+    document.getElementById('copyBtn').addEventListener('click', async () => {
+      const data = collectAllData();
+      const textData = formatDataAsText(data);
+
+      try {
+        await navigator.clipboard.writeText(textData);
+
+        const btn = document.getElementById('copyBtn');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '✅ Gekopieerd!';
+
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+        }, 2000);
+
+        alert('📋 Gekopieerd naar clipboard!\n\nJe kunt het nu plakken in:\n- Notes app\n- WhatsApp/Telegram\n- Google Docs\n- Notion/Evernote');
+      } catch (err) {
+        // Fallback for older browsers
+        const textarea = document.createElement('textarea');
+        textarea.value = textData;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        try {
+          document.execCommand('copy');
+          alert('📋 Gekopieerd naar clipboard!');
+        } catch (e) {
+          alert('❌ Kopiëren mislukt. Probeer de Export functie.');
+        }
+
+        document.body.removeChild(textarea);
+      }
+    });
+
+    // ========================================
+    // Comment System for Bulletpoints
+    // ========================================
+
+    let commentCount = 0;
+
+    // Add comment functionality to all list items
+    function initComments() {
+      const allLi = document.querySelectorAll('.section ul li');
+
+      allLi.forEach((li, index) => {
+        // Skip if already initialized
+        if (li.dataset.commentId) return;
+
+        // Generate unique ID for this item
+        const itemId = `comment_${index}_${li.textContent.slice(0, 30).replace(/[^a-z0-9]/gi, '_')}`;
+        li.dataset.commentId = itemId;
+
+        // Add comment toggle button
+        const toggle = document.createElement('span');
+        toggle.className = 'comment-toggle';
+        toggle.innerHTML = '💬';
+        toggle.title = 'Add comment';
+        li.appendChild(toggle);
+
+        // Create comment box
+        const commentBox = document.createElement('div');
+        commentBox.className = 'comment-box';
+        commentBox.innerHTML = `
+          <textarea class="comment-input" placeholder="Jouw opmerking, vraag of wijziging op dit punt..."></textarea>
+          <div class="comment-actions">
+            <button class="comment-btn comment-btn--save">💾 Opslaan</button>
+            <button class="comment-btn comment-btn--clear">🗑️ Wissen</button>
+            <button class="comment-btn comment-btn--close">Sluiten</button>
+          </div>
+        `;
+        li.appendChild(commentBox);
+
+        // Load saved comment
+        const savedComment = localStorage.getItem(itemId);
+        if (savedComment) {
+          commentBox.querySelector('.comment-input').value = savedComment;
+          li.classList.add('has-comment');
+          commentCount++;
+        }
+
+        // Toggle comment box
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = commentBox.classList.contains('open');
+
+          // Close all other comment boxes
+          document.querySelectorAll('.comment-box.open').forEach(box => {
+            box.classList.remove('open');
+          });
+
+          // Toggle this one
+          if (!isOpen) {
+            commentBox.classList.add('open');
+            commentBox.querySelector('.comment-input').focus();
+          }
+        });
+
+        // Save button
+        commentBox.querySelector('.comment-btn--save').addEventListener('click', () => {
+          const textarea = commentBox.querySelector('.comment-input');
+          const comment = textarea.value.trim();
+
+          if (comment) {
+            localStorage.setItem(itemId, comment);
+            if (!li.classList.contains('has-comment')) {
+              li.classList.add('has-comment');
+              commentCount++;
+            }
+            updateCommentCount();
+
+            // Show feedback
+            const btn = commentBox.querySelector('.comment-btn--save');
+            btn.textContent = '✅ Opgeslagen!';
+            setTimeout(() => {
+              btn.textContent = '💾 Opslaan';
+            }, 1500);
+          } else {
+            alert('Vul eerst een opmerking in!');
+          }
+        });
+
+        // Clear button
+        commentBox.querySelector('.comment-btn--clear').addEventListener('click', () => {
+          if (confirm('Weet je zeker dat je deze opmerking wil wissen?')) {
+            localStorage.removeItem(itemId);
+            commentBox.querySelector('.comment-input').value = '';
+            if (li.classList.contains('has-comment')) {
+              li.classList.remove('has-comment');
+              commentCount--;
+            }
+            updateCommentCount();
+            commentBox.classList.remove('open');
+          }
+        });
+
+        // Close button
+        commentBox.querySelector('.comment-btn--close').addEventListener('click', () => {
+          commentBox.classList.remove('open');
+        });
+
+        // Auto-save on blur (after 1 second delay)
+        let autoSaveTimeout;
+        commentBox.querySelector('.comment-input').addEventListener('input', () => {
+          clearTimeout(autoSaveTimeout);
+          autoSaveTimeout = setTimeout(() => {
+            const comment = commentBox.querySelector('.comment-input').value.trim();
+            if (comment) {
+              localStorage.setItem(itemId, comment);
+              if (!li.classList.contains('has-comment')) {
+                li.classList.add('has-comment');
+                commentCount++;
+                updateCommentCount();
+              }
+            }
+          }, 1000);
+        });
+      });
+
+      updateCommentCount();
+    }
+
+    // Update comment counter badge
+    function updateCommentCount() {
+      let badge = document.querySelector('.comment-count');
+
+      if (commentCount > 0) {
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.className = 'comment-count';
+          document.body.appendChild(badge);
+        }
+        badge.textContent = `💬 ${commentCount} opmerking${commentCount !== 1 ? 'en' : ''}`;
+      } else if (badge) {
+        badge.remove();
+      }
+    }
+
+    // Export all comments
+    function exportComments() {
+      const allComments = {};
+      const allLi = document.querySelectorAll('.section ul li[data-comment-id]');
+
+      allLi.forEach(li => {
+        const itemId = li.dataset.commentId;
+        const comment = localStorage.getItem(itemId);
+        if (comment) {
+          allComments[itemId] = {
+            text: li.textContent.replace('💬', '').trim(),
+            comment: comment
+          };
+        }
+      });
+
+      return allComments;
+    }
+
+    // Initialize on load
+    document.addEventListener('DOMContentLoaded', () => {
+      initComments();
+    });
+
+    // Keyboard shortcut: ESC to close open comment box
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.comment-box.open').forEach(box => {
+          box.classList.remove('open');
+        });
+      }
+    });
+  </script>
+</body>
+</html>

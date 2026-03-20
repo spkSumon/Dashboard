@@ -1,0 +1,15 @@
+{
+  "id": "session-1767122764379",
+  "projectId": "cd649c31-0c0d-4253-854b-8e7a18b7e137",
+  "title": "What features could I add next?",
+  "messages": [
+    {
+      "id": "msg-1767122764383",
+      "role": "user",
+      "content": "What features could I add next?",
+      "timestamp": "2025-12-30T19:26:04.383Z"
+    }
+  ],
+  "createdAt": "2025-12-30T19:26:04.379Z",
+  "updatedAt": "2025-12-30T19:26:04.383Z"
+}

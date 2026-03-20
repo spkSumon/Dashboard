@@ -1,0 +1,90 @@
+{
+  "complexity": "standard",
+  "workflow_type": "feature",
+  "confidence": 0.85,
+  "reasoning": "Optimizing existing TikTok CSV importer is a contained feature enhancement. The code is well-structured (139 lines) with clear optimization opportunities: batch inserts, chunked processing, and transaction management. Limited to 2-3 files in a single service with no external integrations or infrastructure changes.",
+
+  "analysis": {
+    "scope": {
+      "estimated_files": 3,
+      "estimated_services": 1,
+      "is_cross_cutting": false,
+      "notes": "Main work in TikTokCsvImporter.php, possibly GenericCsvImporter.php for shared patterns, and minor ImportController.php updates for progress reporting if needed"
+    },
+    "integrations": {
+      "external_services": [],
+      "new_dependencies": [],
+      "research_needed": false,
+      "notes": "No external integrations. Standard PHP CSV/MySQL optimization patterns apply"
+    },
+    "infrastructure": {
+      "docker_changes": false,
+      "database_changes": false,
+      "config_changes": false,
+      "notes": "Pure code optimization - no infrastructure modifications needed"
+    },
+    "knowledge": {
+      "patterns_exist": true,
+      "research_required": false,
+      "unfamiliar_tech": [],
+      "notes": "GenericCsvImporter shows similar patterns. Standard PHP batch insert and chunking patterns are well-documented"
+    },
+    "risk": {
+      "level": "low",
+      "concerns": [
+        "Memory usage with large file batch processing",
+        "Transaction rollback behavior with chunked commits",
+        "Backward compatibility with existing import behavior"
+      ],
+      "notes": "Low risk as this is optimization of existing working code. Existing tests (if any) will validate behavior is preserved"
+    }
+  },
+
+  "optimization_context": {
+    "current_state": {
+      "file": "src/Services/TikTokCsvImporter.php",
+      "lines": 139,
+      "approach": "Row-by-row processing with single transaction"
+    },
+    "identified_opportunities": [
+      "Batch/bulk INSERT instead of row-by-row",
+      "Chunked transaction commits for large files",
+      "Streaming for memory efficiency",
+      "LAST_INSERT_ID() or batched ID lookups instead of per-row SELECT",
+      "Progress reporting for large imports",
+      "Consider MySQL LOAD DATA INFILE for maximum performance"
+    ],
+    "related_files": [
+      "src/Services/GenericCsvImporter.php",
+      "src/Controllers/ImportController.php",
+      "src/Core/Database.php"
+    ]
+  },
+
+  "recommended_phases": [
+    "discovery",
+    "requirements",
+    "context",
+    "spec_writing",
+    "planning",
+    "validation"
+  ],
+
+  "flags": {
+    "needs_research": false,
+    "needs_self_critique": false,
+    "needs_infrastructure_setup": false
+  },
+
+  "validation_recommendations": {
+    "risk_level": "medium",
+    "skip_validation": false,
+    "minimal_mode": false,
+    "test_types_required": ["unit", "integration"],
+    "security_scan_required": false,
+    "staging_deployment_required": false,
+    "reasoning": "CSV import optimization requires unit tests for batch logic and integration tests to verify database operations work correctly with chunked processing. No security implications as file upload handling remains unchanged."
+  },
+
+  "created_at": "2025-12-30T18:30:00Z"
+}

@@ -1,0 +1,2530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗄️ Database Playground - SocialBit</title>
+    <link rel="stylesheet" href="assets/jungle-theme.css">
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, var(--jungle-darkest) 0%, var(--jungle-medium) 100%);
+            padding: var(--spacing-2xl) var(--spacing-xl);
+            border-radius: var(--radius-xl);
+            margin-bottom: var(--spacing-xl);
+            border: 2px solid var(--jungle-accent);
+            box-shadow: 0 0 30px rgba(46, 204, 113, 0.3);
+        }
+
+        .page-header h1 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            color: var(--jungle-glow);
+            margin-bottom: var(--spacing-sm);
+            text-shadow: 0 0 20px rgba(57, 255, 20, 0.5);
+        }
+
+        .page-header p {
+            color: var(--jungle-accent);
+            font-size: 1.1rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-xl);
+            flex-wrap: wrap;
+        }
+
+        .nav-tabs button {
+            padding: var(--spacing-md) var(--spacing-lg);
+            background: var(--jungle-medium);
+            border: 2px solid var(--jungle-accent);
+            border-radius: var(--radius-md);
+            color: var(--jungle-accent);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tabs button:hover {
+            background: var(--jungle-accent);
+            color: var(--jungle-darkest);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.5);
+        }
+
+        .nav-tabs button.active {
+            background: var(--jungle-accent);
+            color: var(--jungle-darkest);
+            box-shadow: 0 0 20px rgba(46, 204, 113, 0.6);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            background: var(--jungle-medium);
+            border: 2px solid var(--jungle-accent);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .section h2 {
+            font-family: var(--font-display);
+            color: var(--jungle-glow);
+            font-size: 1.75rem;
+            margin-bottom: var(--spacing-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .er-diagram {
+            background: var(--jungle-darkest);
+            border: 2px solid var(--jungle-accent);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-xl);
+            min-height: 600px;
+            overflow-x: auto;
+        }
+
+        .table-group {
+            margin-bottom: var(--spacing-2xl);
+        }
+
+        .table-group h3 {
+            color: var(--jungle-gold);
+            font-size: 1.25rem;
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 2px solid var(--jungle-accent);
+        }
+
+        .db-table {
+            background: var(--jungle-medium);
+            border: 2px solid var(--jungle-accent);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-md);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .db-table:hover {
+            border-color: var(--jungle-glow);
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .db-table-header {
+            background: var(--jungle-accent);
+            color: var(--jungle-darkest);
+            padding: var(--spacing-md);
+            font-weight: 700;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .db-table-body {
+            padding: var(--spacing-md);
+            display: none;
+        }
+
+        .db-table.expanded .db-table-body {
+            display: block;
+        }
+
+        .db-table.expanded .db-table-header {
+            background: var(--jungle-glow);
+        }
+
+        .column {
+            padding: var(--spacing-sm) 0;
+            border-bottom: 1px solid rgba(46, 204, 113, 0.2);
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: var(--spacing-md);
+            font-size: 0.9rem;
+        }
+
+        .column:last-child {
+            border-bottom: none;
+        }
+
+        .column-name {
+            color: var(--jungle-glow);
+            font-weight: 600;
+        }
+
+        .column-type {
+            color: var(--jungle-accent);
+        }
+
+        .column-key {
+            color: var(--jungle-gold);
+            font-size: 0.8rem;
+        }
+
+        .relationship {
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid var(--jungle-accent);
+            border-radius: var(--radius-sm);
+            padding: var(--spacing-sm) var(--spacing-md);
+            margin-top: var(--spacing-md);
+            font-size: 0.9rem;
+        }
+
+        .migration-timeline {
+            position: relative;
+            padding-left: var(--spacing-xl);
+        }
+
+        .migration-item {
+            position: relative;
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            background: var(--jungle-medium);
+            border: 2px solid var(--jungle-accent);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
+        }
+
+        .migration-item:hover {
+            border-color: var(--jungle-glow);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+        }
+
+        .migration-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            background: var(--jungle-accent);
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+
+        .migration-number {
+            display: inline-block;
+            background: var(--jungle-accent);
+            color: var(--jungle-darkest);
+            padding: var(--spacing-xs) var(--spacing-md);
+            border-radius: var(--radius-full);
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .migration-title {
+            font-size: 1.2rem;
+            color: var(--jungle-glow);
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .migration-desc {
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        .prompt-card {
+            background: var(--jungle-medium);
+            border: 2px solid var(--jungle-accent);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .prompt-card:hover {
+            border-color: var(--jungle-glow);
+            box-shadow: 0 0 20px rgba(57, 255, 20, 0.3);
+            transform: translateX(5px);
+        }
+
+        .prompt-title {
+            color: var(--jungle-glow);
+            font-weight: 600;
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .prompt-text {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            font-family: 'Courier New', monospace;
+            background: var(--jungle-darkest);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-sm);
+            border-left: 3px solid var(--jungle-accent);
+        }
+
+        .code-block {
+            background: var(--jungle-darkest);
+            border: 1px solid var(--jungle-accent);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--jungle-accent);
+            margin-top: var(--spacing-md);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .stat-card {
+            background: var(--jungle-darkest);
+            border: 2px solid var(--jungle-accent);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-lg);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--jungle-glow);
+            font-family: var(--font-display);
+        }
+
+        .stat-label {
+            color: var(--jungle-accent);
+            font-size: 0.9rem;
+            margin-top: var(--spacing-sm);
+        }
+
+        .copy-btn {
+            background: var(--jungle-accent);
+            color: var(--jungle-darkest);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: var(--spacing-md);
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: var(--jungle-glow);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.5);
+        }
+
+        .totem-icon {
+            font-size: 2rem;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: var(--spacing-md);
+            background: var(--jungle-darkest);
+            border: 2px solid var(--jungle-accent);
+            border-radius: var(--radius-md);
+            color: var(--jungle-glow);
+            font-size: 1rem;
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--jungle-glow);
+            box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+        }
+
+        .export-btn {
+            background: var(--jungle-gold);
+            color: var(--jungle-darkest);
+            border: none;
+            padding: var(--spacing-md) var(--spacing-xl);
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+        }
+
+        .export-btn:hover {
+            background: var(--jungle-glow);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            transform: scale(1.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: var(--spacing-sm);
+        }
+
+        .badge-primary {
+            background: var(--jungle-accent);
+            color: var(--jungle-darkest);
+        }
+
+        .badge-warning {
+            background: var(--jungle-warning);
+            color: var(--jungle-darkest);
+        }
+
+        .visual-diagram {
+            margin-top: var(--spacing-xl);
+            padding: var(--spacing-xl);
+            background: var(--jungle-darkest);
+            border: 2px solid var(--jungle-accent);
+            border-radius: var(--radius-lg);
+            overflow-x: auto;
+        }
+
+        .diagram-node {
+            background: var(--jungle-medium);
+            border: 2px solid var(--jungle-accent);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin: var(--spacing-md);
+            min-width: 200px;
+            display: inline-block;
+        }
+
+        .diagram-node-header {
+            background: var(--jungle-accent);
+            color: var(--jungle-darkest);
+            padding: var(--spacing-sm);
+            margin: calc(-1 * var(--spacing-md)) calc(-1 * var(--spacing-md)) var(--spacing-sm);
+            font-weight: 700;
+            border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        }
+
+        .diagram-field {
+            padding: var(--spacing-xs) 0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 1.75rem;
+            }
+
+            .nav-tabs {
+                flex-direction: column;
+            }
+
+            .column {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-header">
+        <h1>🗄️ Database Playground</h1>
+        <p>Interactive database schema visualization and documentation for SocialBit</p>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="active" onclick="showTab('overview')">📊 Overview</button>
+        <button onclick="showTab('er-diagram')">🔗 ER Diagram</button>
+        <button onclick="showTab('tables')">📋 Table Explorer</button>
+        <button onclick="showTab('timeline')">📅 Migration Timeline</button>
+        <button onclick="showTab('docs')">📖 Documentation</button>
+        <button onclick="showTab('prompts')">🤖 AI Prompts</button>
+    </div>
+
+    <!-- Overview Tab -->
+    <div id="overview" class="tab-content active">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalTables">24</div>
+                <div class="stat-label">Total Tables</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalMigrations">21</div>
+                <div class="stat-label">Migrations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalViews">6</div>
+                <div class="stat-label">Database Views</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalRelationships">32</div>
+                <div class="stat-label">Relationships</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🌟 Database Architecture</h2>
+            <p style="color: #94a3b8; line-height: 1.8; margin-bottom: var(--spacing-lg);">
+                SocialBit uses a <strong style="color: var(--jungle-glow);">multi-tenant relational database</strong>
+                architecture built on MySQL/MariaDB. The schema is designed for social media analytics with support
+                for multiple platforms (TikTok, Instagram, Facebook, YouTube) and comprehensive metric tracking.
+            </p>
+
+            <h3 style="color: var(--jungle-gold); margin-top: var(--spacing-xl); margin-bottom: var(--spacing-md);">
+                🎯 Key Design Principles
+            </h3>
+            <ul style="color: #94a3b8; line-height: 1.8; margin-left: var(--spacing-xl);">
+                <li><strong>Multi-Tenancy:</strong> All data isolated by client_id with CASCADE DELETE</li>
+                <li><strong>Time-Series Optimization:</strong> Partitioned metrics_history for performance</li>
+                <li><strong>Data Lineage:</strong> Track all data sources (API, CSV, manual) with audit trail</li>
+                <li><strong>Algorithm-First:</strong> 2026 metrics prioritize watch time, completion rate, saves</li>
+                <li><strong>Cross-Platform:</strong> Unified schema supports all major social platforms</li>
+            </ul>
+
+            <h3 style="color: var(--jungle-gold); margin-top: var(--spacing-xl); margin-bottom: var(--spacing-md);">
+                🔑 Core Table Categories
+            </h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-md); margin-top: var(--spacing-md);">
+                <div class="prompt-card" style="cursor: default;">
+                    <div class="prompt-title">👥 Multi-Tenant Foundation</div>
+                    <div style="color: #94a3b8; font-size: 0.9rem; margin-top: var(--spacing-sm);">
+                        users, clients, social_accounts, content_groups
+                    </div>
+                </div>
+                <div class="prompt-card" style="cursor: default;">
+                    <div class="prompt-title">📝 Content Tables</div>
+                    <div style="color: #94a3b8; font-size: 0.9rem; margin-top: var(--spacing-sm);">
+                        posts, metrics_history, content_planning
+                    </div>
+                </div>
+                <div class="prompt-card" style="cursor: default;">
+                    <div class="prompt-title">🏷️ Hashtag System</div>
+                    <div style="color: #94a3b8; font-size: 0.9rem; margin-top: var(--spacing-sm);">
+                        hashtag_performance, post_hashtags
+                    </div>
+                </div>
+                <div class="prompt-card" style="cursor: default;">
+                    <div class="prompt-title">📊 Analytics & Insights</div>
+                    <div style="color: #94a3b8; font-size: 0.9rem; margin-top: var(--spacing-sm);">
+                        competitor_metrics, industry_benchmarks, user_goals
+                    </div>
+                </div>
+                <div class="prompt-card" style="cursor: default;">
+                    <div class="prompt-title">🌐 Platform Integrations</div>
+                    <div style="color: #94a3b8; font-size: 0.9rem; margin-top: var(--spacing-sm);">
+                        tiktok_tokens, metricool_credentials, fathom_sites
+                    </div>
+                </div>
+                <div class="prompt-card" style="cursor: default;">
+                    <div class="prompt-title">💬 Communication</div>
+                    <div style="color: #94a3b8; font-size: 0.9rem; margin-top: var(--spacing-sm);">
+                        inbox_messages, message_threads, glossary_terms
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ER Diagram Tab -->
+    <div id="er-diagram" class="tab-content">
+        <div class="section">
+            <h2>🔗 Entity Relationship Diagram</h2>
+            <p style="color: #94a3b8; margin-bottom: var(--spacing-lg);">
+                Visual representation of table relationships and foreign key constraints
+            </p>
+
+            <div class="visual-diagram">
+                <svg width="100%" height="800" style="background: var(--jungle-darkest);">
+                    <!-- Multi-Tenant Foundation Layer -->
+                    <g id="tenant-layer">
+                        <!-- users table -->
+                        <rect x="50" y="50" width="150" height="120" fill="var(--jungle-medium)" stroke="var(--jungle-accent)" stroke-width="2" rx="8"/>
+                        <rect x="50" y="50" width="150" height="30" fill="var(--jungle-accent)" rx="8"/>
+                        <text x="125" y="70" text-anchor="middle" fill="var(--jungle-darkest)" font-weight="bold">users</text>
+                        <text x="60" y="95" fill="#94a3b8" font-size="12">id (PK)</text>
+                        <text x="60" y="110" fill="#94a3b8" font-size="12">username</text>
+                        <text x="60" y="125" fill="#94a3b8" font-size="12">email</text>
+                        <text x="60" y="140" fill="#94a3b8" font-size="12">plan</text>
+                        <text x="60" y="155" fill="#94a3b8" font-size="12">max_clients</text>
+
+                        <!-- clients table -->
+                        <rect x="250" y="50" width="150" height="140" fill="var(--jungle-medium)" stroke="var(--jungle-accent)" stroke-width="2" rx="8"/>
+                        <rect x="250" y="50" width="150" height="30" fill="var(--jungle-accent)" rx="8"/>
+                        <text x="325" y="70" text-anchor="middle" fill="var(--jungle-darkest)" font-weight="bold">clients</text>
+                        <text x="260" y="95" fill="#94a3b8" font-size="12">id (PK)</text>
+                        <text x="260" y="110" fill="var(--jungle-glow)" font-size="12">user_id (FK)</text>
+                        <text x="260" y="125" fill="#94a3b8" font-size="12">name</text>
+                        <text x="260" y="140" fill="#94a3b8" font-size="12">company_name</text>
+                        <text x="260" y="155" fill="#94a3b8" font-size="12">industry</text>
+                        <text x="260" y="170" fill="#94a3b8" font-size="12">is_active</text>
+
+                        <!-- Relationship line: users -> clients -->
+                        <line x1="200" y1="110" x2="250" y2="110" stroke="var(--jungle-glow)" stroke-width="2"/>
+                        <polygon points="250,110 245,107 245,113" fill="var(--jungle-glow)"/>
+                        <text x="215" y="105" fill="var(--jungle-gold)" font-size="10">1:N</text>
+                    </g>
+
+                    <!-- Content Layer -->
+                    <g id="content-layer">
+                        <!-- posts table -->
+                        <rect x="450" y="50" width="150" height="200" fill="var(--jungle-medium)" stroke="var(--jungle-accent)" stroke-width="2" rx="8"/>
+                        <rect x="450" y="50" width="150" height="30" fill="var(--jungle-accent)" rx="8"/>
+                        <text x="525" y="70" text-anchor="middle" fill="var(--jungle-darkest)" font-weight="bold">posts</text>
+                        <text x="460" y="95" fill="#94a3b8" font-size="12">id (PK)</text>
+                        <text x="460" y="110" fill="var(--jungle-glow)" font-size="12">client_id (FK)</text>
+                        <text x="460" y="125" fill="var(--jungle-glow)" font-size="12">social_account_id (FK)</text>
+                        <text x="460" y="140" fill="#94a3b8" font-size="12">platform</text>
+                        <text x="460" y="155" fill="#94a3b8" font-size="12">caption</text>
+                        <text x="460" y="170" fill="#94a3b8" font-size="12">views</text>
+                        <text x="460" y="185" fill="#94a3b8" font-size="12">likes</text>
+                        <text x="460" y="200" fill="#94a3b8" font-size="12">engagement_rate</text>
+                        <text x="460" y="215" fill="#94a3b8" font-size="12">watch_time</text>
+                        <text x="460" y="230" fill="#94a3b8" font-size="12">completion_rate</text>
+
+                        <!-- social_accounts table -->
+                        <rect x="250" y="220" width="150" height="140" fill="var(--jungle-medium)" stroke="var(--jungle-accent)" stroke-width="2" rx="8"/>
+                        <rect x="250" y="220" width="150" height="30" fill="var(--jungle-accent)" rx="8"/>
+                        <text x="325" y="240" text-anchor="middle" fill="var(--jungle-darkest)" font-weight="bold">social_accounts</text>
+                        <text x="260" y="265" fill="#94a3b8" font-size="12">id (PK)</text>
+                        <text x="260" y="280" fill="var(--jungle-glow)" font-size="12">client_id (FK)</text>
+                        <text x="260" y="295" fill="#94a3b8" font-size="12">platform</text>
+                        <text x="260" y="310" fill="#94a3b8" font-size="12">username</text>
+                        <text x="260" y="325" fill="#94a3b8" font-size="12">access_token</text>
+                        <text x="260" y="340" fill="#94a3b8" font-size="12">last_sync_at</text>
+
+                        <!-- Relationship: clients -> posts -->
+                        <line x1="400" y1="120" x2="450" y2="120" stroke="var(--jungle-glow)" stroke-width="2"/>
+                        <polygon points="450,120 445,117 445,123" fill="var(--jungle-glow)"/>
+                        <text x="415" y="115" fill="var(--jungle-gold)" font-size="10">1:N</text>
+
+                        <!-- Relationship: clients -> social_accounts -->
+                        <line x1="325" y1="190" x2="325" y2="220" stroke="var(--jungle-glow)" stroke-width="2"/>
+                        <polygon points="325,220 322,215 328,215" fill="var(--jungle-glow)"/>
+                        <text x="330" y="205" fill="var(--jungle-gold)" font-size="10">1:N</text>
+
+                        <!-- Relationship: social_accounts -> posts -->
+                        <line x1="400" y1="290" x2="450" y2="150" stroke="var(--jungle-glow)" stroke-width="2"/>
+                        <polygon points="450,150 447,155 443,149" fill="var(--jungle-glow)"/>
+                        <text x="420" y="220" fill="var(--jungle-gold)" font-size="10">1:N</text>
+                    </g>
+
+                    <!-- Analytics Layer -->
+                    <g id="analytics-layer">
+                        <!-- metrics_history table -->
+                        <rect x="650" y="50" width="150" height="160" fill="var(--jungle-medium)" stroke="var(--jungle-accent)" stroke-width="2" rx="8"/>
+                        <rect x="650" y="50" width="150" height="30" fill="var(--jungle-accent)" rx="8"/>
+                        <text x="725" y="70" text-anchor="middle" fill="var(--jungle-darkest)" font-weight="bold">metrics_history</text>
+                        <text x="660" y="95" fill="#94a3b8" font-size="12">id (PK)</text>
+                        <text x="660" y="110" fill="var(--jungle-glow)" font-size="12">post_id (FK)</text>
+                        <text x="660" y="125" fill="var(--jungle-glow)" font-size="12">client_id (FK)</text>
+                        <text x="660" y="140" fill="#94a3b8" font-size="12">views</text>
+                        <text x="660" y="155" fill="#94a3b8" font-size="12">likes</text>
+                        <text x="660" y="170" fill="#94a3b8" font-size="12">shares</text>
+                        <text x="660" y="185" fill="#94a3b8" font-size="12">snapshot_date</text>
+                        <text x="660" y="200" fill="var(--jungle-warning)" font-size="11">PARTITIONED</text>
+
+                        <!-- Relationship: posts -> metrics_history -->
+                        <line x1="600" y1="140" x2="650" y2="140" stroke="var(--jungle-glow)" stroke-width="2"/>
+                        <polygon points="650,140 645,137 645,143" fill="var(--jungle-glow)"/>
+                        <text x="615" y="135" fill="var(--jungle-gold)" font-size="10">1:N</text>
+
+                        <!-- hashtag_performance table -->
+                        <rect x="650" y="240" width="150" height="120" fill="var(--jungle-medium)" stroke="var(--jungle-accent)" stroke-width="2" rx="8"/>
+                        <rect x="650" y="240" width="150" height="30" fill="var(--jungle-accent)" rx="8"/>
+                        <text x="725" y="260" text-anchor="middle" fill="var(--jungle-darkest)" font-weight="bold">hashtag_performance</text>
+                        <text x="660" y="285" fill="#94a3b8" font-size="12">id (PK)</text>
+                        <text x="660" y="300" fill="#94a3b8" font-size="12">hashtag</text>
+                        <text x="660" y="315" fill="#94a3b8" font-size="12">platform</text>
+                        <text x="660" y="330" fill="#94a3b8" font-size="12">total_posts</text>
+                        <text x="660" y="345" fill="#94a3b8" font-size="12">avg_engagement_rate</text>
+
+                        <!-- post_hashtags junction table -->
+                        <rect x="650" y="390" width="150" height="80" fill="var(--jungle-medium)" stroke="var(--jungle-warning)" stroke-width="2" rx="8"/>
+                        <rect x="650" y="390" width="150" height="30" fill="var(--jungle-warning)" rx="8"/>
+                        <text x="725" y="410" text-anchor="middle" fill="var(--jungle-darkest)" font-weight="bold">post_hashtags</text>
+                        <text x="660" y="435" fill="var(--jungle-glow)" font-size="12">post_id (FK, PK)</text>
+                        <text x="660" y="450" fill="var(--jungle-glow)" font-size="12">hashtag_id (FK, PK)</text>
+                        <text x="660" y="465" fill="var(--jungle-warning)" font-size="11">M:N JUNCTION</text>
+
+                        <!-- Relationship: posts -> post_hashtags -->
+                        <line x1="600" y1="230" x2="630" y2="430" stroke="var(--jungle-glow)" stroke-width="2"/>
+                        <polygon points="630,430 633,425 627,425" fill="var(--jungle-glow)"/>
+                        <text x="610" y="330" fill="var(--jungle-gold)" font-size="10">M:N</text>
+
+                        <!-- Relationship: hashtag_performance -> post_hashtags -->
+                        <line x1="725" y1="360" x2="725" y2="390" stroke="var(--jungle-glow)" stroke-width="2"/>
+                        <polygon points="725,390 722,385 728,385" fill="var(--jungle-glow)"/>
+                    </g>
+
+                    <!-- Platform Integration Layer -->
+                    <g id="platform-layer">
+                        <!-- tiktok_tokens table -->
+                        <rect x="50" y="400" width="150" height="100" fill="var(--jungle-medium)" stroke="var(--jungle-accent)" stroke-width="2" rx="8"/>
+                        <rect x="50" y="400" width="150" height="30" fill="var(--jungle-accent)" rx="8"/>
+                        <text x="125" y="420" text-anchor="middle" fill="var(--jungle-darkest)" font-weight="bold">tiktok_tokens</text>
+                        <text x="60" y="445" fill="#94a3b8" font-size="12">id (PK)</text>
+                        <text x="60" y="460" fill="var(--jungle-glow)" font-size="12">client_id (FK)</text>
+                        <text x="60" y="475" fill="#94a3b8" font-size="12">access_token</text>
+                        <text x="60" y="490" fill="#94a3b8" font-size="12">expires_at</text>
+
+                        <!-- Relationship: clients -> tiktok_tokens -->
+                        <line x1="250" y1="180" x2="125" y2="400" stroke="var(--jungle-glow)" stroke-width="2" stroke-dasharray="5,5"/>
+                        <polygon points="125,400 128,405 122,405" fill="var(--jungle-glow)"/>
+                        <text x="180" y="290" fill="var(--jungle-gold)" font-size="10">1:N</text>
+                    </g>
+
+                    <!-- Legend -->
+                    <g id="legend" transform="translate(50, 550)">
+                        <rect x="0" y="0" width="750" height="120" fill="var(--jungle-medium)" stroke="var(--jungle-accent)" stroke-width="2" rx="8"/>
+                        <text x="375" y="25" text-anchor="middle" fill="var(--jungle-glow)" font-weight="bold" font-size="14">Legend</text>
+
+                        <line x1="20" y1="50" x2="80" y2="50" stroke="var(--jungle-glow)" stroke-width="2"/>
+                        <polygon points="80,50 75,47 75,53" fill="var(--jungle-glow)"/>
+                        <text x="90" y="55" fill="#94a3b8" font-size="12">Foreign Key (1:N)</text>
+
+                        <line x1="220" y1="50" x2="280" y2="50" stroke="var(--jungle-glow)" stroke-width="2" stroke-dasharray="5,5"/>
+                        <text x="290" y="55" fill="#94a3b8" font-size="12">Platform Integration</text>
+
+                        <rect x="20" y="70" width="15" height="15" fill="var(--jungle-accent)" stroke="var(--jungle-accent)"/>
+                        <text x="45" y="82" fill="#94a3b8" font-size="12">Core Table</text>
+
+                        <rect x="150" y="70" width="15" height="15" fill="var(--jungle-warning)" stroke="var(--jungle-warning)"/>
+                        <text x="175" y="82" fill="#94a3b8" font-size="12">Junction Table (M:N)</text>
+
+                        <text x="350" y="55" fill="var(--jungle-glow)" font-size="12">PK = Primary Key</text>
+                        <text x="350" y="82" fill="var(--jungle-glow)" font-size="12">FK = Foreign Key</text>
+
+                        <text x="520" y="55" fill="var(--jungle-gold)" font-size="12">Cascade Delete Enabled</text>
+                        <text x="520" y="82" fill="var(--jungle-warning)" font-size="12">Partitioned for Performance</text>
+                    </g>
+                </svg>
+
+                <p style="color: #94a3b8; margin-top: var(--spacing-xl); text-align: center; font-size: 0.9rem;">
+                    💡 <strong>Tip:</strong> Scroll horizontally to see the complete diagram. Click tables in the Table Explorer to see detailed column information.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Explorer Tab -->
+    <div id="tables" class="tab-content">
+        <div class="section">
+            <h2>📋 Table Explorer</h2>
+            <input type="text" class="search-box" id="tableSearch" placeholder="🔍 Search tables by name, column, or category..." oninput="filterTables()">
+
+            <div id="tablesList">
+                <!-- Multi-Tenant Foundation -->
+                <div class="table-group" data-category="multi-tenant">
+                    <h3>👥 Multi-Tenant Foundation</h3>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>users <span class="badge badge-primary">CORE</span></span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">username</div>
+                                <div class="column-type">VARCHAR(50)</div>
+                                <div class="column-key">UNIQUE</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">email</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key">UNIQUE, INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">password_hash</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">plan</div>
+                                <div class="column-type">ENUM</div>
+                                <div class="column-key">starter, professional, agency</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">max_clients</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Default: 1</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">created_at</div>
+                                <div class="column-type">TIMESTAMP</div>
+                                <div class="column-key">AUTO</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Relationships:</strong><br>
+                                → clients (1:N) via user_id
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>clients <span class="badge badge-primary">CORE</span></span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">user_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → users(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">name</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key">NOT NULL</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">company_name</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">industry</div>
+                                <div class="column-type">VARCHAR(100)</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">website</div>
+                                <div class="column-type">VARCHAR(500)</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">is_active</div>
+                                <div class="column-type">BOOLEAN</div>
+                                <div class="column-key">Default: TRUE, INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">notes</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">created_at</div>
+                                <div class="column-type">TIMESTAMP</div>
+                                <div class="column-key">AUTO, INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">updated_at</div>
+                                <div class="column-type">TIMESTAMP</div>
+                                <div class="column-key">AUTO UPDATE</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Relationships:</strong><br>
+                                ← users (N:1) via user_id<br>
+                                → posts (1:N) via client_id (CASCADE DELETE)<br>
+                                → social_accounts (1:N) via client_id (CASCADE DELETE)<br>
+                                → content_groups (1:N) via client_id (CASCADE DELETE)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>social_accounts</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">client_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → clients(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">platform</div>
+                                <div class="column-type">ENUM</div>
+                                <div class="column-key">tiktok, instagram, facebook, youtube</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">platform_user_id</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key">NOT NULL</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">username</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">access_token</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key">ENCRYPTED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">refresh_token</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key">ENCRYPTED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">token_expires_at</div>
+                                <div class="column-type">TIMESTAMP</div>
+                                <div class="column-key">NULL</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">is_active</div>
+                                <div class="column-type">BOOLEAN</div>
+                                <div class="column-key">Default: TRUE, INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">last_sync_at</div>
+                                <div class="column-type">TIMESTAMP</div>
+                                <div class="column-key">INDEXED</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Relationships:</strong><br>
+                                ← clients (N:1) via client_id<br>
+                                → posts (1:N) via social_account_id<br>
+                                <strong>Unique Constraint:</strong> (client_id, platform, platform_user_id)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>content_groups</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">client_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → clients(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">name</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">description</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">primary_post_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Main post reference</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">campaign_tag</div>
+                                <div class="column-type">VARCHAR(100)</div>
+                                <div class="column-key">INDEXED</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Group same content across platforms (e.g., TikTok + Reels + Facebook)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content Tables -->
+                <div class="table-group" data-category="content">
+                    <h3>📝 Content & Posts</h3>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>posts <span class="badge badge-primary">CORE</span></span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">client_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → clients(id), INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">social_account_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → social_accounts(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">content_group_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → content_groups(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">platform</div>
+                                <div class="column-type">ENUM</div>
+                                <div class="column-key">tiktok, instagram, facebook - INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">platform_post_id</div>
+                                <div class="column-type">VARCHAR(100)</div>
+                                <div class="column-key">Platform's unique ID</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">post_type</div>
+                                <div class="column-type">VARCHAR(50)</div>
+                                <div class="column-key">reel, story, post, carousel - INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">topic</div>
+                                <div class="column-type">VARCHAR(100)</div>
+                                <div class="column-key">promo, product, educational - INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">caption</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">hashtags</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key">Comma-separated</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">posted_date</div>
+                                <div class="column-type">DATE</div>
+                                <div class="column-key">INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">posted_time</div>
+                                <div class="column-type">TIME</div>
+                                <div class="column-key">For timing analysis</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">views</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Default: 0</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">likes</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Default: 0</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">comments</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Default: 0</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">shares</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Default: 0</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">saves</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Default: 0</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">watch_time</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">2026 Algorithm Metric</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">completion_rate</div>
+                                <div class="column-type">DECIMAL(5,2)</div>
+                                <div class="column-key">2026 Algorithm Metric</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">sends_count</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">DM shares - 2026 Metric</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">profile_visits</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Discovery metric</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">skip_rate</div>
+                                <div class="column-type">DECIMAL(5,2)</div>
+                                <div class="column-key">Instagram Reels 2026</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">duration</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Video length (seconds)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">engagement_rate</div>
+                                <div class="column-type">DECIMAL(5,2)</div>
+                                <div class="column-key">INDEXED, Calculated</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">import_source</div>
+                                <div class="column-type">ENUM</div>
+                                <div class="column-key">csv, api, scraping, manual</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Relationships:</strong><br>
+                                ← clients (N:1) via client_id<br>
+                                → metrics_history (1:N) via post_id<br>
+                                → post_hashtags (M:N) via post_id
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>metrics_history <span class="badge badge-warning">PARTITIONED</span></span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">post_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → posts(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">client_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → clients(id), INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">views</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Snapshot value</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">likes</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Snapshot value</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">comments</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Snapshot value</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">shares</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Snapshot value</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">saves</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Snapshot value</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">snapshot_date</div>
+                                <div class="column-type">TIMESTAMP</div>
+                                <div class="column-key">INDEXED, Partition Key</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Performance:</strong> Table partitioned by month (snapshot_date) for faster time-series queries<br>
+                                <strong>Purpose:</strong> Track metric changes over time for trending analysis
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>content_planning</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">client_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → clients(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">planned_date</div>
+                                <div class="column-type">DATE</div>
+                                <div class="column-key">INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">planned_time</div>
+                                <div class="column-type">TIME</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">platform</div>
+                                <div class="column-type">ENUM</div>
+                                <div class="column-key">tiktok, instagram, facebook</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">post_type</div>
+                                <div class="column-type">VARCHAR(50)</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">topic</div>
+                                <div class="column-type">VARCHAR(100)</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">caption_draft</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">hashtags_draft</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">status</div>
+                                <div class="column-type">ENUM</div>
+                                <div class="column-key">draft, scheduled, posted</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Editorial calendar for planning future posts
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hashtag System -->
+                <div class="table-group" data-category="hashtags">
+                    <h3>🏷️ Hashtag Tracking</h3>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>hashtag_performance</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">hashtag</div>
+                                <div class="column-type">VARCHAR(100)</div>
+                                <div class="column-key">WITHOUT # prefix, INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">platform</div>
+                                <div class="column-type">ENUM</div>
+                                <div class="column-key">tiktok, instagram, facebook</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">total_posts</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Usage count</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">total_views</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Aggregated views</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">total_likes</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Aggregated likes</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">avg_engagement_rate</div>
+                                <div class="column-type">DECIMAL(5,2)</div>
+                                <div class="column-key">INDEXED for ranking</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">last_used</div>
+                                <div class="column-type">DATE</div>
+                                <div class="column-key">Track recency</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Unique Constraint:</strong> (hashtag, platform)<br>
+                                <strong>Purpose:</strong> Calculate hashtag ROI and generate recommendations
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>post_hashtags <span class="badge badge-warning">JUNCTION</span></span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">post_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → posts(id), PK</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">hashtag_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → hashtag_performance(id), PK</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Relationship Type:</strong> Many-to-Many (M:N)<br>
+                                <strong>Purpose:</strong> Link posts to hashtags for performance tracking
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Platform Integrations -->
+                <div class="table-group" data-category="integrations">
+                    <h3>🔌 Platform Integrations</h3>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>tiktok_tokens</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">client_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → clients(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">access_token</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key">OAuth 2.0 token</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">refresh_token</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">expires_at</div>
+                                <div class="column-type">TIMESTAMP</div>
+                                <div class="column-key">Token expiration</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">open_id</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key">TikTok user identifier</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Store TikTok OAuth credentials per client
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>metricool_credentials</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">client_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → clients(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">api_key</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key">ENCRYPTED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">brand_id</div>
+                                <div class="column-type">VARCHAR(100)</div>
+                                <div class="column-key">Metricool brand ID</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">is_active</div>
+                                <div class="column-type">BOOLEAN</div>
+                                <div class="column-key">Default: TRUE</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Primary data source for multi-platform metrics
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>fathom_sites</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">client_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → clients(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">site_id</div>
+                                <div class="column-type">VARCHAR(100)</div>
+                                <div class="column-key">Fathom site ID</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">api_token</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key">ENCRYPTED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">site_url</div>
+                                <div class="column-type">VARCHAR(500)</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Website analytics for traffic correlation
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics & Insights -->
+                <div class="table-group" data-category="analytics">
+                    <h3>📊 Analytics & Insights</h3>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>industry_benchmarks</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">platform</div>
+                                <div class="column-type">ENUM</div>
+                                <div class="column-key">tiktok, instagram, facebook</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">metric_name</div>
+                                <div class="column-type">VARCHAR(100)</div>
+                                <div class="column-key">engagement_rate, completion_rate, etc.</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">avg_value</div>
+                                <div class="column-type">DECIMAL(10,2)</div>
+                                <div class="column-key">Industry average</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">good_value</div>
+                                <div class="column-type">DECIMAL(10,2)</div>
+                                <div class="column-key">Good performance threshold</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">excellent_value</div>
+                                <div class="column-type">DECIMAL(10,2)</div>
+                                <div class="column-key">Excellent performance threshold</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">year</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">2026, 2027, etc.</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Provide context for metrics ("You're 2× above average")
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>competitor_metrics</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">competitor_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → competitors(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">snapshot_date</div>
+                                <div class="column-type">DATE</div>
+                                <div class="column-key">INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">followers</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">avg_engagement_rate</div>
+                                <div class="column-type">DECIMAL(5,2)</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">posting_frequency</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">Posts per week</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">top_hashtags</div>
+                                <div class="column-type">JSON</div>
+                                <div class="column-key">Array of hashtags</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Benchmark against up to 5 competitors
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>user_goals</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">client_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → clients(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">goal_type</div>
+                                <div class="column-type">VARCHAR(100)</div>
+                                <div class="column-key">followers, engagement_rate, views</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">target_value</div>
+                                <div class="column-type">DECIMAL(10,2)</div>
+                                <div class="column-key">Target to reach</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">current_value</div>
+                                <div class="column-type">DECIMAL(10,2)</div>
+                                <div class="column-key">Current progress</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">deadline</div>
+                                <div class="column-type">DATE</div>
+                                <div class="column-key">Goal deadline</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">status</div>
+                                <div class="column-type">ENUM</div>
+                                <div class="column-key">on_track, behind, achieved</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Track progress toward user-defined goals
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Communication -->
+                <div class="table-group" data-category="communication">
+                    <h3>💬 Inbox & Communication</h3>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>inbox_messages</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">client_id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">FOREIGN KEY → clients(id)</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">platform</div>
+                                <div class="column-type">ENUM</div>
+                                <div class="column-key">tiktok, instagram, facebook</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">message_id</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key">Platform's message ID</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">sender_username</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">message_text</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key"></div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">received_at</div>
+                                <div class="column-type">TIMESTAMP</div>
+                                <div class="column-key">INDEXED</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">is_read</div>
+                                <div class="column-type">BOOLEAN</div>
+                                <div class="column-key">Default: FALSE</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">replied_at</div>
+                                <div class="column-type">TIMESTAMP</div>
+                                <div class="column-key">NULL until replied</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Unified inbox for all platform messages
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>glossary_terms</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div class="column">
+                                <div class="column-name">id</div>
+                                <div class="column-type">INT</div>
+                                <div class="column-key">PRIMARY KEY</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">term</div>
+                                <div class="column-type">VARCHAR(100)</div>
+                                <div class="column-key">UNIQUE, e.g., "engagement_rate"</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">plain_language</div>
+                                <div class="column-type">VARCHAR(255)</div>
+                                <div class="column-key">"How many people interact"</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">definition</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key">Full explanation</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">formula</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key">Calculation formula</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">example</div>
+                                <div class="column-type">TEXT</div>
+                                <div class="column-key">Real-world example</div>
+                            </div>
+                            <div class="column">
+                                <div class="column-name">category</div>
+                                <div class="column-type">VARCHAR(50)</div>
+                                <div class="column-key">metrics, platforms, analytics</div>
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Help non-technical users understand metrics
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Database Views -->
+                <div class="table-group" data-category="views">
+                    <h3>👁️ Database Views (Virtual Tables)</h3>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>top_posts (VIEW)</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div style="color: #94a3b8; margin-bottom: var(--spacing-md);">
+                                <strong>SQL Definition:</strong>
+                            </div>
+                            <div class="code-block" style="font-size: 0.8rem;">
+SELECT id, platform, post_type, topic, caption, posted_date,
+       views, likes, comments, shares, saves, engagement_rate,
+       (likes + comments + shares) as total_engagement
+FROM posts
+WHERE posted_date IS NOT NULL
+ORDER BY engagement_rate DESC
+LIMIT 100
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Quick access to top 100 best-performing posts across all platforms
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>platform_comparison (VIEW)</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div style="color: #94a3b8; margin-bottom: var(--spacing-md);">
+                                <strong>SQL Definition:</strong>
+                            </div>
+                            <div class="code-block" style="font-size: 0.8rem;">
+SELECT platform,
+       COUNT(*) as total_posts,
+       AVG(views) as avg_views,
+       AVG(likes) as avg_likes,
+       AVG(engagement_rate) as avg_engagement_rate,
+       SUM(views) as total_views
+FROM posts
+WHERE posted_date IS NOT NULL
+GROUP BY platform
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Compare performance across TikTok, Instagram, Facebook
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>hashtag_leaderboard (VIEW)</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div style="color: #94a3b8; margin-bottom: var(--spacing-md);">
+                                <strong>SQL Definition:</strong>
+                            </div>
+                            <div class="code-block" style="font-size: 0.8rem;">
+SELECT hashtag, platform, total_posts, avg_engagement_rate, total_views
+FROM hashtag_performance
+ORDER BY avg_engagement_rate DESC
+LIMIT 50
+                            </div>
+                            <div class="relationship">
+                                <strong>Purpose:</strong> Top 50 hashtags ranked by engagement rate
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="db-table" onclick="toggleTable(this)">
+                        <div class="db-table-header">
+                            <span>client_overview (VIEW)</span>
+                            <span>▼</span>
+                        </div>
+                        <div class="db-table-body">
+                            <div style="color: #94a3b8; margin-bottom: var(--spacing-md);">
+                                <strong>Purpose:</strong> Multi-tenant dashboard showing all clients with their metrics
+                            </div>
+                            <div class="relationship">
+                                Shows: client name, connected accounts, total posts, views, likes, avg engagement, latest post date
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Migration Timeline Tab -->
+    <div id="timeline" class="tab-content">
+        <div class="section">
+            <h2>📅 Migration Timeline</h2>
+            <p style="color: #94a3b8; margin-bottom: var(--spacing-xl);">
+                Database evolution from initial schema to current multi-platform architecture
+            </p>
+
+            <div class="migration-timeline">
+                <div class="migration-item">
+                    <div class="migration-number">000</div>
+                    <div class="migration-title">Initial Database Schema</div>
+                    <div class="migration-desc">
+                        Core foundation: posts, users, metrics_history, hashtag_performance, post_hashtags,
+                        tiktok_demographics, import_history. Created analytics views: top_posts, platform_comparison,
+                        hashtag_leaderboard. Single-tenant POC architecture.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">001</div>
+                    <div class="migration-title">Settings Table</div>
+                    <div class="migration-desc">
+                        Added settings table for application configuration and API credentials.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">002</div>
+                    <div class="migration-title">Post Type & Topic</div>
+                    <div class="migration-desc">
+                        Added post_type (reel, story, post, carousel) and topic (promo, product, educational)
+                        columns to posts table for content categorization.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">003</div>
+                    <div class="migration-title">Content Planning</div>
+                    <div class="migration-desc">
+                        Created content_planning table for editorial calendar functionality. Schedule future posts
+                        with draft captions and hashtags.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">004</div>
+                    <div class="migration-title">Internal Fields</div>
+                    <div class="migration-desc">
+                        Added internal_caption and internal_notes to posts table. Internal tracking fields that
+                        don't modify live posts.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">005</div>
+                    <div class="migration-title">TikTok OAuth Tokens</div>
+                    <div class="migration-desc">
+                        Created tiktok_tokens table for OAuth 2.0 authentication. Store access tokens, refresh tokens,
+                        and expiration timestamps.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">006</div>
+                    <div class="migration-title">🌟 Multi-Tenant Foundation</div>
+                    <div class="migration-desc">
+                        <strong>MAJOR MIGRATION:</strong> Added clients, social_accounts, content_groups tables.
+                        Updated posts with client_id, social_account_id, content_group_id. Created default client
+                        for existing data. CASCADE DELETE for data isolation. Created client_overview and
+                        top_posts_by_client views.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">007</div>
+                    <div class="migration-title">Analytics Enhancement</div>
+                    <div class="migration-desc">
+                        Enhanced analytics capabilities with improved indexing and performance optimization.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">010</div>
+                    <div class="migration-title">Multi-Tenant Performance</div>
+                    <div class="migration-desc">
+                        Performance optimization for multi-tenant queries. Added composite indexes on
+                        (client_id, platform, posted_date) for faster filtering.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">011</div>
+                    <div class="migration-title">🚀 2026 Algorithm Metrics</div>
+                    <div class="migration-desc">
+                        <strong>CRITICAL UPDATE:</strong> Added watch_time, completion_rate, sends_count,
+                        profile_visits, skip_rate, duration columns to posts. These metrics are algorithm priority
+                        in 2026 (watch time > vanity metrics).
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">012</div>
+                    <div class="migration-title">Hashtag Tracking System</div>
+                    <div class="migration-desc">
+                        Enhanced hashtag_performance table with tracking capabilities. Generate hashtag recommendations
+                        based on historical performance. Track usage trends and ROI.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">013</div>
+                    <div class="migration-title">Competitor Analysis</div>
+                    <div class="migration-desc">
+                        Created competitors and competitor_metrics tables. Track up to 5 competitors per client.
+                        Daily snapshots of competitor performance for benchmarking.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">014</div>
+                    <div class="migration-title">Website Traffic Correlation</div>
+                    <div class="migration-desc">
+                        Created post_website_traffic table. Link Fathom Analytics referral data to specific posts.
+                        Show which posts drive website visits and conversions.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">015</div>
+                    <div class="migration-title">Data Lineage Tracking</div>
+                    <div class="migration-desc">
+                        Created data_lineage table for audit trail. Track all data sources (API, CSV, manual) with
+                        timestamps. Multi-source conflict resolution with priority hierarchy.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">016</div>
+                    <div class="migration-title">Google Business Integration</div>
+                    <div class="migration-desc">
+                        Created google_business_locations and google_business_metrics tables. Track local business
+                        stats, reviews, Q&A, search appearances, actions (calls, directions, website clicks).
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">017</div>
+                    <div class="migration-title">Database Optimization & Website Analytics</div>
+                    <div class="migration-desc">
+                        Added fathom_sites table for website analytics integration. Database optimization with
+                        improved indexes and query performance.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">018</div>
+                    <div class="migration-title">⚡ Metrics Partitioning</div>
+                    <div class="migration-desc">
+                        <strong>PERFORMANCE:</strong> Partitioned metrics_history table by month (snapshot_date).
+                        Dramatically improves time-series query performance for large datasets. Added client_id to
+                        metrics_history for multi-tenant isolation.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">019</div>
+                    <div class="migration-title">Glossary System</div>
+                    <div class="migration-desc">
+                        Created glossary_terms and glossary_term_links tables. Help non-technical users understand
+                        metrics with plain language definitions, formulas, and examples. Auto-link terms in UI.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">020</div>
+                    <div class="migration-title">💬 Unified Inbox</div>
+                    <div class="migration-desc">
+                        Created inbox_messages and message_threads tables. Unified inbox for all platform messages
+                        (DMs, comments, mentions). Track read status, reply timestamps, and conversation threads.
+                    </div>
+                </div>
+
+                <div class="migration-item">
+                    <div class="migration-number">021+</div>
+                    <div class="migration-title">🔮 Future Migrations</div>
+                    <div class="migration-desc">
+                        Planned: industry_benchmarks (2026 benchmarks), performance_snapshots (historical comparison),
+                        user_goals (goal tracking), recommendations (actionable insights), youtube_analytics,
+                        branding_assets, pos_integration.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documentation Tab -->
+    <div id="docs" class="tab-content">
+        <div class="section">
+            <h2>📖 Schema Documentation</h2>
+
+            <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-xl);">
+                <button class="export-btn" onclick="exportMarkdown()">📄 Export as Markdown</button>
+                <button class="export-btn" onclick="exportSQL()">🗄️ Export CREATE Statements</button>
+                <button class="export-btn" onclick="exportJSON()">📊 Export as JSON</button>
+            </div>
+
+            <div id="docsOutput" class="code-block" style="max-height: 600px; overflow-y: auto;">
+                <pre id="docsContent">Generating documentation...</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Prompts Tab -->
+    <div id="prompts" class="tab-content">
+        <div class="section">
+            <h2>🤖 AI Assistant Prompts</h2>
+            <p style="color: #94a3b8; margin-bottom: var(--spacing-xl);">
+                Pre-built prompts for Claude or other AI assistants to analyze and optimize the database
+            </p>
+
+            <div class="prompt-card" onclick="copyPrompt(this)">
+                <div class="prompt-title">🔍 Analyze Database Schema</div>
+                <div class="prompt-text">
+Analyze the SocialBit database schema for potential issues and improvements:
+
+1. Review all table structures and relationships
+2. Identify missing indexes that could improve query performance
+3. Check for normalization issues or data redundancy
+4. Suggest partitioning strategies for large tables
+5. Recommend any missing foreign key constraints
+6. Flag potential security concerns (e.g., unencrypted sensitive data)
+
+Database: social_media_analytics (MySQL/MariaDB)
+Context: Multi-tenant social media analytics platform supporting TikTok, Instagram, Facebook
+Scale: 10K+ posts per client, time-series metrics
+
+Provide specific SQL recommendations with reasoning.
+                </div>
+                <button class="copy-btn">📋 Copy Prompt</button>
+            </div>
+
+            <div class="prompt-card" onclick="copyPrompt(this)">
+                <div class="prompt-title">⚡ Performance Optimization</div>
+                <div class="prompt-text">
+Review the SocialBit database for performance optimization opportunities:
+
+Focus Areas:
+1. metrics_history table (time-series, millions of rows)
+2. posts table (frequently queried with complex JOINs)
+3. Multi-tenant queries (always filtered by client_id)
+4. Hashtag performance calculations (aggregations)
+5. Dashboard queries (top posts, platform comparison)
+
+Current Issues:
+- metrics_history growing rapidly (daily snapshots)
+- Client dashboard loads slowly with 10+ clients
+- Hashtag leaderboard calculation takes 2+ seconds
+
+Suggest:
+- Index strategies
+- Query optimization techniques
+- Caching approaches
+- Partitioning recommendations
+- View materialization
+
+Provide specific SQL and implementation steps.
+                </div>
+                <button class="copy-btn">📋 Copy Prompt</button>
+            </div>
+
+            <div class="prompt-card" onclick="copyPrompt(this)">
+                <div class="prompt-title">🔗 Review Foreign Key Relationships</div>
+                <div class="prompt-text">
+Review all foreign key relationships in the SocialBit database:
+
+Tables to Check:
+- clients → posts, social_accounts, content_groups
+- posts → metrics_history, post_hashtags
+- social_accounts → posts
+- hashtag_performance → post_hashtags
+
+Requirements:
+1. Verify CASCADE DELETE is appropriate for multi-tenant isolation
+2. Check for orphaned records (missing FKs)
+3. Identify missing relationships (e.g., should tiktok_tokens → clients?)
+4. Review ON DELETE/ON UPDATE constraints for data integrity
+5. Suggest composite foreign keys where needed
+
+Provide:
+- Missing FK constraints (SQL to add them)
+- Potentially dangerous cascades (risk of data loss)
+- Orphaned record cleanup queries
+                </div>
+                <button class="copy-btn">📋 Copy Prompt</button>
+            </div>
+
+            <div class="prompt-card" onclick="copyPrompt(this)">
+                <div class="prompt-title">📊 Generate Migration for New Feature</div>
+                <div class="prompt-text">
+Generate a migration script for adding [FEATURE_NAME] to SocialBit.
+
+Context:
+- Multi-tenant architecture (all tables need client_id)
+- Follow existing migration patterns (000-020)
+- Must be backwards compatible
+- Include indexes for performance
+- Add to appropriate views if needed
+
+Feature Requirements:
+[DESCRIBE YOUR FEATURE HERE]
+
+Example: "YouTube analytics integration with video metrics, channel stats, and comment tracking"
+
+Generate:
+1. CREATE TABLE statements with proper constraints
+2. ALTER TABLE statements if modifying existing tables
+3. Foreign key relationships with CASCADE rules
+4. Indexes for common queries
+5. View updates if applicable
+6. Sample data population queries
+7. Rollback script
+
+Output Format: SQL migration file numbered appropriately (e.g., 021_youtube_integration.sql)
+                </div>
+                <button class="copy-btn">📋 Copy Prompt</button>
+            </div>
+
+            <div class="prompt-card" onclick="copyPrompt(this)">
+                <div class="prompt-title">🔒 Security Audit</div>
+                <div class="prompt-text">
+Perform a security audit of the SocialBit database schema:
+
+Check for:
+1. **Sensitive Data Encryption**
+   - OAuth tokens (access_token, refresh_token)
+   - API keys (metricool_credentials, fathom_sites)
+   - Password hashes (users table)
+   - Should these be encrypted at application layer?
+
+2. **SQL Injection Vulnerabilities**
+   - Are there any TEXT fields accepting user input without validation?
+   - Review VARCHAR fields for length limits
+   - Check for fields that should be ENUM instead of VARCHAR
+
+3. **Multi-Tenant Isolation**
+   - Are all tables properly filtered by client_id?
+   - Can clients access other clients' data?
+   - Are views client-aware?
+
+4. **Cascade Delete Risks**
+   - Could CASCADE DELETE accidentally wipe important data?
+   - Should any deletes be RESTRICT instead?
+
+5. **Access Control**
+   - What database roles/permissions should exist?
+   - Should there be read-only users for analytics?
+
+Provide specific security hardening recommendations.
+                </div>
+                <button class="copy-btn">📋 Copy Prompt</button>
+            </div>
+
+            <div class="prompt-card" onclick="copyPrompt(this)">
+                <div class="prompt-title">📐 Suggest Database Views</div>
+                <div class="prompt-text">
+Suggest new database views for SocialBit to simplify common queries:
+
+Current Views:
+- top_posts (top 100 by engagement_rate)
+- platform_comparison (aggregated platform stats)
+- hashtag_leaderboard (top 50 hashtags)
+- client_overview (multi-tenant dashboard)
+- top_posts_by_client (client-filtered top posts)
+
+Common Query Patterns to Optimize:
+1. "Show me trending posts (growing engagement in last 7 days)"
+2. "Best performing content type per platform"
+3. "Hashtag combinations with highest engagement"
+4. "Posts that drove website traffic"
+5. "Client performance vs industry benchmarks"
+6. "Content calendar with recommended posting times"
+
+For each suggested view:
+- View name
+- Purpose/use case
+- Full SQL CREATE VIEW statement
+- Expected performance improvement
+- Which dashboard would use it
+
+Focus on business user insights, not technical metrics.
+                </div>
+                <button class="copy-btn">📋 Copy Prompt</button>
+            </div>
+
+            <div class="prompt-card" onclick="copyPrompt(this)">
+                <div class="prompt-title">🧪 Generate Test Data</div>
+                <div class="prompt-text">
+Generate realistic test data for the SocialBit database:
+
+Requirements:
+1. Create 3 test clients (food blogger, fitness coach, e-commerce brand)
+2. Each client has 2-3 social accounts (TikTok, Instagram, Facebook)
+3. 50 posts per platform with realistic metrics
+4. metrics_history snapshots for trending analysis
+5. Hashtags with varying performance
+6. Some posts in content_groups (cross-platform)
+
+Metric Realism:
+- Engagement rates matching 2026 benchmarks (TikTok: 3.7%, Instagram: 0.48%)
+- Watch time and completion rates that make sense
+- Realistic follower growth patterns
+- Some high performers, mostly average, few flops
+
+Output:
+- INSERT statements for all test data
+- Use realistic captions and hashtags
+- Dates in last 90 days
+- Varied post types (reel, story, post, carousel)
+
+Generate SQL that can be run directly to populate test database.
+                </div>
+                <button class="copy-btn">📋 Copy Prompt</button>
+            </div>
+
+            <div class="prompt-card" onclick="copyPrompt(this)">
+                <div class="prompt-title">📈 Analyze Query Performance</div>
+                <div class="prompt-text">
+Analyze and optimize this slow query in SocialBit:
+
+[PASTE YOUR SLOW QUERY HERE]
+
+Context:
+- Database: MySQL 8.0 / MariaDB 10.6
+- posts table: ~50K rows
+- metrics_history table: ~500K rows (partitioned by month)
+- Always filtered by client_id (multi-tenant)
+
+Provide:
+1. EXPLAIN output interpretation
+2. Missing indexes causing table scans
+3. Rewritten query with optimizations
+4. Alternative approaches (views, materialized tables, caching)
+5. Expected performance improvement
+
+Example Slow Queries to Analyze:
+- "Top 10 posts per client with engagement trend"
+- "Hashtag performance across all clients"
+- "Client dashboard with 15+ metrics"
+- "Posts that drove website traffic (JOINs Fathom data)"
+                </div>
+                <button class="copy-btn">📋 Copy Prompt</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tabs button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Toggle table details
+        function toggleTable(tableElement) {
+            tableElement.classList.toggle('expanded');
+        }
+
+        // Filter tables by search
+        function filterTables() {
+            const searchTerm = document.getElementById('tableSearch').value.toLowerCase();
+            const tableGroups = document.querySelectorAll('.table-group');
+
+            tableGroups.forEach(group => {
+                const tables = group.querySelectorAll('.db-table');
+                let hasVisibleTable = false;
+
+                tables.forEach(table => {
+                    const text = table.textContent.toLowerCase();
+                    if (text.includes(searchTerm)) {
+                        table.style.display = 'block';
+                        hasVisibleTable = true;
+                    } else {
+                        table.style.display = 'none';
+                    }
+                });
+
+                // Hide group if no visible tables
+                group.style.display = hasVisibleTable ? 'block' : 'none';
+            });
+        }
+
+        // Copy prompt to clipboard
+        function copyPrompt(card) {
+            const promptText = card.querySelector('.prompt-text').textContent;
+            navigator.clipboard.writeText(promptText).then(() => {
+                const btn = card.querySelector('.copy-btn');
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.style.background = 'var(--jungle-glow)';
+
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = 'var(--jungle-accent)';
+                }, 2000);
+            });
+        }
+
+        // Export documentation
+        function exportMarkdown() {
+            const markdown = generateMarkdownDocs();
+            downloadFile(markdown, 'socialbit-database-schema.md', 'text/markdown');
+            document.getElementById('docsContent').textContent = markdown;
+        }
+
+        function exportSQL() {
+            const sql = generateSQLDocs();
+            downloadFile(sql, 'socialbit-create-tables.sql', 'text/plain');
+            document.getElementById('docsContent').textContent = sql;
+        }
+
+        function exportJSON() {
+            const json = generateJSONDocs();
+            downloadFile(json, 'socialbit-database-schema.json', 'application/json');
+            document.getElementById('docsContent').textContent = json;
+        }
+
+        function generateMarkdownDocs() {
+            return `# SocialBit Database Schema Documentation
+
+Generated: ${new Date().toISOString()}
+
+## Overview
+
+Multi-tenant social media analytics platform supporting TikTok, Instagram, Facebook, and YouTube.
+
+- **Total Tables:** 24
+- **Total Views:** 6
+- **Migrations:** 000-020 (21 total)
+- **Database Engine:** MySQL/MariaDB
+- **Charset:** utf8mb4_unicode_ci
+
+## Core Architecture
+
+### Multi-Tenant Foundation
+- \`users\` - Platform users with plan tiers
+- \`clients\` - Tenant accounts (isolated by client_id)
+- \`social_accounts\` - Connected platform accounts per client
+- \`content_groups\` - Group same content across platforms
+
+### Content & Posts
+- \`posts\` - Core post data (all platforms)
+- \`metrics_history\` - Time-series snapshots (PARTITIONED)
+- \`content_planning\` - Editorial calendar
+
+### Hashtag System
+- \`hashtag_performance\` - Aggregated hashtag stats
+- \`post_hashtags\` - M:N junction table
+
+### Platform Integrations
+- \`tiktok_tokens\` - OAuth credentials
+- \`metricool_credentials\` - Primary data source
+- \`fathom_sites\` - Website analytics
+
+### Analytics & Insights
+- \`industry_benchmarks\` - 2026 performance standards
+- \`competitor_metrics\` - Competitor tracking
+- \`user_goals\` - Goal progress tracking
+
+## Database Views
+
+### top_posts
+Top 100 posts by engagement_rate across all platforms.
+
+### platform_comparison
+Aggregated stats per platform (TikTok, Instagram, Facebook).
+
+### hashtag_leaderboard
+Top 50 hashtags ranked by avg_engagement_rate.
+
+### client_overview
+Multi-tenant dashboard with all client metrics.
+
+## Key Features
+
+- **Multi-Tenant Isolation:** All tables filtered by client_id with CASCADE DELETE
+- **2026 Algorithm Metrics:** watch_time, completion_rate, sends_count, skip_rate
+- **Time-Series Optimization:** metrics_history partitioned by month
+- **Data Lineage:** Full audit trail for multi-source data (API, CSV, manual)
+- **Cross-Platform Groups:** Link same content across TikTok + Instagram + Facebook
+
+## Migration History
+
+See \`scripts/\` directory for all 21 migration files (000-020).
+
+---
+Generated by SocialBit Database Playground
+`;
+        }
+
+        function generateSQLDocs() {
+            return `-- ============================================
+-- SocialBit Database Schema
+-- Generated: ${new Date().toISOString()}
+-- ============================================
+
+CREATE DATABASE IF NOT EXISTS social_media_analytics
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE social_media_analytics;
+
+-- Core tables with simplified structure
+-- For full schema, see scripts/000_create_database_schema.sql
+
+-- ============================================
+-- Multi-Tenant Foundation
+-- ============================================
+
+CREATE TABLE users (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  email VARCHAR(255) UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  plan ENUM('starter', 'professional', 'agency') DEFAULT 'starter',
+  max_clients INT DEFAULT 1,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE clients (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  company_name VARCHAR(255),
+  is_active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- Content Tables
+-- ============================================
+
+CREATE TABLE posts (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  client_id INT NOT NULL,
+  platform ENUM('tiktok', 'instagram', 'facebook') NOT NULL,
+  caption TEXT,
+  views INT DEFAULT 0,
+  likes INT DEFAULT 0,
+  engagement_rate DECIMAL(5,2),
+  watch_time INT,
+  completion_rate DECIMAL(5,2),
+  posted_date DATE NOT NULL,
+  FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- See full schema at: scripts/000_create_database_schema.sql
+-- All 21 migrations: scripts/000_*.sql through scripts/020_*.sql
+`;
+        }
+
+        function generateJSONDocs() {
+            const schema = {
+                database: "social_media_analytics",
+                generated: new Date().toISOString(),
+                stats: {
+                    total_tables: 24,
+                    total_views: 6,
+                    total_migrations: 21
+                },
+                tables: [
+                    {
+                        name: "users",
+                        category: "multi-tenant",
+                        description: "Platform users with plan tiers",
+                        columns: [
+                            { name: "id", type: "INT", key: "PRIMARY KEY" },
+                            { name: "username", type: "VARCHAR(50)", key: "UNIQUE" },
+                            { name: "email", type: "VARCHAR(255)", key: "UNIQUE" },
+                            { name: "plan", type: "ENUM", values: ["starter", "professional", "agency"] }
+                        ]
+                    },
+                    {
+                        name: "clients",
+                        category: "multi-tenant",
+                        description: "Tenant accounts (isolated by client_id)",
+                        columns: [
+                            { name: "id", type: "INT", key: "PRIMARY KEY" },
+                            { name: "user_id", type: "INT", key: "FOREIGN KEY → users(id)" },
+                            { name: "name", type: "VARCHAR(255)" },
+                            { name: "is_active", type: "BOOLEAN" }
+                        ]
+                    },
+                    {
+                        name: "posts",
+                        category: "content",
+                        description: "Core post data for all platforms",
+                        columns: [
+                            { name: "id", type: "INT", key: "PRIMARY KEY" },
+                            { name: "client_id", type: "INT", key: "FOREIGN KEY → clients(id)" },
+                            { name: "platform", type: "ENUM", values: ["tiktok", "instagram", "facebook"] },
+                            { name: "views", type: "INT" },
+                            { name: "likes", type: "INT" },
+                            { name: "engagement_rate", type: "DECIMAL(5,2)" },
+                            { name: "watch_time", type: "INT", note: "2026 Algorithm Metric" },
+                            { name: "completion_rate", type: "DECIMAL(5,2)", note: "2026 Algorithm Metric" }
+                        ]
+                    }
+                    // Simplified - full schema available in markdown/SQL exports
+                ],
+                views: [
+                    { name: "top_posts", description: "Top 100 posts by engagement_rate" },
+                    { name: "platform_comparison", description: "Platform performance aggregation" },
+                    { name: "hashtag_leaderboard", description: "Top 50 hashtags by engagement" },
+                    { name: "client_overview", description: "Multi-tenant dashboard metrics" }
+                ],
+                migrations: [
+                    { number: "000", title: "Initial Database Schema" },
+                    { number: "006", title: "Multi-Tenant Foundation" },
+                    { number: "011", title: "2026 Algorithm Metrics" },
+                    { number: "018", title: "Metrics Partitioning" },
+                    { number: "020", title: "Unified Inbox" }
+                ]
+            };
+
+            return JSON.stringify(schema, null, 2);
+        }
+
+        function downloadFile(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🗄️ Database Playground loaded successfully');
+            // Generate initial markdown docs
+            document.getElementById('docsContent').textContent = generateMarkdownDocs();
+        });
+    </script>
+</body>
+</html>
