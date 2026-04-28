@@ -130,20 +130,26 @@ function getMetricData($responseBody, $metricName) {
 
 function formatMetricLabel($metricName) {
     $labels = [
-        'engagement'   => 'Engagement',
-        'interactions' => 'Interacties',
-        'video_views'  => 'Video views',
+        'engagement'           => 'Engagement',
+        'interactions'         => 'Interacties',
+        'video_views'          => 'Video views',
+        'reach'                => 'Bereik',
+        'impressions'          => 'Impressies',
+        'clicks'               => 'Klikken',
+        'ctr'                  => 'CTR',
+        'reels_count'          => 'Aantal Reels',
+        'avg_reach_per_reel'   => 'Gem. bereik per reel',
     ];
 
     return $labels[$metricName] ?? ucfirst(str_replace('_', ' ', $metricName));
 }
 
 function formatMetricValue($value, $metricName) {
-    if ($metricName === 'engagement') {
+    if ($metricName === 'engagement' || $metricName === 'ctr') {
         return number_format((float) $value, 2, ',', '.') . '%';
     }
 
-    if ($metricName === 'interactions' || $metricName === 'video_views') {
+    if (in_array($metricName, ['interactions', 'video_views', 'reach', 'impressions', 'clicks', 'reels_count'])) {
         return number_format((float) $value, 0, ',', '.');
     }
 
@@ -172,9 +178,50 @@ function getMetricsForSection($sectionKey, $metricMode) {
 
     if ($sectionKey === 'reels') {
         $baseMetrics[] = 'video_views';
+        // Reach metrics only for reels to derive avg_reach_per_reel
+        $baseMetrics[] = 'reach';
     }
 
     return $baseMetrics;
+}
+
+/**
+ * Calculate derived KPI metrics from parsed data
+ * Returns aggregated stats for KPI cards
+ */
+function calculateDerivedKPIs($resultsBySection) {
+    $kpis = [];
+
+    // Reels KPIs
+    if (isset($resultsBySection['reels'])) {
+        // Reels count = total datapoints in reels section
+        $reelsData = $resultsBySection['reels']['video_views']['parsed'] ?? null;
+        if ($reelsData) {
+            $kpis['reels_count'] = $reelsData['dataPointCount'];
+        }
+
+        // Avg reach per reel = average of reach values
+        $reachData = $resultsBySection['reels']['reach']['parsed'] ?? null;
+        if ($reachData) {
+            $kpis['avg_reach_per_reel'] = $reachData['averageValue'];
+        }
+
+        // Total interactions in reels
+        $interactionsData = $resultsBySection['reels']['interactions']['parsed'] ?? null;
+        if ($interactionsData) {
+            $kpis['reels_interactions'] = $interactionsData['averageValue'];
+        }
+    }
+
+    // Posts KPIs
+    if (isset($resultsBySection['posts'])) {
+        $postsInteractions = $resultsBySection['posts']['interactions']['parsed'] ?? null;
+        if ($postsInteractions) {
+            $kpis['posts_interactions'] = $postsInteractions['averageValue'];
+        }
+    }
+
+    return $kpis;
 }
 
 $from = $_GET['from'] ?? date('Y-m-01');
@@ -264,6 +311,10 @@ $metricApiMap = [
     'engagement'   => 'engagement',
     'interactions' => 'interactions',
     'video_views'  => 'blue_reels_play_count',
+    'reach'        => 'reach',
+    'impressions'  => 'impressions',
+    'clicks'       => 'clicks',
+    'ctr'          => 'ctr',
 ];
 
 $sectionsToLoad = [];
@@ -647,6 +698,46 @@ if (empty($globalErrors)) {
             <?php endforeach; ?>
         <?php endforeach; ?>
     </div>
+
+    <?php
+    // Calculate derived KPIs
+    $kpis = calculateDerivedKPIs($resultsBySection);
+    ?>
+
+    <?php if (!empty($kpis)): ?>
+    <div class="card">
+        <h2>📊 Samenvatting KPI's</h2>
+        <div class="stats-grid">
+            <?php if (isset($kpis['reels_count'])): ?>
+            <div class="stat-item">
+                <div class="stat-label">Aantal Reels</div>
+                <div class="stat-value"><?= (int) $kpis['reels_count'] ?></div>
+            </div>
+            <?php endif; ?>
+
+            <?php if (isset($kpis['avg_reach_per_reel'])): ?>
+            <div class="stat-item">
+                <div class="stat-label">Gem. bereik per reel</div>
+                <div class="stat-value"><?= formatMetricValue($kpis['avg_reach_per_reel'], 'reach') ?></div>
+            </div>
+            <?php endif; ?>
+
+            <?php if (isset($kpis['reels_interactions'])): ?>
+            <div class="stat-item">
+                <div class="stat-label">Gem. interacties (Reels)</div>
+                <div class="stat-value"><?= formatMetricValue($kpis['reels_interactions'], 'interactions') ?></div>
+            </div>
+            <?php endif; ?>
+
+            <?php if (isset($kpis['posts_interactions'])): ?>
+            <div class="stat-item">
+                <div class="stat-label">Gem. interacties (Posts)</div>
+                <div class="stat-value"><?= formatMetricValue($kpis['posts_interactions'], 'interactions') ?></div>
+            </div>
+            <?php endif; ?>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <?php foreach ($sectionsToLoad as $sectionKey): ?>
         <div class="section-card">
