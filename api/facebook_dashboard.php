@@ -573,8 +573,8 @@ if (empty($globalErrors)) {
 </head>
 <body>
     <nav class="navbar">
-        <a href="#" class="nav-link active">Facebook</a>
-        <a href="#" class="nav-link">Instagram</a>
+        <a href="facebook_dashboard.php" class="nav-link active">Facebook</a>
+        <a href="instagram_dashboard.php" class="nav-link">Instagram</a>
         <a href="#" class="nav-link">TikTok</a>
         <a href="#" class="nav-link">Google Business</a>
         <a href="config.php" class="nav-link">Inbox</a>
