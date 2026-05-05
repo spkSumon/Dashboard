@@ -124,28 +124,18 @@ function getMetricData($responseBody, $metricName) {
 
 function formatMetricLabel($metricName) {
     $labels = [
-        'engagement' => 'Engagement',
+        'engagement'   => 'Engagement',
         'interactions' => 'Interacties',
-        'reactions' => 'Reacties',
-        'comments' => 'Reacties',
-        'shares' => 'Delingen',
-        'clicks' => 'Klikken',
-        'impressions' => 'Vertoningen',
-        'reach' => 'Bereik',
-        'videoviews' => 'Video weergaven',
-        'views' => 'Weergaven',
+        'reach'        => 'Bereik',
+        'impressions'  => 'Vertoningen',
+        'video_views'  => 'Video views',
     ];
 
     return $labels[$metricName] ?? ucfirst(str_replace('_', ' ', $metricName));
 }
 
 function formatMetricValue($value, $metricName) {
-    $percentageMetrics = [
-        'engagement',
-        'ctr',
-    ];
-
-    if (in_array($metricName, $percentageMetrics, true)) {
+    if ($metricName === 'engagement') {
         return number_format((float) $value, 2, ',', '.') . '%';
     }
 
@@ -154,85 +144,32 @@ function formatMetricValue($value, $metricName) {
 
 function formatSectionLabel($sectionKey) {
     $labels = [
-        'posts'   => 'Posts',
-        'reels'   => 'Reels',
-        'stories' => 'Stories',
-        'videos'  => 'Videos',
+        'posts' => 'Posts',
+        'reels' => 'Reels',
     ];
 
     return $labels[$sectionKey] ?? ucfirst($sectionKey);
 }
 
+
 function getMetricsForSection($sectionKey, $metricMode) {
-    // Reels heeft andere field names dan posts/stories/videos
-    if ($sectionKey === 'reels') {
-        if ($metricMode === 'engagement') {
-            return ['engagement'];
-        }
-
-        if ($metricMode === 'interactions') {
-            return ['interactions'];
-        }
-
-        if ($metricMode === 'reach_views') {
-            return ['reach', 'impressions'];
-        }
-
-        // both - alleen metrics die werken voor reels
-        return ['engagement', 'interactions', 'reach', 'impressions'];
-    }
-    
-    // Stories heeft beperkte metrics
-    if ($sectionKey === 'stories') {
-        if ($metricMode === 'engagement') {
-            return ['engagement'];
-        }
-
-        if ($metricMode === 'interactions') {
-            return ['interactions'];
-        }
-
-        if ($metricMode === 'reach_views') {
-            return ['reach', 'impressions'];
-        }
-
-        // both
-        return ['engagement', 'interactions', 'reach', 'impressions'];
-    }
-    
-    // Videos heeft ook beperkte metrics
-    if ($sectionKey === 'videos') {
-        if ($metricMode === 'engagement') {
-            return ['engagement'];
-        }
-
-        if ($metricMode === 'interactions') {
-            return ['interactions'];
-        }
-
-        if ($metricMode === 'reach_views') {
-            return ['reach', 'impressions'];
-        }
-
-        // both
-        return ['engagement', 'interactions', 'reach', 'impressions'];
-    }
-
-    // Posts - volledig bereik van metrics
     if ($metricMode === 'engagement') {
         return ['engagement'];
     }
 
     if ($metricMode === 'interactions') {
-        return ['interactions', 'reactions', 'comments', 'shares'];
+        return ['interactions'];
     }
 
     if ($metricMode === 'reach_views') {
-        return ['reach', 'impressions', 'videoviews'];
+        return $sectionKey === 'reels'
+            ? ['video_views']
+            : ['reach', 'impressions'];
     }
 
-    // both
-    return ['engagement', 'interactions', 'reactions', 'comments', 'shares', 'reach', 'impressions'];
+    return $sectionKey === 'reels'
+        ? ['engagement', 'interactions', 'video_views']
+        : ['engagement', 'interactions', 'reach', 'impressions'];
 }
 
 $from        = $_GET['from']         ?? date('Y-m-01');
@@ -247,7 +184,8 @@ if (!in_array($metricMode, $allowedMetricModes, true)) {
     $metricMode = 'engagement';
 }
 
-$allowedSectionModes = ['posts', 'reels', 'stories', 'videos', 'all'];
+$allowedSectionModes = ['posts', 'reels', 'all'];
+
 if (!in_array($sectionMode, $allowedSectionModes, true)) {
     $sectionMode = 'posts';
 }
@@ -290,24 +228,23 @@ $availableSections = [
         'label'  => 'Reels',
         'params' => ['subject' => 'reels'],
     ],
-    'stories' => [
-        'label'  => 'Stories',
-        'params' => ['subject' => 'stories'],
-    ],
-    'videos' => [
-        'label'  => 'Videos',
-        'params' => ['subject' => 'videos'],
-    ],
+];
+
+$metricApiMap = [
+    'engagement'   => 'engagement',
+    'interactions' => 'interactions',
+    'reach'        => 'reach',
+    'impressions'  => 'impressions',
+    'video_views'  => 'blue_reels_play_count',
 ];
 
 if ($sectionMode === 'all') {
-    $sectionsToLoad = ['posts', 'reels', 'videos'];
+    $sectionsToLoad = ['posts', 'reels'];
 } elseif (isset($availableSections[$sectionMode])) {
     $sectionsToLoad = [$sectionMode];
 } else {
     $sectionsToLoad = ['posts'];
 }
-
 $resultsBySection = [];
 $errorsBySection  = [];
 $emptyBySection   = [];
@@ -327,8 +264,10 @@ if (empty($globalErrors)) {
         $metrics = getMetricsForSection($sectionKey, $metricMode);
 
         foreach ($metrics as $metricName) {
+            $apiMetricName = $metricApiMap[$metricName] ?? $metricName;
+
             $params = array_merge($sectionParams, [
-                'metric' => $metricName
+                'metric' => $apiMetricName
             ]);
 
             $result = callMetricool($config['endpoint'], $params, $headers);
@@ -360,7 +299,7 @@ if (empty($globalErrors)) {
                 continue;
             }
 
-            $parsed = getMetricData($result['body'], $metricName);
+            $parsed = getMetricData($result['body'], $apiMetricName);
 
             if (isset($parsed['error'])) {
                 $errorsBySection[$sectionKey][$metricName] = $parsed['error'];
