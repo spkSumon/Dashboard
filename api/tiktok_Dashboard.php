@@ -2,7 +2,7 @@
 
 $userId = 4394337;
 $blogId = 5668624;
-$token  = '';
+$token  = 'YTQGUMFFSNCTTTRMJPHRVFOHDACWTAULVIIPDJQOUIJDTONUCOIJUELBHLAZQDUB';
 
 $headers = [
     "Accept: application/json",
@@ -126,14 +126,17 @@ function formatMetricLabel($metricName) {
     $labels = [
         'engagement' => 'Engagement',
         'interactions' => 'Interacties',
-        'reactions' => 'Reacties',
+        'likes' => 'Likes',
         'comments' => 'Reacties',
         'shares' => 'Delingen',
+        'saved' => 'Opgeslagen',
         'clicks' => 'Klikken',
         'impressions' => 'Vertoningen',
         'reach' => 'Bereik',
         'videoviews' => 'Video weergaven',
         'views' => 'Weergaven',
+        'profile_views' => 'Profiel weergaven',
+        'followers' => 'Volgers',
     ];
 
     return $labels[$metricName] ?? ucfirst(str_replace('_', ' ', $metricName));
@@ -152,104 +155,15 @@ function formatMetricValue($value, $metricName) {
     return number_format((float) $value, 0, ',', '.');
 }
 
-function formatSectionLabel($sectionKey) {
-    $labels = [
-        'posts'   => 'Posts',
-        'reels'   => 'Reels',
-        'stories' => 'Stories',
-        'videos'  => 'Videos',
-    ];
-
-    return $labels[$sectionKey] ?? ucfirst($sectionKey);
-}
-
-function getMetricsForSection($sectionKey, $metricMode) {
-    // Reels heeft andere field names dan posts/stories/videos
-    if ($sectionKey === 'reels') {
-        if ($metricMode === 'engagement') {
-            return ['engagement'];
-        }
-
-        if ($metricMode === 'interactions') {
-            return ['interactions'];
-        }
-
-        if ($metricMode === 'reach_views') {
-            return ['reach', 'impressions'];
-        }
-
-        // both - alleen metrics die werken voor reels
-        return ['engagement', 'interactions', 'reach', 'impressions'];
-    }
-    
-    // Stories heeft beperkte metrics
-    if ($sectionKey === 'stories') {
-        if ($metricMode === 'engagement') {
-            return ['engagement'];
-        }
-
-        if ($metricMode === 'interactions') {
-            return ['interactions'];
-        }
-
-        if ($metricMode === 'reach_views') {
-            return ['reach', 'impressions'];
-        }
-
-        // both
-        return ['engagement', 'interactions', 'reach', 'impressions'];
-    }
-    
-    // Videos heeft ook beperkte metrics
-    if ($sectionKey === 'videos') {
-        if ($metricMode === 'engagement') {
-            return ['engagement'];
-        }
-
-        if ($metricMode === 'interactions') {
-            return ['interactions'];
-        }
-
-        if ($metricMode === 'reach_views') {
-            return ['reach', 'impressions'];
-        }
-
-        // both
-        return ['engagement', 'interactions', 'reach', 'impressions'];
-    }
-
-    // Posts - volledig bereik van metrics
-    if ($metricMode === 'engagement') {
-        return ['engagement'];
-    }
-
-    if ($metricMode === 'interactions') {
-        return ['interactions', 'reactions', 'comments', 'shares'];
-    }
-
-    if ($metricMode === 'reach_views') {
-        return ['reach', 'impressions', 'videoviews'];
-    }
-
-    // both
-    return ['engagement', 'interactions', 'reactions', 'comments', 'shares', 'reach', 'impressions'];
-}
-
-$from        = $_GET['from']         ?? date('Y-m-01');
-$to          = $_GET['to']           ?? date('Y-m-d');
-$testMode    = $_GET['test']         ?? 'timeline';
-$metricMode  = $_GET['metric_mode']  ?? 'engagement';
-$sectionMode = $_GET['section_mode'] ?? 'posts';
+$from       = $_GET['from']        ?? date('Y-m-01');
+$to         = $_GET['to']          ?? date('Y-m-d');
+$testMode   = $_GET['test']        ?? 'timeline';
+$metricMode = $_GET['metric_mode'] ?? 'engagement';
 
 $allowedMetricModes = ['engagement', 'interactions', 'reach_views', 'both'];
 
 if (!in_array($metricMode, $allowedMetricModes, true)) {
     $metricMode = 'engagement';
-}
-
-$allowedSectionModes = ['posts', 'reels', 'stories', 'videos', 'all'];
-if (!in_array($sectionMode, $allowedSectionModes, true)) {
-    $sectionMode = 'posts';
 }
 
 $globalErrors = [];
@@ -271,7 +185,7 @@ $configurations = [
         'params'   => [
             'from'     => $fromIso,
             'to'       => $toIso,
-            'network'  => 'facebook',
+            'network'  => 'tiktokBusiness',
             'timezone' => 'Europe/Brussels',
             'userId'   => $userId,
             'blogId'   => $blogId,
@@ -281,104 +195,67 @@ $configurations = [
 
 $config = $configurations[$testMode] ?? $configurations['timeline'];
 
-$availableSections = [
-    'posts' => [
-        'label'  => 'Posts',
-        'params' => ['subject' => 'posts'],
-    ],
-    'reels' => [
-        'label'  => 'Reels',
-        'params' => ['subject' => 'reels'],
-    ],
-    'stories' => [
-        'label'  => 'Stories',
-        'params' => ['subject' => 'stories'],
-    ],
-    'videos' => [
-        'label'  => 'Videos',
-        'params' => ['subject' => 'videos'],
-    ],
-];
-
-if ($sectionMode === 'all') {
-    $sectionsToLoad = ['posts', 'reels', 'videos'];
-} elseif (isset($availableSections[$sectionMode])) {
-    $sectionsToLoad = [$sectionMode];
+if ($metricMode === 'engagement') {
+    $metrics = ['engagement'];
+} elseif ($metricMode === 'interactions') {
+    $metrics = ['interactions', 'likes', 'comments', 'shares'];
+} elseif ($metricMode === 'reach_views') {
+    $metrics = ['reach', 'impressions', 'videoviews', 'views'];
 } else {
-    $sectionsToLoad = ['posts'];
+    $metrics = ['engagement', 'interactions', 'likes', 'comments', 'shares', 'reach', 'impressions', 'videoviews'];
 }
 
-$resultsBySection = [];
-$errorsBySection  = [];
-$emptyBySection   = [];
+$results = [];
+$errors = [];
+$empty = [];
 
 if (empty($globalErrors)) {
-    foreach ($sectionsToLoad as $sectionKey) {
-        if (!isset($availableSections[$sectionKey])) {
+    foreach ($metrics as $metricName) {
+        $params = array_merge($config['params'], [
+            'metric' => $metricName
+        ]);
+
+        $result = callMetricool($config['endpoint'], $params, $headers);
+
+        $results[$metricName] = [
+            'request' => $result,
+            'parsed'  => null,
+        ];
+
+        if (isset($result['error'])) {
+            $errors[$metricName] = $result['error'];
             continue;
         }
 
-        $resultsBySection[$sectionKey] = [];
-        $errorsBySection[$sectionKey]  = [];
-        $emptyBySection[$sectionKey]   = [];
+        if (($result['httpCode'] ?? 0) !== 200) {
+            $apiMsg =
+                $result['body']['detail']
+                ?? $result['body']['message']
+                ?? $result['body']['error']
+                ?? $result['raw']
+                ?? '';
 
-        $sectionParams = array_merge($config['params'], $availableSections[$sectionKey]['params']);
+            $errors[$metricName] =
+                'HTTP ' . ($result['httpCode'] ?? '?') .
+                ' voor ' . $metricName .
+                ($apiMsg ? ' — API: ' . $apiMsg : '');
 
-        $metrics = getMetricsForSection($sectionKey, $metricMode);
-
-        foreach ($metrics as $metricName) {
-            $params = array_merge($sectionParams, [
-                'metric' => $metricName
-            ]);
-
-            $result = callMetricool($config['endpoint'], $params, $headers);
-
-            $resultsBySection[$sectionKey][$metricName] = [
-                'request' => $result,
-                'parsed'  => null,
-            ];
-
-            if (isset($result['error'])) {
-                $errorsBySection[$sectionKey][$metricName] = $result['error'];
-                continue;
-            }
-
-            if (($result['httpCode'] ?? 0) !== 200) {
-                $apiMsg =
-                    $result['body']['detail']
-                    ?? $result['body']['message']
-                    ?? $result['body']['error']
-                    ?? $result['raw']
-                    ?? '';
-
-                $errorsBySection[$sectionKey][$metricName] =
-                    'HTTP ' . ($result['httpCode'] ?? '?') .
-                    ' voor ' . $metricName .
-                    ' in ' . $sectionKey .
-                    ($apiMsg ? ' — API: ' . $apiMsg : '');
-
-                continue;
-            }
-
-            $parsed = getMetricData($result['body'], $metricName);
-
-            if (isset($parsed['error'])) {
-                $errorsBySection[$sectionKey][$metricName] = $parsed['error'];
-                continue;
-            }
-
-            if (!empty($parsed['empty'])) {
-                $emptyBySection[$sectionKey][$metricName] =
-                    'Geen data gevonden voor ' .
-                    formatMetricLabel($metricName) .
-                    ' in ' .
-                    formatSectionLabel($sectionKey) .
-                    '.';
-                continue;
-            }
-
-            $resultsBySection[$sectionKey][$metricName]['parsed'] = $parsed;
+            continue;
         }
+
+        $parsed = getMetricData($result['body'], $metricName);
+
+        if (isset($parsed['error'])) {
+            $errors[$metricName] = $parsed['error'];
+            continue;
+        }
+
+        if (!empty($parsed['empty'])) {
+            $empty[$metricName] = 'Geen data gevonden voor ' . formatMetricLabel($metricName) . '.';
+            continue;
+        }
+
+        $results[$metricName]['parsed'] = $parsed;
     }
 }
 ?>
@@ -387,26 +264,25 @@ if (empty($globalErrors)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Dashboard - Metrics</title>
+    <title>TikTok Dashboard - Metrics</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <nav class="navbar">
     <a href="config.php" class="nav-link">📥 Inbox</a>
-    <a href="facebook_dashboard.php" class="nav-link active">👥 Facebook</a>
+    <a href="facebook_dashboard.php" class="nav-link">👥 Facebook</a>
     <a href="instagram_dashboard.php" class="nav-link">📸 Instagram</a>
-    <a href="tiktok_dashboard.php" class="nav-link">🎵 TikTok</a>
+    <a href="tiktok_dashboard.php" class="nav-link active">🎵 TikTok</a>
     <a href="gmb_dashboard.php" class="nav-link">🏢 Google Business</a>
 </nav>
 
 <div class="header">
-    <h1>👥 Facebook Dashboard</h1>
-    <p class="header-subtitle">Bekijk en analyseer je Facebook statistieken</p>
+    <h1>🎵 TikTok Dashboard</h1>
+    <p class="header-subtitle">Bekijk en analyseer je TikTok statistieken</p>
     <span class="test-mode">
         <strong>Modus:</strong> <?= htmlspecialchars($testMode) ?> |
-        <strong>Metrics:</strong> <?= htmlspecialchars($metricMode) ?> |
-        <strong>Secties:</strong> <?= htmlspecialchars($sectionMode) ?>
+        <strong>Metrics:</strong> <?= htmlspecialchars($metricMode) ?>
     </span>
 </div>
 
@@ -437,20 +313,9 @@ if (empty($globalErrors)) {
             <label for="metric_mode">📊 Welke metrics</label>
             <select id="metric_mode" name="metric_mode">
                 <option value="engagement" <?= $metricMode === 'engagement' ? 'selected' : '' ?>>Alleen engagement</option>
-                <option value="interactions" <?= $metricMode === 'interactions' ? 'selected' : '' ?>>Interacties (reacties/delingen)</option>
+                <option value="interactions" <?= $metricMode === 'interactions' ? 'selected' : '' ?>>Interacties (likes/reacties/delingen)</option>
                 <option value="reach_views" <?= $metricMode === 'reach_views' ? 'selected' : '' ?>>Bereik & weergaven</option>
                 <option value="both" <?= $metricMode === 'both' ? 'selected' : '' ?>>Alle basis metrics</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="section_mode">📂 Welke secties</label>
-            <select id="section_mode" name="section_mode">
-                <option value="posts" <?= $sectionMode === 'posts' ? 'selected' : '' ?>>Alleen posts</option>
-                <option value="reels" <?= $sectionMode === 'reels' ? 'selected' : '' ?>>Alleen reels</option>
-                <option value="stories" <?= $sectionMode === 'stories' ? 'selected' : '' ?>>Alleen stories</option>
-                <option value="videos" <?= $sectionMode === 'videos' ? 'selected' : '' ?>>Alleen videos</option>
-                <option value="all" <?= $sectionMode === 'all' ? 'selected' : '' ?>>Alle secties</option>
             </select>
         </div>
 
@@ -462,45 +327,35 @@ if (empty($globalErrors)) {
 
 <div class="endpoint-info">
     <p><strong>📡 Basis endpoint:</strong> <?= htmlspecialchars($config['endpoint']) ?></p>
-    <p><strong>ℹ️ Let op:</strong> Facebook's API heeft verschillende beschikbare metrics per sectie. Sommige metrics zijn alleen beschikbaar voor posts, niet voor reels/stories/videos.</p>
-    <?php foreach ($sectionsToLoad as $sectionKey): ?>
-        <?php foreach (($resultsBySection[$sectionKey] ?? []) as $metricName => $metricResult): ?>
-            <p>
-                <strong><?= htmlspecialchars(formatSectionLabel($sectionKey)) ?> – <?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
-                <code><?= htmlspecialchars($metricResult['request']['url'] ?? '-') ?></code>
-            </p>
-        <?php endforeach; ?>
+    <?php foreach ($results as $metricName => $result): ?>
+        <p>
+            <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
+            <code><?= htmlspecialchars($result['request']['url'] ?? '-') ?></code>
+        </p>
     <?php endforeach; ?>
 </div>
 
-<?php foreach ($sectionsToLoad as $sectionKey): ?>
-    <div class="section-card">
-        <div class="section-header">
-            <h2><?= htmlspecialchars(formatSectionLabel($sectionKey)) ?></h2>
-            <span class="section-pill"><?= htmlspecialchars(formatSectionLabel($sectionKey)) ?></span>
-        </div>
+<?php foreach ($results as $metricName => $result): ?>
+    <?php
+        $data  = $result['parsed'] ?? null;
+        $error = $errors[$metricName] ?? null;
+        $emptyMsg = $empty[$metricName] ?? null;
+    ?>
 
-        <?php foreach (($resultsBySection[$sectionKey] ?? []) as $metricName => $metricResult): ?>
-            <?php
-                $data  = $metricResult['parsed'] ?? null;
-                $error = $errorsBySection[$sectionKey][$metricName] ?? null;
-                $empty = $emptyBySection[$sectionKey][$metricName] ?? null;
-            ?>
+    <div class="metric-block">
+        <?php if ($error): ?>
+            <div class="error">
+                <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
+                <?= htmlspecialchars($error) ?>
+            </div>
 
-            <div class="metric-block">
-                <?php if ($error): ?>
-                    <div class="error">
-                        <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
-                        <?= htmlspecialchars($error) ?>
-                    </div>
+        <?php elseif ($emptyMsg): ?>
+            <div class="info">
+                <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
+                <?= htmlspecialchars($emptyMsg) ?>
+            </div>
 
-                <?php elseif ($empty): ?>
-                    <div class="info">
-                        <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
-                        <?= htmlspecialchars($empty) ?>
-                    </div>
-
-                <?php elseif ($data): ?>
+        <?php elseif ($data): ?>
 
             <div class="card">
                 <h3>
@@ -591,34 +446,26 @@ if (empty($globalErrors)) {
                 </table>
             </div>
 
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
+        <?php endif; ?>
     </div>
 <?php endforeach; ?>
 
 <div class="card">
     <h3>🐛 Debug Informatie</h3>
 
-    <?php foreach ($sectionsToLoad as $sectionKey): ?>
-        <?php foreach (($resultsBySection[$sectionKey] ?? []) as $metricName => $metricResult): ?>
-            <div class="debug-box">
-                <strong>
-                    <?= htmlspecialchars(formatSectionLabel($sectionKey)) ?>
-                    –
-                    <?= htmlspecialchars(formatMetricLabel($metricName)) ?>
-                </strong>
+    <?php foreach ($results as $metricName => $result): ?>
+        <div class="debug-box">
+            <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?></strong>
 
-                <?php if (($metricResult['request']['httpCode'] ?? 0) !== 200): ?>
-                    <p style="color:#c62828;font-weight:700;">
-                        HTTP <?= htmlspecialchars($metricResult['request']['httpCode'] ?? '?') ?>
-                    </p>
-                    <pre><?= htmlspecialchars($metricResult['request']['raw'] ?? '-') ?></pre>
-                <?php else: ?>
-                    <pre><?php var_dump($metricResult['request']['body'] ?? null); ?></pre>
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
+            <?php if (($result['request']['httpCode'] ?? 0) !== 200): ?>
+                <p style="color:#c62828;font-weight:700;">
+                    HTTP <?= htmlspecialchars($result['request']['httpCode'] ?? '?') ?>
+                </p>
+                <pre><?= htmlspecialchars($result['request']['raw'] ?? '-') ?></pre>
+            <?php else: ?>
+                <pre><?php var_dump($result['request']['body'] ?? null); ?></pre>
+            <?php endif; ?>
+        </div>
     <?php endforeach; ?>
 </div>
 
