@@ -38,6 +38,8 @@ switch ($range) {
 // our api's url to get data from our site
 $urlsite = "https://api.usefathom.com/v1/sites/$SITE_ID";
 
+$url = "https://api.usefathom.com/v1/current_visitors?site_id=$SITE_ID";
+
 
 $urldata = "https://api.usefathom.com/v1/aggregations";
 // parameters for our api call that we use 
@@ -108,7 +110,7 @@ function callFathom($url, $params, $apiKey) {
 
 
 
-
+$currentVisitors = callFathom($url, [], $API_KEY);
 // we call the function to get data from the api
 $data = callFathom($urldata, $params, $API_KEY);
 echo "<script>console.log(" . json_encode($data) . ");</script>";
@@ -129,6 +131,11 @@ foreach ($graphicinfo as $element){
 
 
 }
+
+
+$currentVisitors = json_encode($currentVisitors['total'] ?? 0);
+
+
 echo "<script>console.log(" . json_encode($values) . ");</script>";
 echo "<script>console.log(" . json_encode($datums) . ");</script>";
 
@@ -276,30 +283,83 @@ $totalAvgDuration = $totalVisits > 0 ? $totalAvg_duration / $totalVisits : 0;
 </head>
 <body class="bg-gray-100 ">
 
-<section class="flex justify-between text-center  items-center w-full p-4 rounded gap-4 mb-8 bg-[#5603AD]">
+<section class="flex justify-between items-center w-full p-4 rounded gap-4 mb-8 bg-[#5603AD]">
 
-    <div class=" text-white p-4 rounded ">
+    <!-- Realtime -->
+    <div id="realtimeD" class="relative text-white p-4 rounded">
+        Totaal realtime visitors: <?= $currentVisitors ?>
+        <div id="exp-realtime" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 p-4 text-white">
+            Het aantal mensen dat nu op je website zit.
+        </div>
+    </div>
+
+    <!-- Visits -->
+    <div id="visitsD" class="relative text-white p-4 rounded">
         Totaal visits: <?= $totalVisits ?>
+        <div id="exp-visits" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2  w-[1/2] p-4 text-white">
+            Het aantal bezoeken aan je website. Als iemand 3 pagina’s bekijkt, telt dat als 1 visit.
+        </div>
     </div>
 
-    <div class=" text-white p-4 rounded ">
+    <!-- Pageviews -->
+    <div id="pageviewsD" class="relative text-white p-4 rounded">
         Totaal pageviews: <?= $totalPageViews ?>
+        <div id="exp-pageviews" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 w-max p-4 text-white">
+            Hoeveel pagina’s in totaal bekeken zijn.
+        </div>
     </div>
 
-    <div class=" text-white p-4 rounded ">
+    <!-- Views per visit -->
+    <div id="viewsD" class="relative text-white p-4 rounded">
         Views per visit: <?= number_format($totalViewsPerVisit, 2) ?>
+        <div id="exp-vpv" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 w-max p-4 text-white">
+            Gemiddeld aantal pagina’s per bezoek.
+        </div>
     </div>
 
-    <div class=" text-white p-4 rounded">
+    <!-- Bounce -->
+    <div id="bounceD" class="relative text-white p-4 rounded">
         Bounce rate: <?= number_format($totalBounceRate, 2) ?>%
+        <div id="exp-bounce" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 w-max p-4 text-white">
+            Percentage dat direct weggaat na 1 pagina.
+        </div>
     </div>
-    <div>
-    <div class=" text-white p-4 rounded ">
-        
+
+    <!-- Duration -->
+    <div id="durationD" class="relative text-white p-4 rounded">
         Gemiddelde sessieduur: <?= gmdate("i:s", (int)round($totalAvgDuration)) ?>
+        <div id="exp-duration" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 max-w-full p-4 text-white">
+            Gemiddelde tijd dat iemand op je site blijft.
+        </div>
     </div>
 
 </section>
+
+<script>
+function setupTooltip(triggerId, tooltipId) {
+    const trigger = document.getElementById(triggerId);
+    const tooltip = document.getElementById(tooltipId);
+
+    trigger.addEventListener("mouseenter", () => {
+        tooltip.classList.remove("hidden");
+    });
+
+    trigger.addEventListener("mouseleave", () => {
+        tooltip.classList.add("hidden");
+    });
+}
+
+// Apply to ALL blocks
+setupTooltip("realtimeD", "exp-realtime");
+setupTooltip("visitsD", "exp-visits");
+setupTooltip("pageviewsD", "exp-pageviews");
+setupTooltip("viewsD", "exp-vpv");
+setupTooltip("bounceD", "exp-bounce");
+setupTooltip("durationD", "exp-duration");
+</script>
+
+
+
 <section>
     <div class="m-auto w-[100%] max-w-[90%]  ">
         <canvas id="Chart" class="" ></canvas>
@@ -335,7 +395,6 @@ $totalAvgDuration = $totalVisits > 0 ? $totalAvg_duration / $totalVisits : 0;
                     <?= number_format($site['views_per_visit'], 2) ?> vpv |
                     <?= number_format($site['bounce_rate'], 2) ?>% bounce rate |
                     <?= gmdate("i:s", (int)(round($site['avg_duration']))) ?> avg duration
-                    
                 </span>
             </li>
         <?php endforeach; ?>
