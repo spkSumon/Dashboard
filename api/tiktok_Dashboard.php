@@ -10,10 +10,14 @@ $headers = [
     "X-Mc-Auth: {$token}",
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ORIGINELE FUNCTIES – ongewijzigd
+// ─────────────────────────────────────────────────────────────────────────────
+
 function callMetricool($endpoint, $params, $headers) {
-    $baseUrl = "https://app.metricool.com";
+    $baseUrl  = "https://app.metricool.com";
     $endpoint = '/' . ltrim($endpoint, '/');
-    $url = $baseUrl . $endpoint . '?' . http_build_query($params);
+    $url      = $baseUrl . $endpoint . '?' . http_build_query($params);
 
     $ch = curl_init();
 
@@ -66,11 +70,7 @@ function getMetricData($responseBody, $metricName) {
     }
 
     if (count($metricBlock['values']) === 0) {
-        return [
-            'empty'  => true,
-            'metric' => $metricName,
-            'values' => []
-        ];
+        return ['empty' => true, 'metric' => $metricName, 'values' => []];
     }
 
     $values = $metricBlock['values'];
@@ -79,23 +79,15 @@ function getMetricData($responseBody, $metricName) {
         return strcmp($a['dateTime'] ?? '', $b['dateTime'] ?? '');
     });
 
-    $numericValues = array_map(function ($row) {
-        return (float) ($row['value'] ?? 0);
-    }, $values);
+    $numericValues = array_map(fn($row) => (float) ($row['value'] ?? 0), $values);
 
     $maxIndex = 0;
     $minIndex = 0;
 
     foreach ($values as $index => $row) {
         $currentValue = (float) ($row['value'] ?? 0);
-
-        if ($currentValue > (float) ($values[$maxIndex]['value'] ?? 0)) {
-            $maxIndex = $index;
-        }
-
-        if ($currentValue < (float) ($values[$minIndex]['value'] ?? 0)) {
-            $minIndex = $index;
-        }
+        if ($currentValue > (float) ($values[$maxIndex]['value'] ?? 0)) $maxIndex = $index;
+        if ($currentValue < (float) ($values[$minIndex]['value'] ?? 0)) $minIndex = $index;
     }
 
     $sortedNumericValues = $numericValues;
@@ -124,46 +116,63 @@ function getMetricData($responseBody, $metricName) {
 
 function formatMetricLabel($metricName) {
     $labels = [
-        'engagement' => 'Engagement',
-        'interactions' => 'Interacties',
-        'likes' => 'Likes',
-        'comments' => 'Reacties',
-        'shares' => 'Delingen',
-        'saved' => 'Opgeslagen',
-        'clicks' => 'Klikken',
-        'impressions' => 'Vertoningen',
-        'reach' => 'Bereik',
-        'videoviews' => 'Video weergaven',
-        'views' => 'Weergaven',
+        'engagement'    => 'Engagement',
+        'interactions'  => 'Interacties',
+        'likes'         => 'Likes',
+        'comments'      => 'Reacties',
+        'shares'        => 'Delingen',
+        'saved'         => 'Opgeslagen',
+        'clicks'        => 'Klikken',
+        'impressions'   => 'Vertoningen',
+        'reach'         => 'Bereik',
+        'videoviews'    => 'Video weergaven',
+        'views'         => 'Weergaven',
         'profile_views' => 'Profiel weergaven',
-        'followers' => 'Volgers',
+        'followers'     => 'Volgers',
     ];
-
     return $labels[$metricName] ?? ucfirst(str_replace('_', ' ', $metricName));
 }
 
 function formatMetricValue($value, $metricName) {
-    $percentageMetrics = [
-        'engagement',
-        'ctr',
-    ];
-
-    if (in_array($metricName, $percentageMetrics, true)) {
+    if (in_array($metricName, ['engagement', 'ctr'], true)) {
         return number_format((float) $value, 2, ',', '.') . '%';
     }
-
     return number_format((float) $value, 0, ',', '.');
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// NIEUW – Helper: haal beschikbare metrics uit een volledige API response
+// Gebruikt voor de "posts" subject call die meerdere metrics tegelijk teruggeeft
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Geeft alle metrische namen terug die aanwezig zijn in de response body.
+ * Handig als je niet vooraf weet welke metrics de API teruggeeft.
+ */
+function getAvailableMetricsFromResponse(array $responseBody): array {
+    if (!isset($responseBody['data']) || !is_array($responseBody['data'])) {
+        return [];
+    }
+    return array_filter(
+        array_column($responseBody['data'], 'metric'),
+        fn($m) => $m !== null
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET parameters
+// ─────────────────────────────────────────────────────────────────────────────
+
 $from       = $_GET['from']        ?? date('Y-m-01');
 $to         = $_GET['to']          ?? date('Y-m-d');
-$testMode   = $_GET['test']        ?? 'timeline';
-$metricMode = $_GET['metric_mode'] ?? 'engagement';
+$testMode   = $_GET['test']        ?? 'posts';           // NIEUW: default = posts
+$metricMode = $_GET['metric_mode'] ?? 'views_interactions';
 
-$allowedMetricModes = ['engagement', 'interactions', 'reach_views', 'both'];
+// NIEUW – uitgebreide metric modes voor TikTok posts-data
+$allowedMetricModes = ['views_interactions', 'engagement', 'interactions', 'reach_views', 'both'];
 
 if (!in_array($metricMode, $allowedMetricModes, true)) {
-    $metricMode = 'engagement';
+    $metricMode = 'views_interactions';
 }
 
 $globalErrors = [];
@@ -179,40 +188,86 @@ if ($from > $to) {
 $fromIso = $from . 'T00:00:00+01:00';
 $toIso   = $to   . 'T23:59:59+01:00';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// NIEUW – Configuraties uitgebreid met posts/videos subject endpoints
+// Dit zijn de endpoints die Metricool zelf gebruikt voor de "Posts viewed" grafiek
+// ─────────────────────────────────────────────────────────────────────────────
+
+$baseParams = [
+    'from'     => $fromIso,
+    'to'       => $toIso,
+    'network'  => 'tiktokBusiness',
+    'timezone' => 'Europe/Brussels',
+    'userId'   => $userId,
+    'blogId'   => $blogId,
+];
+
 $configurations = [
+    // Originele timeline (werkt niet voor engagement → behouden voor debug)
     'timeline' => [
         'endpoint' => '/api/v2/analytics/timelines',
-        'params'   => [
-            'from'     => $fromIso,
-            'to'       => $toIso,
-            'network'  => 'tiktokBusiness',
-            'timezone' => 'Europe/Brussels',
-            'userId'   => $userId,
-            'blogId'   => $blogId,
-        ]
+        'params'   => $baseParams,
+        'label'    => 'Timeline (profiel)',
+    ],
+
+    // NIEUW – Posts subject: equivalent van "Posts viewed in period" in Metricool UI
+    'posts' => [
+        'endpoint' => '/api/v2/analytics/timelines',
+        'params'   => array_merge($baseParams, ['subject' => 'posts']),
+        'label'    => 'Posts (per post)',
+    ],
+
+    // NIEUW – Videos subject: TikTok videos (zelfde data, andere subject naam)
+    'videos' => [
+        'endpoint' => '/api/v2/analytics/timelines',
+        'params'   => array_merge($baseParams, ['subject' => 'videos']),
+        'label'    => 'Videos',
+    ],
+
+    // NIEUW – Metrics endpoint (aggregaten, geen tijdreeks)
+    'metrics' => [
+        'endpoint' => '/api/v2/analytics/metrics',
+        'params'   => $baseParams,
+        'label'    => 'Metrics (totalen)',
     ],
 ];
 
-$config = $configurations[$testMode] ?? $configurations['timeline'];
+$config = $configurations[$testMode] ?? $configurations['posts'];
 
-if ($metricMode === 'engagement') {
+// ─────────────────────────────────────────────────────────────────────────────
+// NIEUW – Metric selectie gebaseerd op wat Metricool UI toont:
+// "Posts views", "Likes", "Comments", "Shares"
+// ─────────────────────────────────────────────────────────────────────────────
+
+if ($metricMode === 'views_interactions') {
+    // Exact wat Metricool UI toont onder "Posts viewed in period"
+    $metrics = ['videoviews', 'likes', 'comments', 'shares'];
+} elseif ($metricMode === 'engagement') {
     $metrics = ['engagement'];
 } elseif ($metricMode === 'interactions') {
     $metrics = ['interactions', 'likes', 'comments', 'shares'];
 } elseif ($metricMode === 'reach_views') {
     $metrics = ['reach', 'impressions', 'videoviews', 'views'];
 } else {
-    $metrics = ['engagement', 'interactions', 'likes', 'comments', 'shares', 'reach', 'impressions', 'videoviews'];
+    // both – alles
+    $metrics = ['videoviews', 'likes', 'comments', 'shares', 'reach', 'impressions', 'engagement'];
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Data ophalen – originele structuur behouden
+// ─────────────────────────────────────────────────────────────────────────────
+
 $results = [];
-$errors = [];
-$empty = [];
+$errors  = [];
+$empty   = [];
+
+// NIEUW – bijhouden welke metrics de API effectief teruggeeft (voor debug)
+$apiAvailableMetrics = [];
 
 if (empty($globalErrors)) {
     foreach ($metrics as $metricName) {
         $params = array_merge($config['params'], [
-            'metric' => $metricName
+            'metric' => $metricName,
         ]);
 
         $result = callMetricool($config['endpoint'], $params, $headers);
@@ -240,8 +295,16 @@ if (empty($globalErrors)) {
                 ' voor ' . $metricName .
                 ($apiMsg ? ' — API: ' . $apiMsg : '');
 
+            // NIEUW – registreer beschikbare metrics uit de fout-response indien aanwezig
+            if (!empty($result['body'])) {
+                $apiAvailableMetrics[$metricName] = getAvailableMetricsFromResponse($result['body']);
+            }
+
             continue;
         }
+
+        // NIEUW – registreer welke metrics de API teruggeeft
+        $apiAvailableMetrics[$metricName] = getAvailableMetricsFromResponse($result['body'] ?? []);
 
         $parsed = getMetricData($result['body'], $metricName);
 
@@ -282,7 +345,8 @@ if (empty($globalErrors)) {
     <p class="header-subtitle">Bekijk en analyseer je TikTok statistieken</p>
     <span class="test-mode">
         <strong>Modus:</strong> <?= htmlspecialchars($testMode) ?> |
-        <strong>Metrics:</strong> <?= htmlspecialchars($metricMode) ?>
+        <strong>Metrics:</strong> <?= htmlspecialchars($metricMode) ?> |
+        <strong>Endpoint label:</strong> <?= htmlspecialchars($configurations[$testMode]['label'] ?? $testMode) ?>
     </span>
 </div>
 
@@ -305,17 +369,25 @@ if (empty($globalErrors)) {
         <div class="form-group">
             <label for="test">⚙️ API Configuratie</label>
             <select id="test" name="test">
-                <option value="timeline" <?= $testMode === 'timeline' ? 'selected' : '' ?>>Timeline</option>
+                <!-- NIEUW – posts en videos als standaard opties -->
+                <option value="posts"   <?= $testMode === 'posts'   ? 'selected' : '' ?>>Posts (aanbevolen)</option>
+                <option value="videos"  <?= $testMode === 'videos'  ? 'selected' : '' ?>>Videos</option>
+                <option value="metrics" <?= $testMode === 'metrics' ? 'selected' : '' ?>>Metrics (totalen)</option>
+                <option value="timeline" <?= $testMode === 'timeline' ? 'selected' : '' ?>>Timeline (debug)</option>
             </select>
         </div>
 
         <div class="form-group">
             <label for="metric_mode">📊 Welke metrics</label>
             <select id="metric_mode" name="metric_mode">
-                <option value="engagement" <?= $metricMode === 'engagement' ? 'selected' : '' ?>>Alleen engagement</option>
+                <!-- NIEUW – views_interactions als standaard (wat Metricool UI toont) -->
+                <option value="views_interactions" <?= $metricMode === 'views_interactions' ? 'selected' : '' ?>>
+                    📹 Views + Likes + Reacties + Delingen
+                </option>
+                <option value="engagement"   <?= $metricMode === 'engagement'   ? 'selected' : '' ?>>Alleen engagement</option>
                 <option value="interactions" <?= $metricMode === 'interactions' ? 'selected' : '' ?>>Interacties (likes/reacties/delingen)</option>
-                <option value="reach_views" <?= $metricMode === 'reach_views' ? 'selected' : '' ?>>Bereik & weergaven</option>
-                <option value="both" <?= $metricMode === 'both' ? 'selected' : '' ?>>Alle basis metrics</option>
+                <option value="reach_views"  <?= $metricMode === 'reach_views'  ? 'selected' : '' ?>>Bereik & weergaven</option>
+                <option value="both"         <?= $metricMode === 'both'         ? 'selected' : '' ?>>Alle metrics</option>
             </select>
         </div>
 
@@ -326,7 +398,11 @@ if (empty($globalErrors)) {
 </form>
 
 <div class="endpoint-info">
-    <p><strong>📡 Basis endpoint:</strong> <?= htmlspecialchars($config['endpoint']) ?></p>
+    <p>
+        <strong>📡 Basis endpoint:</strong> <?= htmlspecialchars($config['endpoint']) ?> |
+        <strong>Subject:</strong> <?= htmlspecialchars($config['params']['subject'] ?? 'geen') ?> |
+        <strong>Network:</strong> <?= htmlspecialchars($config['params']['network'] ?? '-') ?>
+    </p>
     <?php foreach ($results as $metricName => $result): ?>
         <p>
             <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
@@ -337,8 +413,8 @@ if (empty($globalErrors)) {
 
 <?php foreach ($results as $metricName => $result): ?>
     <?php
-        $data  = $result['parsed'] ?? null;
-        $error = $errors[$metricName] ?? null;
+        $data     = $result['parsed'] ?? null;
+        $error    = $errors[$metricName] ?? null;
         $emptyMsg = $empty[$metricName] ?? null;
     ?>
 
@@ -347,6 +423,16 @@ if (empty($globalErrors)) {
             <div class="error">
                 <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
                 <?= htmlspecialchars($error) ?>
+                <?php
+                // NIEUW – toon welke metrics WEL beschikbaar zijn als hint
+                $available = $apiAvailableMetrics[$metricName] ?? [];
+                if (!empty($available)):
+                ?>
+                    <br><small>
+                        <strong>Beschikbare metrics in deze response:</strong>
+                        <?= htmlspecialchars(implode(', ', $available)) ?>
+                    </small>
+                <?php endif; ?>
             </div>
 
         <?php elseif ($emptyMsg): ?>
@@ -356,6 +442,12 @@ if (empty($globalErrors)) {
             </div>
 
         <?php elseif ($data): ?>
+
+            <?php if ($data['dataPointCount'] === 1): ?>
+                <div class="warning">
+                    Slechts één datapunt gevonden voor <?= htmlspecialchars(formatMetricLabel($metricName)) ?>.
+                </div>
+            <?php endif; ?>
 
             <div class="card">
                 <h3>
@@ -372,39 +464,32 @@ if (empty($globalErrors)) {
                         <div class="stat-label">📍 Aantal datapunten</div>
                         <div class="stat-value"><?= (int) $data['dataPointCount'] ?></div>
                     </div>
-
                     <div class="stat-item">
                         <div class="stat-label">📊 Gemiddelde</div>
                         <div class="stat-value"><?= formatMetricValue($data['averageValue'], $metricName) ?></div>
                     </div>
-
                     <div class="stat-item">
                         <div class="stat-label">🎯 Mediaan</div>
                         <div class="stat-value"><?= formatMetricValue($data['medianValue'], $metricName) ?></div>
                     </div>
-
                     <div class="stat-item">
                         <div class="stat-label">⬆️ Hoogste waarde</div>
                         <div class="stat-value positive"><?= formatMetricValue($data['maxValue'], $metricName) ?></div>
                     </div>
-
                     <div class="stat-item">
                         <div class="stat-label">🏆 Beste datapunt</div>
                         <div class="stat-value">#<?= $data['maxIndex'] + 1 ?></div>
                         <div class="stat-subtext"><?= htmlspecialchars($data['maxRow']['dateTime'] ?? '-') ?></div>
                     </div>
-
                     <div class="stat-item">
                         <div class="stat-label">⬇️ Laagste waarde</div>
                         <div class="stat-value negative"><?= formatMetricValue($data['minValue'], $metricName) ?></div>
                     </div>
-
                     <div class="stat-item">
                         <div class="stat-label">📉 Zwakste datapunt</div>
                         <div class="stat-value">#<?= $data['minIndex'] + 1 ?></div>
                         <div class="stat-subtext"><?= htmlspecialchars($data['minRow']['dateTime'] ?? '-') ?></div>
                     </div>
-
                     <div class="stat-item">
                         <div class="stat-label">📏 Spreiding</div>
                         <div class="stat-value neutral"><?= formatMetricValue($data['rangeValue'], $metricName) ?></div>
@@ -425,18 +510,15 @@ if (empty($globalErrors)) {
                     <tbody>
                         <?php foreach ($data['values'] as $index => $row): ?>
                             <?php
-                                $isBest  = $index === $data['maxIndex'];
-                                $isWorst = $index === $data['minIndex'];
+                                $isBest   = $index === $data['maxIndex'];
+                                $isWorst  = $index === $data['minIndex'];
                                 $rowClass = $isBest ? 'row-best' : ($isWorst ? 'row-worst' : '');
                             ?>
                             <tr class="<?= $rowClass ?>">
                                 <td>
                                     <?= $index + 1 ?>
-                                    <?php if ($isBest): ?>
-                                        <span class="badge-best">🏆 Beste</span>
-                                    <?php elseif ($isWorst): ?>
-                                        <span class="badge-worst">📉 Zwakste</span>
-                                    <?php endif; ?>
+                                    <?php if ($isBest):  ?><span class="badge-best">🏆 Beste</span><?php endif; ?>
+                                    <?php if ($isWorst): ?><span class="badge-worst">📉 Zwakste</span><?php endif; ?>
                                 </td>
                                 <td><?= htmlspecialchars($row['dateTime'] ?? '-') ?></td>
                                 <td><strong><?= formatMetricValue($row['value'] ?? 0, $metricName) ?></strong></td>
@@ -456,6 +538,12 @@ if (empty($globalErrors)) {
     <?php foreach ($results as $metricName => $result): ?>
         <div class="debug-box">
             <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?></strong>
+            <?php
+            // NIEUW – toon beschikbare metrics in debug
+            $available = $apiAvailableMetrics[$metricName] ?? [];
+            if (!empty($available)): ?>
+                <br><em>Metrics in response: <?= htmlspecialchars(implode(', ', $available)) ?></em>
+            <?php endif; ?>
 
             <?php if (($result['request']['httpCode'] ?? 0) !== 200): ?>
                 <p style="color:#c62828;font-weight:700;">
