@@ -122,203 +122,96 @@ function getMetricData($responseBody, $metricName) {
     ];
 }
 
-function formatMetricLabel($metricName) {
-    $labels = [
-        'engagement'   => 'Engagement',
-        'interactions' => 'Interacties',
-        'reach'        => 'Bereik',
-        'impressions'  => 'Vertoningen',
-        'video_views'  => 'Video views',
-    ];
-
-    return $labels[$metricName] ?? ucfirst(str_replace('_', ' ', $metricName));
-}
-
-function formatMetricValue($value, $metricName) {
-    if ($metricName === 'engagement') {
-        return number_format((float) $value, 2, ',', '.') . '%';
-    }
-
-    return number_format((float) $value, 0, ',', '.');
-}
-
-function formatSectionLabel($sectionKey) {
-    $labels = [
-        'posts' => 'Posts',
-        'reels' => 'Reels',
-    ];
-
-    return $labels[$sectionKey] ?? ucfirst($sectionKey);
-}
-
-
-function getMetricsForSection($sectionKey, $metricMode) {
-    if ($metricMode === 'engagement') {
-        return ['engagement'];
-    }
-
-    if ($metricMode === 'interactions') {
-        return ['interactions'];
-    }
-
-    if ($metricMode === 'reach_views') {
-        return $sectionKey === 'reels'
-            ? ['video_views']
-            : ['reach', 'impressions'];
-    }
-
-    return $sectionKey === 'reels'
-        ? ['engagement', 'interactions', 'video_views']
-        : ['engagement', 'interactions', 'reach', 'impressions'];
-}
-
-$from        = $_GET['from']         ?? date('Y-m-01');
-$to          = $_GET['to']           ?? date('Y-m-d');
-$testMode    = $_GET['test']         ?? 'timeline';
-$metricMode  = $_GET['metric_mode']  ?? 'engagement';
-$sectionMode = $_GET['section_mode'] ?? 'posts';
-
-$allowedMetricModes = ['engagement', 'interactions', 'reach_views', 'both'];
-
-if (!in_array($metricMode, $allowedMetricModes, true)) {
-    $metricMode = 'engagement';
-}
-
-$allowedSectionModes = ['posts', 'reels', 'all'];
-
-if (!in_array($sectionMode, $allowedSectionModes, true)) {
-    $sectionMode = 'posts';
-}
-
-$globalErrors = [];
-
-if ($token === '') {
-    $globalErrors[] = 'Geen Metricool token ingesteld.';
-}
-
-if ($from > $to) {
-    $globalErrors[] = 'De startdatum mag niet later zijn dan de einddatum.';
-}
+$from = $_POST['from'] ?? date('Y-m-01');
+$to   = $_POST['to']   ?? date('Y-m-d');
 
 $fromIso = $from . 'T00:00:00+01:00';
 $toIso   = $to   . 'T23:59:59+01:00';
 
-$configurations = [
-    'timeline' => [
-        'endpoint' => '/api/v2/analytics/timelines',
-        'params'   => [
+// Alle beschikbare metrics
+$availableMetrics = [
+    'posts' => [
+        ['key' => 'engagement', 'label' => 'Engagement', 'icon' => '📊', 'api' => 'engagement'],
+        ['key' => 'interactions', 'label' => 'Interacties', 'icon' => '💬', 'api' => 'interactions'],
+        ['key' => 'likes', 'label' => 'Likes', 'icon' => '👍', 'api' => 'likes'],
+        ['key' => 'comments', 'label' => 'Reacties', 'icon' => '💭', 'api' => 'comments'],
+        ['key' => 'shares', 'label' => 'Delingen', 'icon' => '↗️', 'api' => 'shares'],
+        ['key' => 'reach', 'label' => 'Bereik', 'icon' => '👥', 'api' => 'reach'],
+        ['key' => 'impressions', 'label' => 'Vertoningen', 'icon' => '👀', 'api' => 'impressions'],
+    ],
+    'reels' => [
+        ['key' => 'engagement', 'label' => 'Engagement', 'icon' => '📊', 'api' => 'engagement'],
+        ['key' => 'interactions', 'label' => 'Interacties', 'icon' => '💬', 'api' => 'interactions'],
+        ['key' => 'likes', 'label' => 'Likes', 'icon' => '👍', 'api' => 'likes'],
+        ['key' => 'comments', 'label' => 'Reacties', 'icon' => '💭', 'api' => 'comments'],
+        ['key' => 'shares', 'label' => 'Delingen', 'icon' => '↗️', 'api' => 'shares'],
+        ['key' => 'video_views', 'label' => 'Video views', 'icon' => '▶️', 'api' => 'blue_reels_play_count'],
+        ['key' => 'reach', 'label' => 'Bereik', 'icon' => '👥', 'api' => 'reach'],
+    ],
+];
+
+// Data ophalen voor de geselecteerde metrics
+$selectedMetricsJson = $_POST['selected_metrics'] ?? '[]';
+$selectedMetrics = json_decode($selectedMetricsJson, true);
+
+if (!is_array($selectedMetrics)) {
+    $selectedMetrics = [];
+}
+
+$selectedSection = $_POST['selected_section'] ?? 'posts';
+
+if (!isset($availableMetrics[$selectedSection])) {
+    $selectedSection = 'posts';
+}
+
+$metricsData = [];
+
+if (!empty($selectedMetrics) && $token !== '') {
+    $subject = $selectedSection;
+    
+    foreach ($selectedMetrics as $metricKey) {
+        // Vind de metric info
+        $metricInfo = null;
+        foreach ($availableMetrics[$selectedSection] as $m) {
+            if ($m['key'] === $metricKey) {
+                $metricInfo = $m;
+                break;
+            }
+        }
+        
+        if (!$metricInfo) continue;
+        
+        $params = [
             'from'     => $fromIso,
             'to'       => $toIso,
             'network'  => 'facebook',
             'timezone' => 'Europe/Brussels',
             'userId'   => $userId,
             'blogId'   => $blogId,
-        ]
-    ],
-];
-
-$config = $configurations[$testMode] ?? $configurations['timeline'];
-
-$availableSections = [
-    'posts' => [
-        'label'  => 'Posts',
-        'params' => ['subject' => 'posts'],
-    ],
-    'reels' => [
-        'label'  => 'Reels',
-        'params' => ['subject' => 'reels'],
-    ],
-];
-
-$metricApiMap = [
-    'engagement'   => 'engagement',
-    'interactions' => 'interactions',
-    'reach'        => 'reach',
-    'impressions'  => 'impressions',
-    'video_views'  => 'blue_reels_play_count',
-];
-
-if ($sectionMode === 'all') {
-    $sectionsToLoad = ['posts', 'reels'];
-} elseif (isset($availableSections[$sectionMode])) {
-    $sectionsToLoad = [$sectionMode];
-} else {
-    $sectionsToLoad = ['posts'];
-}
-$resultsBySection = [];
-$errorsBySection  = [];
-$emptyBySection   = [];
-
-if (empty($globalErrors)) {
-    foreach ($sectionsToLoad as $sectionKey) {
-        if (!isset($availableSections[$sectionKey])) {
-            continue;
-        }
-
-        $resultsBySection[$sectionKey] = [];
-        $errorsBySection[$sectionKey]  = [];
-        $emptyBySection[$sectionKey]   = [];
-
-        $sectionParams = array_merge($config['params'], $availableSections[$sectionKey]['params']);
-
-        $metrics = getMetricsForSection($sectionKey, $metricMode);
-
-        foreach ($metrics as $metricName) {
-            $apiMetricName = $metricApiMap[$metricName] ?? $metricName;
-
-            $params = array_merge($sectionParams, [
-                'metric' => $apiMetricName
-            ]);
-
-            $result = callMetricool($config['endpoint'], $params, $headers);
-
-            $resultsBySection[$sectionKey][$metricName] = [
-                'request' => $result,
-                'parsed'  => null,
-            ];
-
-            if (isset($result['error'])) {
-                $errorsBySection[$sectionKey][$metricName] = $result['error'];
-                continue;
+            'subject'  => $subject,
+            'metric'   => $metricInfo['api'],
+        ];
+        
+        $result = callMetricool('/api/v2/analytics/timelines', $params, $headers);
+        
+        if (($result['httpCode'] ?? 0) === 200) {
+            $parsed = getMetricData($result['body'], $metricInfo['api']);
+            
+            if (!isset($parsed['error']) && empty($parsed['empty'])) {
+                $metricsData[$metricKey] = [
+                    'info' => $metricInfo,
+                    'data' => $parsed,
+                ];
             }
-
-            if (($result['httpCode'] ?? 0) !== 200) {
-                $apiMsg =
-                    $result['body']['detail']
-                    ?? $result['body']['message']
-                    ?? $result['body']['error']
-                    ?? $result['raw']
-                    ?? '';
-
-                $errorsBySection[$sectionKey][$metricName] =
-                    'HTTP ' . ($result['httpCode'] ?? '?') .
-                    ' voor ' . $metricName .
-                    ' in ' . $sectionKey .
-                    ($apiMsg ? ' — API: ' . $apiMsg : '');
-
-                continue;
-            }
-
-            $parsed = getMetricData($result['body'], $apiMetricName);
-
-            if (isset($parsed['error'])) {
-                $errorsBySection[$sectionKey][$metricName] = $parsed['error'];
-                continue;
-            }
-
-            if (!empty($parsed['empty'])) {
-                $emptyBySection[$sectionKey][$metricName] =
-                    'Geen data gevonden voor ' .
-                    formatMetricLabel($metricName) .
-                    ' in ' .
-                    formatSectionLabel($sectionKey) .
-                    '.';
-                continue;
-            }
-
-            $resultsBySection[$sectionKey][$metricName]['parsed'] = $parsed;
         }
     }
+}
+
+function formatValue($value, $metricKey) {
+    if ($metricKey === 'engagement') {
+        return number_format((float) $value, 2, ',', '.') . '%';
+    }
+    return number_format((float) $value, 0, ',', '.');
 }
 ?>
 <!DOCTYPE html>
@@ -326,240 +219,496 @@ if (empty($globalErrors)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Dashboard - Metrics</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Facebook Dashboard</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .date-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .date-selector label {
+            font-weight: 600;
+        }
+        
+        .date-selector input,
+        .date-selector select {
+            padding: 8px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        .section-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .section-tab {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .section-tab:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .section-tab.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+        
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 20px;
+            min-height: 500px;
+        }
+        
+        .metrics-sidebar {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .metrics-sidebar h3 {
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+        
+        .metric-chip {
+            background: #f0f0f0;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        .metric-chip:hover {
+            background: #e0e0e0;
+            transform: translateX(5px);
+        }
+        
+        .metric-chip.dragging {
+            opacity: 0.5;
+        }
+        
+        .metric-chip .icon {
+            font-size: 20px;
+        }
+        
+        .drop-zone {
+            background: rgba(255,255,255,0.95);
+            border: 3px dashed rgba(102,126,234,0.3);
+            border-radius: 12px;
+            padding: 40px;
+            min-height: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .drop-zone.drag-over {
+            background: rgba(102,126,234,0.1);
+            border-color: #667eea;
+        }
+        
+        .drop-zone.has-content {
+            align-items: stretch;
+            justify-content: flex-start;
+        }
+        
+        .drop-placeholder {
+            text-align: center;
+            color: #999;
+        }
+        
+        .drop-placeholder .icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+        
+        .metrics-display {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        .metric-card .remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            transition: all 0.2s;
+        }
+        
+        .metric-card .remove-btn:hover {
+            background: #cc0000;
+        }
+        
+        .metric-card h4 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+        
+        .metric-card .icon {
+            font-size: 24px;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .stat-value.large {
+            font-size: 32px;
+            grid-column: 1 / -1;
+            color: #667eea;
+        }
+        
+        .analyze-btn {
+            width: 100%;
+            padding: 15px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 15px;
+        }
+        
+        .analyze-btn:hover {
+            background: #5568d3;
+        }
+        
+        .analyze-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-sidebar {
+                order: 2;
+            }
+        }
+    </style>
 </head>
 <body>
-
 <nav class="navbar">
     <a href="config.php" class="nav-link">📥 Inbox</a>
-    <a href="facebook_dashboard.php" class="nav-link active">👥 Facebook</a>
-    <a href="instagram_dashboard.php" class="nav-link">📸 Instagram</a>
+    <a href="facebook_dashboard.php" class="nav-link">👥 Facebook</a>
+    <a href="instagram_dashboard.php" class="nav-link active">📸 Instagram</a>
     <a href="tiktok_dashboard.php" class="nav-link">🎵 TikTok</a>
     <a href="gmb_dashboard.php" class="nav-link">🏢 Google Business</a>
 </nav>
-
-<div class="header">
-    <h1>👥 Facebook Dashboard</h1>
-    <p class="header-subtitle">Bekijk en analyseer je Facebook statistieken</p>
-    <span class="test-mode">
-        <strong>Modus:</strong> <?= htmlspecialchars($testMode) ?> |
-        <strong>Metrics:</strong> <?= htmlspecialchars($metricMode) ?> |
-        <strong>Secties:</strong> <?= htmlspecialchars($sectionMode) ?>
-    </span>
-</div>
-
-<?php foreach ($globalErrors as $globalError): ?>
-    <div class="error"><?= htmlspecialchars($globalError) ?></div>
-<?php endforeach; ?>
-
-<form method="get">
-    <div class="form-row">
-        <div class="form-group">
-            <label for="from">📅 Van datum</label>
-            <input type="date" id="from" name="from" value="<?= htmlspecialchars($from) ?>">
-        </div>
-
-        <div class="form-group">
-            <label for="to">📅 Tot datum</label>
-            <input type="date" id="to" name="to" value="<?= htmlspecialchars($to) ?>">
-        </div>
-
-        <div class="form-group">
-            <label for="test">⚙️ API Configuratie</label>
-            <select id="test" name="test">
-                <option value="timeline" <?= $testMode === 'timeline' ? 'selected' : '' ?>>Timeline</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="metric_mode">📊 Welke metrics</label>
-            <select id="metric_mode" name="metric_mode">
-                <option value="engagement" <?= $metricMode === 'engagement' ? 'selected' : '' ?>>Alleen engagement</option>
-                <option value="interactions" <?= $metricMode === 'interactions' ? 'selected' : '' ?>>Interacties (reacties/delingen)</option>
-                <option value="reach_views" <?= $metricMode === 'reach_views' ? 'selected' : '' ?>>Bereik & weergaven</option>
-                <option value="both" <?= $metricMode === 'both' ? 'selected' : '' ?>>Alle basis metrics</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="section_mode">📂 Welke secties</label>
-            <select id="section_mode" name="section_mode">
-                <option value="posts" <?= $sectionMode === 'posts' ? 'selected' : '' ?>>Alleen posts</option>
-                <option value="reels" <?= $sectionMode === 'reels' ? 'selected' : '' ?>>Alleen reels</option>
-                <option value="stories" <?= $sectionMode === 'stories' ? 'selected' : '' ?>>Alleen stories</option>
-                <option value="videos" <?= $sectionMode === 'videos' ? 'selected' : '' ?>>Alleen videos</option>
-                <option value="all" <?= $sectionMode === 'all' ? 'selected' : '' ?>>Alle secties</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <button type="submit">🔍 Data ophalen</button>
-        </div>
+<div class="container">
+    <div class="header">
+        <h1>👥 Facebook Dashboard</h1>
+        <p>Sleep metrics naar het midden om ze te bekijken</p>
     </div>
-</form>
-
-<div class="endpoint-info">
-    <p><strong>📡 Basis endpoint:</strong> <?= htmlspecialchars($config['endpoint']) ?></p>
-    <p><strong>ℹ️ Let op:</strong> Facebook's API heeft verschillende beschikbare metrics per sectie. Sommige metrics zijn alleen beschikbaar voor posts, niet voor reels/stories/videos.</p>
-    <?php foreach ($sectionsToLoad as $sectionKey): ?>
-        <?php foreach (($resultsBySection[$sectionKey] ?? []) as $metricName => $metricResult): ?>
-            <p>
-                <strong><?= htmlspecialchars(formatSectionLabel($sectionKey)) ?> – <?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
-                <code><?= htmlspecialchars($metricResult['request']['url'] ?? '-') ?></code>
-            </p>
-        <?php endforeach; ?>
-    <?php endforeach; ?>
-</div>
-
-<?php foreach ($sectionsToLoad as $sectionKey): ?>
-    <div class="section-card">
-        <div class="section-header">
-            <h2><?= htmlspecialchars(formatSectionLabel($sectionKey)) ?></h2>
-            <span class="section-pill"><?= htmlspecialchars(formatSectionLabel($sectionKey)) ?></span>
+    
+    <form method="POST" id="dashboardForm">
+        <div class="date-selector">
+            <label>📅 Van:</label>
+            <input type="date" name="from" value="<?= htmlspecialchars($from) ?>">
+            
+            <label>Tot:</label>
+            <input type="date" name="to" value="<?= htmlspecialchars($to) ?>">
         </div>
-
-        <?php foreach (($resultsBySection[$sectionKey] ?? []) as $metricName => $metricResult): ?>
-            <?php
-                $data  = $metricResult['parsed'] ?? null;
-                $error = $errorsBySection[$sectionKey][$metricName] ?? null;
-                $empty = $emptyBySection[$sectionKey][$metricName] ?? null;
-            ?>
-
-            <div class="metric-block">
-                <?php if ($error): ?>
-                    <div class="error">
-                        <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
-                        <?= htmlspecialchars($error) ?>
-                    </div>
-
-                <?php elseif ($empty): ?>
-                    <div class="info">
-                        <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
-                        <?= htmlspecialchars($empty) ?>
-                    </div>
-
-                <?php elseif ($data): ?>
-
-            <div class="card">
-                <h3>
-                    📊 <?= htmlspecialchars(formatMetricLabel($metricName)) ?> overzicht
-                    <span class="data-point-badge"><?= $data['dataPointCount'] ?> datapunt(en)</span>
-                </h3>
-
-                <p style="color:#666; margin-bottom:20px;">
-                    <strong>📅 Periode:</strong> <?= htmlspecialchars($from) ?> tot <?= htmlspecialchars($to) ?>
-                </p>
-
-                <div class="stats-grid">
-                    <div class="stat-item">
-                        <div class="stat-label">📍 Aantal datapunten</div>
-                        <div class="stat-value"><?= (int) $data['dataPointCount'] ?></div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-label">📊 Gemiddelde</div>
-                        <div class="stat-value"><?= formatMetricValue($data['averageValue'], $metricName) ?></div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-label">🎯 Mediaan</div>
-                        <div class="stat-value"><?= formatMetricValue($data['medianValue'], $metricName) ?></div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-label">⬆️ Hoogste waarde</div>
-                        <div class="stat-value positive"><?= formatMetricValue($data['maxValue'], $metricName) ?></div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-label">🏆 Beste datapunt</div>
-                        <div class="stat-value">#<?= $data['maxIndex'] + 1 ?></div>
-                        <div class="stat-subtext"><?= htmlspecialchars($data['maxRow']['dateTime'] ?? '-') ?></div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-label">⬇️ Laagste waarde</div>
-                        <div class="stat-value negative"><?= formatMetricValue($data['minValue'], $metricName) ?></div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-label">📉 Zwakste datapunt</div>
-                        <div class="stat-value">#<?= $data['minIndex'] + 1 ?></div>
-                        <div class="stat-subtext"><?= htmlspecialchars($data['minRow']['dateTime'] ?? '-') ?></div>
-                    </div>
-
-                    <div class="stat-item">
-                        <div class="stat-label">📏 Spreiding</div>
-                        <div class="stat-value neutral"><?= formatMetricValue($data['rangeValue'], $metricName) ?></div>
-                    </div>
+        
+        <div class="section-tabs">
+            <div class="section-tab <?= $selectedSection === 'posts' ? 'active' : '' ?>" 
+                 onclick="selectSection('posts')">
+                📝 Posts
+            </div>
+            <div class="section-tab <?= $selectedSection === 'reels' ? 'active' : '' ?>" 
+                 onclick="selectSection('reels')">
+                🎥 Reels
+            </div>
+        </div>
+        
+        <input type="hidden" name="selected_section" id="selectedSection" value="<?= htmlspecialchars($selectedSection) ?>">
+        <input type="hidden" name="selected_metrics" id="selectedMetrics" value="">
+        
+        <div class="dashboard-layout">
+            <div class="metrics-sidebar">
+                <h3>Beschikbare Metrics</h3>
+                <div id="metricsList">
+                    <?php foreach ($availableMetrics[$selectedSection] as $metric): ?>
+                        <div class="metric-chip" draggable="true" data-metric="<?= htmlspecialchars($metric['key']) ?>">
+                            <span class="icon"><?= $metric['icon'] ?></span>
+                            <span><?= htmlspecialchars($metric['label']) ?></span>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
-
-            <div class="card">
-                <h3>📋 <?= htmlspecialchars(formatMetricLabel($metricName)) ?> per datapunt</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>📅 Datum & Tijd</th>
-                            <th>📊 <?= htmlspecialchars(formatMetricLabel($metricName)) ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($data['values'] as $index => $row): ?>
-                            <?php
-                                $isBest  = $index === $data['maxIndex'];
-                                $isWorst = $index === $data['minIndex'];
-                                $rowClass = $isBest ? 'row-best' : ($isWorst ? 'row-worst' : '');
-                            ?>
-                            <tr class="<?= $rowClass ?>">
-                                <td>
-                                    <?= $index + 1 ?>
-                                    <?php if ($isBest): ?>
-                                        <span class="badge-best">🏆 Beste</span>
-                                    <?php elseif ($isWorst): ?>
-                                        <span class="badge-worst">📉 Zwakste</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?= htmlspecialchars($row['dateTime'] ?? '-') ?></td>
-                                <td><strong><?= formatMetricValue($row['value'] ?? 0, $metricName) ?></strong></td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-
-                <?php endif; ?>
-            </div>
-        <?php endforeach; ?>
-    </div>
-<?php endforeach; ?>
-
-<div class="card">
-    <h3>🐛 Debug Informatie</h3>
-
-    <?php foreach ($sectionsToLoad as $sectionKey): ?>
-        <?php foreach (($resultsBySection[$sectionKey] ?? []) as $metricName => $metricResult): ?>
-            <div class="debug-box">
-                <strong>
-                    <?= htmlspecialchars(formatSectionLabel($sectionKey)) ?>
-                    –
-                    <?= htmlspecialchars(formatMetricLabel($metricName)) ?>
-                </strong>
-
-                <?php if (($metricResult['request']['httpCode'] ?? 0) !== 200): ?>
-                    <p style="color:#c62828;font-weight:700;">
-                        HTTP <?= htmlspecialchars($metricResult['request']['httpCode'] ?? '?') ?>
-                    </p>
-                    <pre><?= htmlspecialchars($metricResult['request']['raw'] ?? '-') ?></pre>
+            
+            <div class="drop-zone <?= !empty($metricsData) ? 'has-content' : '' ?>" id="dropZone">
+                <?php if (empty($metricsData)): ?>
+                    <div class="drop-placeholder">
+                        <div class="icon">📊</div>
+                        <h3>Sleep metrics hierheen</h3>
+                        <p>Kies de metrics die je wilt bekijken door ze hierheen te slepen</p>
+                    </div>
                 <?php else: ?>
-                    <pre><?php var_dump($metricResult['request']['body'] ?? null); ?></pre>
+                    <div class="metrics-display" id="metricsDisplay">
+                        <?php foreach ($metricsData as $key => $metric): ?>
+                            <div class="metric-card" data-metric="<?= htmlspecialchars($key) ?>">
+                                <button type="button" class="remove-btn" onclick="removeMetric('<?= htmlspecialchars($key) ?>')">×</button>
+                                <h4>
+                                    <span class="icon"><?= $metric['info']['icon'] ?></span>
+                                    <?= htmlspecialchars($metric['info']['label']) ?>
+                                </h4>
+                                
+                                <div class="stat-grid">
+                                    <div class="stat-item" style="grid-column: 1 / -1;">
+                                        <div class="stat-label">Gemiddelde</div>
+                                        <div class="stat-value large">
+                                            <?= formatValue($metric['data']['averageValue'], $key) ?>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="stat-item">
+                                        <div class="stat-label">⬆️ Hoogste</div>
+                                        <div class="stat-value">
+                                            <?= formatValue($metric['data']['maxValue'], $key) ?>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="stat-item">
+                                        <div class="stat-label">⬇️ Laagste</div>
+                                        <div class="stat-value">
+                                            <?= formatValue($metric['data']['minValue'], $key) ?>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="stat-item">
+                                        <div class="stat-label">📍 Datapunten</div>
+                                        <div class="stat-value">
+                                            <?= $metric['data']['dataPointCount'] ?>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="stat-item">
+                                        <div class="stat-label">🎯 Mediaan</div>
+                                        <div class="stat-value">
+                                            <?= formatValue($metric['data']['medianValue'], $key) ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                    <button type="button" class="analyze-btn" onclick="clearAll()">
+                        🔄 Opnieuw beginnen
+                    </button>
                 <?php endif; ?>
             </div>
-        <?php endforeach; ?>
-    <?php endforeach; ?>
+        </div>
+    </form>
 </div>
+
+<script>
+let selectedMetricsList = <?= json_encode(array_keys($metricsData)) ?>;
+const currentSection = '<?= htmlspecialchars($selectedSection) ?>';
+
+// Metrics per section
+const metricsConfig = <?= json_encode($availableMetrics) ?>;
+
+function selectSection(section) {
+    document.getElementById('selectedSection').value = section;
+    selectedMetricsList = [];
+    submitForm();
+}
+
+function updateMetricsList() {
+    const metricsList = document.getElementById('metricsList');
+    metricsList.innerHTML = '';
+    
+    metricsConfig[currentSection].forEach(metric => {
+        if (!selectedMetricsList.includes(metric.key)) {
+            const chip = document.createElement('div');
+            chip.className = 'metric-chip';
+            chip.draggable = true;
+            chip.dataset.metric = metric.key;
+            chip.innerHTML = `
+                <span class="icon">${metric.icon}</span>
+                <span>${metric.label}</span>
+            `;
+            
+            chip.addEventListener('dragstart', handleDragStart);
+            chip.addEventListener('dragend', handleDragEnd);
+            
+            metricsList.appendChild(chip);
+        }
+    });
+}
+
+function handleDragStart(e) {
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', e.target.innerHTML);
+    e.dataTransfer.setData('metric', e.target.dataset.metric);
+}
+
+function handleDragEnd(e) {
+    e.target.classList.remove('dragging');
+}
+
+const dropZone = document.getElementById('dropZone');
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    
+    const metric = e.dataTransfer.getData('metric');
+    
+    if (metric && !selectedMetricsList.includes(metric)) {
+        selectedMetricsList.push(metric);
+        submitForm();
+    }
+});
+
+function removeMetric(metric) {
+    selectedMetricsList = selectedMetricsList.filter(m => m !== metric);
+    submitForm();
+}
+
+function clearAll() {
+    selectedMetricsList = [];
+    submitForm();
+}
+
+function submitForm() {
+    document.getElementById('selectedMetrics').value = JSON.stringify(selectedMetricsList);
+    document.getElementById('dashboardForm').submit();
+}
+
+// Initialize drag and drop
+document.querySelectorAll('.metric-chip').forEach(chip => {
+    chip.addEventListener('dragstart', handleDragStart);
+    chip.addEventListener('dragend', handleDragEnd);
+});
+
+// Handle date changes
+document.querySelectorAll('input[type="date"]').forEach(input => {
+    input.addEventListener('change', () => {
+        submitForm();
+    });
+});
+</script>
 
 </body>
 </html>
