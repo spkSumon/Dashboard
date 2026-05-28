@@ -4,6 +4,7 @@ $userId = 4394337;
 $blogId = 5668624;
 $token  = 'YTQGUMFFSNCTTTRMJPHRVFOHDACWTAULVIIPDJQOUIJDTONUCOIJUELBHLAZQDUB';
 
+
 $headers = [
     "Accept: application/json",
     "Content-Type: application/json",
@@ -14,9 +15,7 @@ function callMetricool($endpoint, $params, $headers) {
     $baseUrl = "https://app.metricool.com";
     $endpoint = '/' . ltrim($endpoint, '/');
     $url = $baseUrl . $endpoint . '?' . http_build_query($params);
-
     $ch = curl_init();
-
     curl_setopt_array($ch, [
         CURLOPT_URL            => $url,
         CURLOPT_RETURNTRANSFER => true,
@@ -25,18 +24,14 @@ function callMetricool($endpoint, $params, $headers) {
         CURLOPT_SSL_VERIFYPEER => true,
         CURLOPT_TIMEOUT        => 30,
     ]);
-
     $response = curl_exec($ch);
-
     if (curl_errno($ch)) {
         $error = curl_error($ch);
         curl_close($ch);
         return ['error' => $error];
     }
-
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-
     return [
         'httpCode' => $httpCode,
         'body'     => json_decode($response, true),
@@ -49,71 +44,42 @@ function getMetricData($responseBody, $metricName) {
     if (!isset($responseBody['data']) || !is_array($responseBody['data'])) {
         return ['error' => 'Geen geldige data gevonden.'];
     }
-
     foreach ($responseBody['data'] as $block) {
         if (($block['metric'] ?? null) === $metricName) {
             $metricBlock = $block;
             break;
         }
     }
-
     if (!isset($metricBlock)) {
-        return ['error' => 'Metric "' . $metricName . '" niet gevonden in de response.'];
+        return ['error' => 'Metric "' . $metricName . '" niet gevonden.'];
     }
-
     if (!isset($metricBlock['values']) || !is_array($metricBlock['values'])) {
-        return ['error' => 'Geen geldige values-array gevonden voor metric "' . $metricName . '".'];
+        return ['error' => 'Geen values gevonden voor "' . $metricName . '".'];
     }
-
     if (count($metricBlock['values']) === 0) {
-        return [
-            'empty'  => true,
-            'metric' => $metricName,
-            'values' => []
-        ];
+        return ['empty' => true, 'metric' => $metricName, 'values' => []];
     }
-
     $values = $metricBlock['values'];
-
-    usort($values, function ($a, $b) {
-        return strcmp($a['dateTime'] ?? '', $b['dateTime'] ?? '');
-    });
-
-    $numericValues = array_map(function ($row) {
-        return (float) ($row['value'] ?? 0);
-    }, $values);
-
-    $maxIndex = 0;
-    $minIndex = 0;
-
-    foreach ($values as $index => $row) {
-        $currentValue = (float) ($row['value'] ?? 0);
-
-        if ($currentValue > (float) ($values[$maxIndex]['value'] ?? 0)) {
-            $maxIndex = $index;
-        }
-
-        if ($currentValue < (float) ($values[$minIndex]['value'] ?? 0)) {
-            $minIndex = $index;
-        }
+    usort($values, fn($a, $b) => strcmp($a['dateTime'] ?? '', $b['dateTime'] ?? ''));
+    $numericValues = array_map(fn($row) => (float)($row['value'] ?? 0), $values);
+    $maxIndex = $minIndex = 0;
+    foreach ($values as $i => $row) {
+        $v = (float)($row['value'] ?? 0);
+        if ($v > (float)($values[$maxIndex]['value'] ?? 0)) $maxIndex = $i;
+        if ($v < (float)($values[$minIndex]['value'] ?? 0)) $minIndex = $i;
     }
-
-    $sortedNumericValues = $numericValues;
-    sort($sortedNumericValues);
-    $count = count($sortedNumericValues);
-
-    $medianValue = $count % 2 === 0
-        ? ($sortedNumericValues[$count / 2 - 1] + $sortedNumericValues[$count / 2]) / 2
-        : $sortedNumericValues[(int) floor($count / 2)];
-
+    $sorted = $numericValues;
+    sort($sorted);
+    $c = count($sorted);
+    $median = $c % 2 === 0 ? ($sorted[$c/2-1] + $sorted[$c/2]) / 2 : $sorted[(int)floor($c/2)];
     return [
         'metric'         => $metricName,
         'dataPointCount' => count($values),
         'averageValue'   => array_sum($numericValues) / count($numericValues),
-        'medianValue'    => $medianValue,
-        'minValue'       => (float) ($values[$minIndex]['value'] ?? 0),
-        'maxValue'       => (float) ($values[$maxIndex]['value'] ?? 0),
-        'rangeValue'     => (float) ($values[$maxIndex]['value'] ?? 0) - (float) ($values[$minIndex]['value'] ?? 0),
+        'medianValue'    => $median,
+        'minValue'       => (float)($values[$minIndex]['value'] ?? 0),
+        'maxValue'       => (float)($values[$maxIndex]['value'] ?? 0),
+        'rangeValue'     => (float)($values[$maxIndex]['value'] ?? 0) - (float)($values[$minIndex]['value'] ?? 0),
         'minIndex'       => $minIndex,
         'maxIndex'       => $maxIndex,
         'minRow'         => $values[$minIndex],
@@ -122,65 +88,60 @@ function getMetricData($responseBody, $metricName) {
     ];
 }
 
+function formatValue($value, $metricKey) {
+    if ($metricKey === 'engagement') {
+        return number_format((float)$value, 2, ',', '.') . '%';
+    }
+    return number_format((float)$value, 0, ',', '.');
+}
+
 $from = $_POST['from'] ?? date('Y-m-01');
 $to   = $_POST['to']   ?? date('Y-m-d');
-
 $fromIso = $from . 'T00:00:00+01:00';
 $toIso   = $to   . 'T23:59:59+01:00';
 
-// Alle beschikbare metrics
 $availableMetrics = [
     'posts' => [
-        ['key' => 'engagement', 'label' => 'Engagement', 'icon' => '📊', 'api' => 'engagement'],
-        ['key' => 'interactions', 'label' => 'Interacties', 'icon' => '💬', 'api' => 'interactions'],
-        ['key' => 'likes', 'label' => 'Likes', 'icon' => '👍', 'api' => 'likes'],
-        ['key' => 'comments', 'label' => 'Reacties', 'icon' => '💭', 'api' => 'comments'],
-        ['key' => 'shares', 'label' => 'Delingen', 'icon' => '↗️', 'api' => 'shares'],
-        ['key' => 'reach', 'label' => 'Bereik', 'icon' => '👥', 'api' => 'reach'],
-        ['key' => 'impressions', 'label' => 'Vertoningen', 'icon' => '👀', 'api' => 'impressions'],
+        ['key' => 'engagement',   'label' => 'Engagement',  'api' => 'engagement',            'page' => 'engagement_detail.php',   'color' => '#f59e0b', 'bg' => '#fffbeb', 'icon' => '📈'],
+        ['key' => 'interactions', 'label' => 'Interacties', 'api' => 'interactions',           'page' => 'interactions_detail.php', 'color' => '#8b5cf6', 'bg' => '#f5f3ff', 'icon' => '💬'],
+        ['key' => 'likes',        'label' => 'Likes',       'api' => 'likes',                  'page' => 'likes_detail.php',        'color' => '#ec4899', 'bg' => '#fdf2f8', 'icon' => '❤️'],
+        ['key' => 'comments',     'label' => 'Reacties',    'api' => 'comments',               'page' => 'comments_detail.php',     'color' => '#06b6d4', 'bg' => '#ecfeff', 'icon' => '💭'],
+        ['key' => 'shares',       'label' => 'Delingen',    'api' => 'shares',                 'page' => 'shares_detail.php',       'color' => '#10b981', 'bg' => '#ecfdf5', 'icon' => '🔁'],
+        ['key' => 'reach',        'label' => 'Bereik',      'api' => 'impressionsunique',      'page' => 'reach_detail.php',        'color' => '#3b82f6', 'bg' => '#eff6ff', 'icon' => '👁️'],
     ],
     'reels' => [
-        ['key' => 'engagement', 'label' => 'Engagement', 'icon' => '📊', 'api' => 'engagement'],
-        ['key' => 'interactions', 'label' => 'Interacties', 'icon' => '💬', 'api' => 'interactions'],
-        ['key' => 'likes', 'label' => 'Likes', 'icon' => '👍', 'api' => 'likes'],
-        ['key' => 'comments', 'label' => 'Reacties', 'icon' => '💭', 'api' => 'comments'],
-        ['key' => 'shares', 'label' => 'Delingen', 'icon' => '↗️', 'api' => 'shares'],
-        ['key' => 'video_views', 'label' => 'Video views', 'icon' => '▶️', 'api' => 'blue_reels_play_count'],
-        ['key' => 'reach', 'label' => 'Bereik', 'icon' => '👥', 'api' => 'reach'],
+        ['key' => 'engagement',   'label' => 'Engagement',  'api' => 'engagement',             'page' => 'engagement_detail.php',   'color' => '#f59e0b', 'bg' => '#fffbeb', 'icon' => '📈'],
+        ['key' => 'interactions', 'label' => 'Interacties', 'api' => 'interactions',           'page' => 'interactions_detail.php', 'color' => '#8b5cf6', 'bg' => '#f5f3ff', 'icon' => '💬'],
+        ['key' => 'likes',        'label' => 'Likes',       'api' => 'likes',                  'page' => 'likes_detail.php',        'color' => '#ec4899', 'bg' => '#fdf2f8', 'icon' => '❤️'],
+        ['key' => 'comments',     'label' => 'Reacties',    'api' => 'comments',               'page' => 'comments_detail.php',     'color' => '#06b6d4', 'bg' => '#ecfeff', 'icon' => '💭'],
+        ['key' => 'shares',       'label' => 'Delingen',    'api' => 'shares',                 'page' => 'shares_detail.php',       'color' => '#10b981', 'bg' => '#ecfdf5', 'icon' => '🔁'],
+        ['key' => 'video_views',  'label' => 'Video views', 'api' => 'blue_reels_play_count',  'page' => 'videoviews_detail.php',   'color' => '#f43f5e', 'bg' => '#fff1f2', 'icon' => '▶️'],
+        ['key' => 'reach',        'label' => 'Bereik',      'api' => 'impressionsunique',      'page' => 'reach_detail.php',        'color' => '#3b82f6', 'bg' => '#eff6ff', 'icon' => '👁️'],
     ],
 ];
 
-// Data ophalen voor de geselecteerde metrics
+// Build lookup by key for easy access
+$metricLookup = [];
+foreach ($availableMetrics as $section => $metrics) {
+    foreach ($metrics as $m) {
+        $metricLookup[$section][$m['key']] = $m;
+    }
+}
+
 $selectedMetricsJson = $_POST['selected_metrics'] ?? '[]';
 $selectedMetrics = json_decode($selectedMetricsJson, true);
-
-if (!is_array($selectedMetrics)) {
-    $selectedMetrics = [];
-}
+if (!is_array($selectedMetrics)) $selectedMetrics = [];
 
 $selectedSection = $_POST['selected_section'] ?? 'posts';
-
-if (!isset($availableMetrics[$selectedSection])) {
-    $selectedSection = 'posts';
-}
+if (!isset($availableMetrics[$selectedSection])) $selectedSection = 'posts';
 
 $metricsData = [];
 
 if (!empty($selectedMetrics) && $token !== '') {
-    $subject = $selectedSection;
-    
     foreach ($selectedMetrics as $metricKey) {
-        // Vind de metric info
-        $metricInfo = null;
-        foreach ($availableMetrics[$selectedSection] as $m) {
-            if ($m['key'] === $metricKey) {
-                $metricInfo = $m;
-                break;
-            }
-        }
-        
+        $metricInfo = $metricLookup[$selectedSection][$metricKey] ?? null;
         if (!$metricInfo) continue;
-        
+
         $params = [
             'from'     => $fromIso,
             'to'       => $toIso,
@@ -188,30 +149,19 @@ if (!empty($selectedMetrics) && $token !== '') {
             'timezone' => 'Europe/Brussels',
             'userId'   => $userId,
             'blogId'   => $blogId,
-            'subject'  => $subject,
+            'subject'  => $selectedSection,
             'metric'   => $metricInfo['api'],
         ];
-        
+
         $result = callMetricool('/api/v2/analytics/timelines', $params, $headers);
-        
+
         if (($result['httpCode'] ?? 0) === 200) {
             $parsed = getMetricData($result['body'], $metricInfo['api']);
-            
             if (!isset($parsed['error']) && empty($parsed['empty'])) {
-                $metricsData[$metricKey] = [
-                    'info' => $metricInfo,
-                    'data' => $parsed,
-                ];
+                $metricsData[$metricKey] = ['info' => $metricInfo, 'data' => $parsed];
             }
         }
     }
-}
-
-function formatValue($value, $metricKey) {
-    if ($metricKey === 'engagement') {
-        return number_format((float) $value, 2, ',', '.') . '%';
-    }
-    return number_format((float) $value, 0, ',', '.');
 }
 ?>
 <!DOCTYPE html>
@@ -219,467 +169,568 @@ function formatValue($value, $metricKey) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Dashboard</title>
-
+    <title>Facebook — SkyByte</title>
+    <link rel="stylesheet" href="styles.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            background: #f0f2f7;
         }
-        
-        .container {
-            max-width: 1400px;
+
+        .sb-page {
+            max-width: 1320px;
             margin: 0 auto;
         }
-        
-        .header {
-            text-align: center;
-            color: white;
-            margin-bottom: 30px;
+
+        .sb-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a2233;
+            letter-spacing: -0.3px;
+            margin-bottom: 4px;
         }
-        
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+
+        .sb-subtitle {
+            font-size: 13px;
+            color: #7a8599;
+            margin-bottom: 28px;
         }
-        
-        .date-selector {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+
+        /* ── Toolbar ── */
+        .sb-toolbar {
             display: flex;
-            gap: 15px;
             align-items: center;
+            gap: 12px;
             flex-wrap: wrap;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        .date-selector label {
-            font-weight: 600;
-        }
-        
-        .date-selector input,
-        .date-selector select {
-            padding: 8px 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        
-        .section-tabs {
-            display: flex;
-            gap: 10px;
+            background: #fff;
+            border: 1px solid #e4e8ef;
+            border-radius: 12px;
+            padding: 14px 18px;
             margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
         }
-        
-        .section-tab {
-            flex: 1;
-            padding: 15px;
-            background: rgba(255,255,255,0.2);
-            border: 2px solid transparent;
-            border-radius: 12px;
-            color: white;
-            cursor: pointer;
-            text-align: center;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s;
+
+        .sb-toolbar label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #9aa3b4;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin: 0;
         }
-        
-        .section-tab:hover {
-            background: rgba(255,255,255,0.3);
-        }
-        
-        .section-tab.active {
-            background: white;
-            color: #667eea;
-            border-color: white;
-        }
-        
-        .dashboard-layout {
-            display: grid;
-            grid-template-columns: 250px 1fr;
-            gap: 20px;
-            min-height: 500px;
-        }
-        
-        .metrics-sidebar {
-            background: rgba(255,255,255,0.95);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        .metrics-sidebar h3 {
-            margin-bottom: 15px;
-            color: #667eea;
-        }
-        
-        .metric-chip {
-            background: #f0f0f0;
-            padding: 12px;
-            margin-bottom: 8px;
+
+        .sb-toolbar input[type="date"] {
+            border: 1px solid #dde2ec;
             border-radius: 8px;
-            cursor: move;
+            padding: 7px 11px;
+            font-size: 13px;
+            color: #1a2233;
+            background: #fafbfd;
+            width: auto;
+        }
+
+        .sb-toolbar input[type="date"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+        }
+
+        .sb-divider {
+            width: 1px;
+            height: 28px;
+            background: #e4e8ef;
+            margin: 0 4px;
+        }
+
+        .sb-tabs {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+            background: #f0f2f7;
+            padding: 3px;
+            border-radius: 9px;
+        }
+
+        .sb-tab {
+            padding: 6px 18px;
+            border-radius: 7px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #7a8599;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all .15s;
+        }
+
+        .sb-tab:hover { color: #3b82f6; }
+
+        .sb-tab.active {
+            background: #fff;
+            color: #1a2233;
+            box-shadow: 0 1px 4px rgba(0,0,0,.10);
+        }
+
+        /* ── Layout ── */
+        .sb-layout {
+            display: grid;
+            grid-template-columns: 210px 1fr;
+            gap: 16px;
+            align-items: start;
+        }
+
+        /* ── Sidebar ── */
+        .sb-sidebar {
+            background: #fff;
+            border: 1px solid #e4e8ef;
+            border-radius: 12px;
+            padding: 16px;
+            position: sticky;
+            top: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+
+        .sb-sidebar-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #9aa3b4;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 12px;
+        }
+
+        .sb-chip {
             display: flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
+            gap: 9px;
+            padding: 9px 11px;
+            margin-bottom: 5px;
+            border-radius: 8px;
+            border: 1px solid #e8edf4;
+            background: #fafbfd;
+            cursor: grab;
+            font-size: 13px;
+            font-weight: 500;
+            color: #3a4460;
+            transition: all .15s;
             user-select: none;
         }
-        
-        .metric-chip:hover {
-            background: #e0e0e0;
-            transform: translateX(5px);
+
+        .sb-chip:hover {
+            transform: translateX(2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,.08);
         }
-        
-        .metric-chip.dragging {
-            opacity: 0.5;
+
+        .sb-chip.dragging { opacity: .35; }
+
+        .sb-chip-icon {
+            font-size: 14px;
+            line-height: 1;
         }
-        
-        .metric-chip .icon {
-            font-size: 20px;
-        }
-        
-        .drop-zone {
-            background: rgba(255,255,255,0.95);
-            border: 3px dashed rgba(102,126,234,0.3);
+
+        /* ── Canvas ── */
+        .sb-canvas {
+            background: #fff;
+            border: 2px dashed #dde2ec;
             border-radius: 12px;
-            padding: 40px;
-            min-height: 500px;
+            min-height: 480px;
+            padding: 24px;
+            transition: border-color .2s, background .2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+
+        .sb-canvas.drag-over {
+            border-color: #3b82f6;
+            background: #f0f6ff;
+        }
+
+        .sb-canvas.has-content {
+            border-style: solid;
+            border-color: #e4e8ef;
+        }
+
+        /* Empty state */
+        .sb-empty {
+            height: 100%;
+            min-height: 400px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s;
+            gap: 10px;
+            color: #b0bac8;
         }
-        
-        .drop-zone.drag-over {
-            background: rgba(102,126,234,0.1);
-            border-color: #667eea;
-        }
-        
-        .drop-zone.has-content {
-            align-items: stretch;
-            justify-content: flex-start;
-        }
-        
-        .drop-placeholder {
-            text-align: center;
-            color: #999;
-        }
-        
-        .drop-placeholder .icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            opacity: 0.3;
-        }
-        
-        .metrics-display {
-            width: 100%;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        
-        .metric-card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            position: relative;
-        }
-        
-        .metric-card .remove-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #ff4444;
-            color: white;
-            border: none;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 16px;
-            line-height: 1;
-            transition: all 0.2s;
-        }
-        
-        .metric-card .remove-btn:hover {
-            background: #cc0000;
-        }
-        
-        .metric-card h4 {
+
+        .sb-empty-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            background: #f0f4ff;
             display: flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 15px;
-            color: #667eea;
-        }
-        
-        .metric-card .icon {
+            justify-content: center;
+            margin-bottom: 4px;
             font-size: 24px;
         }
-        
-        .stat-grid {
+
+        .sb-empty p {
+            font-size: 13px;
+            font-weight: 500;
+            color: #b0bac8;
+            margin: 0;
+        }
+
+        /* ── Metric cards ── */
+        .sb-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 14px;
+        }
+
+        /* Clickable card wrapper */
+        .sb-card-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            border-radius: 12px;
+            transition: transform .18s, box-shadow .18s;
+        }
+
+        .sb-card-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0,0,0,.11);
+        }
+
+        .sb-card-link:hover .sb-card-open {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .sb-card {
+            border: 1px solid #e4e8ef;
+            border-radius: 12px;
+            padding: 18px;
+            position: relative;
+            background: #fafbfd;
+            overflow: hidden;
+        }
+
+        /* Colored top accent bar */
+        .sb-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--card-color, #3b82f6);
+            border-radius: 12px 12px 0 0;
+        }
+
+        .sb-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .sb-card-label-wrap {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .sb-card-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            background: var(--card-bg, #eff6ff);
+            flex-shrink: 0;
+        }
+
+        .sb-card-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #7a8599;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sb-card-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* "Open detail" arrow badge */
+        .sb-card-open {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--card-color, #3b82f6);
+            background: var(--card-bg, #eff6ff);
+            padding: 3px 8px;
+            border-radius: 20px;
+            opacity: 0;
+            transform: translateX(-4px);
+            transition: opacity .18s, transform .18s;
+            white-space: nowrap;
+        }
+
+        .sb-card-open svg {
+            width: 11px;
+            height: 11px;
+        }
+
+        .sb-card-remove {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            border: 1px solid #e4e8ef;
+            background: #fff;
+            color: #b0bac8;
+            font-size: 15px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all .15s;
+            padding: 0;
+            flex-shrink: 0;
+            z-index: 2;
+            position: relative;
+        }
+
+        .sb-card-remove:hover {
+            background: #fff0f0;
+            border-color: #fca5a5;
+            color: #ef4444;
+        }
+
+        .sb-card-avg {
+            font-size: 34px;
+            font-weight: 800;
+            color: var(--card-color, #1a2233);
+            letter-spacing: -1.5px;
+            margin-bottom: 14px;
+            line-height: 1;
+        }
+
+        .sb-card-stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 15px;
+            gap: 7px;
         }
-        
-        .stat-item {
-            text-align: center;
-        }
-        
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-        }
-        
-        .stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: #333;
-        }
-        
-        .stat-value.large {
-            font-size: 32px;
-            grid-column: 1 / -1;
-            color: #667eea;
-        }
-        
-        .analyze-btn {
-            width: 100%;
-            padding: 15px;
-            background: #667eea;
-            color: white;
-            border: none;
+
+        .sb-card-stat {
+            background: #fff;
+            border: 1px solid #edf0f5;
             border-radius: 8px;
-            font-size: 16px;
+            padding: 8px 10px;
+        }
+
+        .sb-card-stat-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #b0bac8;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 3px;
+        }
+
+        .sb-card-stat-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: #3a4460;
+        }
+
+        /* ── Reset button ── */
+        .sb-reset {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 18px;
+            padding: 8px 14px;
+            border: 1px solid #e4e8ef;
+            border-radius: 8px;
+            background: #fff;
+            font-size: 13px;
             font-weight: 600;
+            color: #7a8599;
             cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 15px;
+            transition: all .15s;
         }
-        
-        .analyze-btn:hover {
-            background: #5568d3;
+
+        .sb-reset:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: #fff8f8;
         }
-        
-        .analyze-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        
+
         @media (max-width: 768px) {
-            .dashboard-layout {
-                grid-template-columns: 1fr;
-            }
-            
-            .metrics-sidebar {
-                order: 2;
-            }
+            .sb-layout { grid-template-columns: 1fr; }
+            .sb-sidebar { position: static; }
+            .sb-tabs { margin-left: 0; }
         }
     </style>
 </head>
 <body>
-<nav class="navbar">
-    <a href="config.php" class="nav-link">📥 Inbox</a>
-    <a href="facebook_dashboard.php" class="nav-link">👥 Facebook</a>
-    <a href="instagram_dashboard.php" class="nav-link active">📸 Instagram</a>
-    <a href="tiktok_dashboard.php" class="nav-link">🎵 TikTok</a>
-    <a href="gmb_dashboard.php" class="nav-link">🏢 Google Business</a>
-</nav>
-<div class="container">
-    <div class="header">
-        <h1>👥 Facebook Dashboard</h1>
-        <p>Sleep metrics naar het midden om ze te bekijken</p>
-    </div>
-    
+
+<div class="sb-page">
+
+    <nav class="navbar">
+        <a href="config.php" class="nav-link">Inbox</a>
+        <a href="facebook_dashboard.php" class="nav-link active">Facebook</a>
+        <a href="instagram_dashboard.php" class="nav-link">Instagram</a>
+        <a href="tiktok_dashboard.php" class="nav-link">TikTok</a>
+        <a href="gmb_dashboard.php" class="nav-link">Google Business</a>
+    </nav>
+
+    <p class="sb-title">Facebook</p>
+    <p class="sb-subtitle">Selecteer een periode en sleep metrics naar het overzicht</p>
+
     <form method="POST" id="dashboardForm">
-        <div class="date-selector">
-            <label>📅 Van:</label>
-            <input type="date" name="from" value="<?= htmlspecialchars($from) ?>">
-            
-            <label>Tot:</label>
-            <input type="date" name="to" value="<?= htmlspecialchars($to) ?>">
-        </div>
-        
-        <div class="section-tabs">
-            <div class="section-tab <?= $selectedSection === 'posts' ? 'active' : '' ?>" 
-                 onclick="selectSection('posts')">
-                📝 Posts
-            </div>
-            <div class="section-tab <?= $selectedSection === 'reels' ? 'active' : '' ?>" 
-                 onclick="selectSection('reels')">
-                🎥 Reels
-            </div>
-        </div>
-        
         <input type="hidden" name="selected_section" id="selectedSection" value="<?= htmlspecialchars($selectedSection) ?>">
         <input type="hidden" name="selected_metrics" id="selectedMetrics" value="">
-        
-        <div class="dashboard-layout">
-            <div class="metrics-sidebar">
-                <h3>Beschikbare Metrics</h3>
+
+        <div class="sb-toolbar">
+            <label>Van</label>
+            <input type="date" name="from" value="<?= htmlspecialchars($from) ?>">
+            <label>Tot</label>
+            <input type="date" name="to"   value="<?= htmlspecialchars($to) ?>">
+
+            <div class="sb-divider"></div>
+
+            <div class="sb-tabs">
+                <button type="button" class="sb-tab <?= $selectedSection === 'posts' ? 'active' : '' ?>"
+                        onclick="selectSection('posts')">Posts</button>
+                <button type="button" class="sb-tab <?= $selectedSection === 'reels' ? 'active' : '' ?>"
+                        onclick="selectSection('reels')">Reels</button>
+            </div>
+        </div>
+
+        <div class="sb-layout">
+
+            <!-- Sidebar -->
+            <div class="sb-sidebar">
+                <div class="sb-sidebar-title">Metrics</div>
                 <div id="metricsList">
                     <?php foreach ($availableMetrics[$selectedSection] as $metric): ?>
-                        <div class="metric-chip" draggable="true" data-metric="<?= htmlspecialchars($metric['key']) ?>">
-                            <span class="icon"><?= $metric['icon'] ?></span>
-                            <span><?= htmlspecialchars($metric['label']) ?></span>
+                        <div class="sb-chip"
+                             draggable="true"
+                             data-metric="<?= htmlspecialchars($metric['key']) ?>"
+                             style="border-left: 3px solid <?= htmlspecialchars($metric['color']) ?>;">
+                            <span class="sb-chip-icon"><?= $metric['icon'] ?></span>
+                            <?= htmlspecialchars($metric['label']) ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
             </div>
-            
-            <div class="drop-zone <?= !empty($metricsData) ? 'has-content' : '' ?>" id="dropZone">
+
+            <!-- Canvas -->
+            <div class="sb-canvas <?= !empty($metricsData) ? 'has-content' : '' ?>" id="dropZone">
+
                 <?php if (empty($metricsData)): ?>
-                    <div class="drop-placeholder">
-                        <div class="icon">📊</div>
-                        <h3>Sleep metrics hierheen</h3>
-                        <p>Kies de metrics die je wilt bekijken door ze hierheen te slepen</p>
+                    <div class="sb-empty">
+                        <div class="sb-empty-icon">📊</div>
+                        <p>Sleep een metric hierheen</p>
+                        <p style="font-size:12px; color:#c8d0de;">Kies links wat je wilt zien</p>
                     </div>
+
                 <?php else: ?>
-                    <div class="metrics-display" id="metricsDisplay">
-                        <?php foreach ($metricsData as $key => $metric): ?>
-                            <div class="metric-card" data-metric="<?= htmlspecialchars($key) ?>">
-                                <button type="button" class="remove-btn" onclick="removeMetric('<?= htmlspecialchars($key) ?>')">×</button>
-                                <h4>
-                                    <span class="icon"><?= $metric['info']['icon'] ?></span>
-                                    <?= htmlspecialchars($metric['info']['label']) ?>
-                                </h4>
-                                
-                                <div class="stat-grid">
-                                    <div class="stat-item" style="grid-column: 1 / -1;">
-                                        <div class="stat-label">Gemiddelde</div>
-                                        <div class="stat-value large">
-                                            <?= formatValue($metric['data']['averageValue'], $key) ?>
+                    <div class="sb-cards" id="metricsDisplay">
+                        <?php foreach ($metricsData as $key => $metric):
+                            $color = htmlspecialchars($metric['info']['color'] ?? '#3b82f6');
+                            $bg    = htmlspecialchars($metric['info']['bg']    ?? '#eff6ff');
+                            $page  = htmlspecialchars($metric['info']['page']  ?? '#');
+                            $icon  = $metric['info']['icon'] ?? '📊';
+                            // Pass date params to detail page
+                            $detailUrl = $page . '?from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=' . urlencode($selectedSection);
+                        ?>
+                            <a href="<?= $detailUrl ?>"
+                               class="sb-card-link"
+                               data-metric="<?= htmlspecialchars($key) ?>"
+                               style="--card-color: <?= $color ?>; --card-bg: <?= $bg ?>;">
+                                <div class="sb-card" style="--card-color: <?= $color ?>; --card-bg: <?= $bg ?>;">
+                                    <div class="sb-card-header">
+                                        <div class="sb-card-label-wrap">
+                                            <div class="sb-card-icon"><?= $icon ?></div>
+                                            <span class="sb-card-label"><?= htmlspecialchars($metric['info']['label']) ?></span>
+                                        </div>
+                                        <div class="sb-card-actions">
+                                            <span class="sb-card-open">
+                                                Details
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                                                </svg>
+                                            </span>
+                                            <button type="button" class="sb-card-remove"
+                                                    onclick="event.preventDefault(); removeMetric('<?= htmlspecialchars($key) ?>')">×</button>
                                         </div>
                                     </div>
-                                    
-                                    <div class="stat-item">
-                                        <div class="stat-label">⬆️ Hoogste</div>
-                                        <div class="stat-value">
-                                            <?= formatValue($metric['data']['maxValue'], $key) ?>
-                                        </div>
+
+                                    <div class="sb-card-avg">
+                                        <?= formatValue($metric['data']['averageValue'], $key) ?>
                                     </div>
-                                    
-                                    <div class="stat-item">
-                                        <div class="stat-label">⬇️ Laagste</div>
-                                        <div class="stat-value">
-                                            <?= formatValue($metric['data']['minValue'], $key) ?>
+
+                                    <div class="sb-card-stats">
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label">Hoogste</div>
+                                            <div class="sb-card-stat-value"><?= formatValue($metric['data']['maxValue'], $key) ?></div>
                                         </div>
-                                    </div>
-                                    
-                                    <div class="stat-item">
-                                        <div class="stat-label">📍 Datapunten</div>
-                                        <div class="stat-value">
-                                            <?= $metric['data']['dataPointCount'] ?>
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label">Laagste</div>
+                                            <div class="sb-card-stat-value"><?= formatValue($metric['data']['minValue'], $key) ?></div>
                                         </div>
-                                    </div>
-                                    
-                                    <div class="stat-item">
-                                        <div class="stat-label">🎯 Mediaan</div>
-                                        <div class="stat-value">
-                                            <?= formatValue($metric['data']['medianValue'], $key) ?>
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label">Mediaan</div>
+                                            <div class="sb-card-stat-value"><?= formatValue($metric['data']['medianValue'], $key) ?></div>
+                                        </div>
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label">Datapunten</div>
+                                            <div class="sb-card-stat-value"><?= $metric['data']['dataPointCount'] ?></div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </a>
                         <?php endforeach; ?>
                     </div>
-                    
-                    <button type="button" class="analyze-btn" onclick="clearAll()">
-                        🔄 Opnieuw beginnen
+
+                    <button type="button" class="sb-reset" onclick="clearAll()">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="1 4 1 10 7 10"/>
+                            <path d="M3.51 15a9 9 0 1 0 .49-3"/>
+                        </svg>
+                        Alles wissen
                     </button>
                 <?php endif; ?>
+
             </div>
         </div>
     </form>
+
 </div>
 
 <script>
 let selectedMetricsList = <?= json_encode(array_keys($metricsData)) ?>;
-const currentSection = '<?= htmlspecialchars($selectedSection) ?>';
-
-// Metrics per section
-const metricsConfig = <?= json_encode($availableMetrics) ?>;
+const metricsConfig     = <?= json_encode($availableMetrics) ?>;
+let currentSection      = '<?= htmlspecialchars($selectedSection) ?>';
 
 function selectSection(section) {
+    currentSection = section;
     document.getElementById('selectedSection').value = section;
     selectedMetricsList = [];
     submitForm();
 }
 
-function updateMetricsList() {
-    const metricsList = document.getElementById('metricsList');
-    metricsList.innerHTML = '';
-    
-    metricsConfig[currentSection].forEach(metric => {
-        if (!selectedMetricsList.includes(metric.key)) {
-            const chip = document.createElement('div');
-            chip.className = 'metric-chip';
-            chip.draggable = true;
-            chip.dataset.metric = metric.key;
-            chip.innerHTML = `
-                <span class="icon">${metric.icon}</span>
-                <span>${metric.label}</span>
-            `;
-            
-            chip.addEventListener('dragstart', handleDragStart);
-            chip.addEventListener('dragend', handleDragEnd);
-            
-            metricsList.appendChild(chip);
-        }
-    });
+function submitForm() {
+    document.getElementById('selectedMetrics').value = JSON.stringify(selectedMetricsList);
+    document.getElementById('dashboardForm').submit();
 }
-
-function handleDragStart(e) {
-    e.target.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', e.target.innerHTML);
-    e.dataTransfer.setData('metric', e.target.dataset.metric);
-}
-
-function handleDragEnd(e) {
-    e.target.classList.remove('dragging');
-}
-
-const dropZone = document.getElementById('dropZone');
-
-dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    dropZone.classList.add('drag-over');
-});
-
-dropZone.addEventListener('dragleave', () => {
-    dropZone.classList.remove('drag-over');
-});
-
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('drag-over');
-    
-    const metric = e.dataTransfer.getData('metric');
-    
-    if (metric && !selectedMetricsList.includes(metric)) {
-        selectedMetricsList.push(metric);
-        submitForm();
-    }
-});
 
 function removeMetric(metric) {
     selectedMetricsList = selectedMetricsList.filter(m => m !== metric);
@@ -691,22 +742,39 @@ function clearAll() {
     submitForm();
 }
 
-function submitForm() {
-    document.getElementById('selectedMetrics').value = JSON.stringify(selectedMetricsList);
-    document.getElementById('dashboardForm').submit();
-}
-
-// Initialize drag and drop
-document.querySelectorAll('.metric-chip').forEach(chip => {
-    chip.addEventListener('dragstart', handleDragStart);
-    chip.addEventListener('dragend', handleDragEnd);
+// Drag & drop
+document.querySelectorAll('.sb-chip').forEach(chip => {
+    chip.addEventListener('dragstart', e => {
+        chip.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('metric', chip.dataset.metric);
+    });
+    chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
 });
 
-// Handle date changes
-document.querySelectorAll('input[type="date"]').forEach(input => {
-    input.addEventListener('change', () => {
+const dropZone = document.getElementById('dropZone');
+
+dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const metric = e.dataTransfer.getData('metric');
+    if (metric && !selectedMetricsList.includes(metric)) {
+        selectedMetricsList.push(metric);
         submitForm();
-    });
+    }
+});
+
+// Auto-submit on date change
+document.querySelectorAll('input[type="date"]').forEach(input => {
+    input.addEventListener('change', submitForm);
 });
 </script>
 
