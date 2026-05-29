@@ -2,7 +2,7 @@
 
 $userId = 4394337;
 $blogId = 5668624;
-$token  = '';
+$token  = 'YTQGUMFFSNCTTTRMJPHRVFOHDACWTAULVIIPDJQOUIJDTONUCOIJUELBHLAZQDUB';
 
 $headers = [
     "Accept: application/json",
@@ -14,9 +14,7 @@ function callMetricool($endpoint, $params, $headers) {
     $baseUrl = "https://app.metricool.com";
     $endpoint = '/' . ltrim($endpoint, '/');
     $url = $baseUrl . $endpoint . '?' . http_build_query($params);
-
     $ch = curl_init();
-
     curl_setopt_array($ch, [
         CURLOPT_URL            => $url,
         CURLOPT_RETURNTRANSFER => true,
@@ -25,95 +23,42 @@ function callMetricool($endpoint, $params, $headers) {
         CURLOPT_SSL_VERIFYPEER => true,
         CURLOPT_TIMEOUT        => 30,
     ]);
-
     $response = curl_exec($ch);
-
-    if (curl_errno($ch)) {
-        $error = curl_error($ch);
-        curl_close($ch);
-        return ['error' => $error];
-    }
-
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    if (curl_errno($ch)) { $error = curl_error($ch); curl_close($ch); return ['error' => $error]; }
+    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-
-    return [
-        'httpCode' => $httpCode,
-        'body'     => json_decode($response, true),
-        'raw'      => $response,
-        'url'      => $url,
-    ];
+    return ['httpCode' => $code, 'body' => json_decode($response, true), 'raw' => $response];
 }
 
 function getMetricData($responseBody, $metricName) {
     if (!isset($responseBody['data']) || !is_array($responseBody['data'])) {
         return ['error' => 'Geen geldige data gevonden.'];
     }
-
     foreach ($responseBody['data'] as $block) {
-        if (($block['metric'] ?? null) === $metricName) {
-            $metricBlock = $block;
-            break;
-        }
+        if (($block['metric'] ?? null) === $metricName) { $metricBlock = $block; break; }
     }
-
-    if (!isset($metricBlock)) {
-        return ['error' => 'Metric "' . $metricName . '" niet gevonden in de response.'];
-    }
-
-    if (!isset($metricBlock['values']) || !is_array($metricBlock['values'])) {
-        return ['error' => 'Geen geldige values-array gevonden voor metric "' . $metricName . '".'];
-    }
-
-    if (count($metricBlock['values']) === 0) {
-        return [
-            'empty'  => true,
-            'metric' => $metricName,
-            'values' => []
-        ];
-    }
-
+    if (!isset($metricBlock)) { return ['error' => 'Metric "' . $metricName . '" niet gevonden.']; }
+    if (!isset($metricBlock['values']) || !is_array($metricBlock['values'])) { return ['error' => 'Geen values gevonden voor "' . $metricName . '".'];}
+    if (count($metricBlock['values']) === 0) { return ['empty' => true, 'metric' => $metricName, 'values' => []]; }
     $values = $metricBlock['values'];
-
-    usort($values, function ($a, $b) {
-        return strcmp($a['dateTime'] ?? '', $b['dateTime'] ?? '');
-    });
-
-    $numericValues = array_map(function ($row) {
-        return (float) ($row['value'] ?? 0);
-    }, $values);
-
-    $maxIndex = 0;
-    $minIndex = 0;
-
-    foreach ($values as $index => $row) {
-        $currentValue = (float) ($row['value'] ?? 0);
-
-        if ($currentValue > (float) ($values[$maxIndex]['value'] ?? 0)) {
-            $maxIndex = $index;
-        }
-
-        if ($currentValue < (float) ($values[$minIndex]['value'] ?? 0)) {
-            $minIndex = $index;
-        }
+    usort($values, fn($a, $b) => strcmp($a['dateTime'] ?? '', $b['dateTime'] ?? ''));
+    $numericValues = array_map(fn($row) => (float)($row['value'] ?? 0), $values);
+    $maxIndex = $minIndex = 0;
+    foreach ($values as $i => $row) {
+        $v = (float)($row['value'] ?? 0);
+        if ($v > (float)($values[$maxIndex]['value'] ?? 0)) $maxIndex = $i;
+        if ($v < (float)($values[$minIndex]['value'] ?? 0)) $minIndex = $i;
     }
-
-    $sortedNumericValues = $numericValues;
-    sort($sortedNumericValues);
-    $count = count($sortedNumericValues);
-
-    $medianValue = $count % 2 === 0
-        ? ($sortedNumericValues[$count / 2 - 1] + $sortedNumericValues[$count / 2]) / 2
-        : $sortedNumericValues[(int) floor($count / 2)];
-
+    $sorted = $numericValues; sort($sorted); $c = count($sorted);
+    $median = $c % 2 === 0 ? ($sorted[$c/2-1] + $sorted[$c/2]) / 2 : $sorted[(int)floor($c/2)];
     return [
         'metric'         => $metricName,
         'dataPointCount' => count($values),
         'averageValue'   => array_sum($numericValues) / count($numericValues),
-        'medianValue'    => $medianValue,
-        'minValue'       => (float) ($values[$minIndex]['value'] ?? 0),
-        'maxValue'       => (float) ($values[$maxIndex]['value'] ?? 0),
-        'rangeValue'     => (float) ($values[$maxIndex]['value'] ?? 0) - (float) ($values[$minIndex]['value'] ?? 0),
+        'medianValue'    => $median,
+        'minValue'       => (float)($values[$minIndex]['value'] ?? 0),
+        'maxValue'       => (float)($values[$maxIndex]['value'] ?? 0),
+        'rangeValue'     => (float)($values[$maxIndex]['value'] ?? 0) - (float)($values[$minIndex]['value'] ?? 0),
         'minIndex'       => $minIndex,
         'maxIndex'       => $maxIndex,
         'minRow'         => $values[$minIndex],
@@ -122,320 +67,73 @@ function getMetricData($responseBody, $metricName) {
     ];
 }
 
-function formatMetricLabel($metricName) {
-    $labels = [
-        'engagement' => 'Engagement',
-        'interactions' => 'Interacties',
-        'likes' => 'Likes',
-        'comments' => 'Reacties',
-        'shares' => 'Delingen',
-        'saved' => 'Opgeslagen',
-        'clicks' => 'Klikken',
-        'impressions' => 'Vertoningen',
-        'reach' => 'Bereik',
-        'videoviews' => 'Video weergaven',
-        'spend' => 'Advertentiekosten',
-        'ig_reels_avg_watch_time' => 'Gemiddelde kijktijd reels',
-        'ig_reels_duration' => 'Reels duur',
-        'ig_reels_video_view_total_time' => 'Totale kijktijd reels',
-        'reels_skip_rate' => 'Skip rate reels',
-        'reposts' => 'Reposts',
-    ];
-
-    return $labels[$metricName] ?? ucfirst(str_replace('_', ' ', $metricName));
+function formatValue($value, $metricKey) {
+    if ($metricKey === 'engagement') { return number_format((float)$value, 2, ',', '.') . '%'; }
+    return number_format((float)$value, 0, ',', '.');
 }
 
-function formatMetricValue($value, $metricName) {
-    $percentageMetrics = [
-        'engagement',
-        'ctr',
-        'reels_skip_rate',
-    ];
-
-    $moneyMetrics = [
-        'spend',
-    ];
-
-    $timeMetrics = [
-        'ig_reels_avg_watch_time',
-        'ig_reels_duration',
-        'ig_reels_video_view_total_time',
-    ];
-
-    if (in_array($metricName, $percentageMetrics, true)) {
-        return number_format((float) $value, 2, ',', '.') . '%';
-    }
-
-    if (in_array($metricName, $moneyMetrics, true)) {
-        return '€ ' . number_format((float) $value, 2, ',', '.');
-    }
-
-    if (in_array($metricName, $timeMetrics, true)) {
-        return number_format((float) $value, 2, ',', '.') . ' sec.';
-    }
-
-    return number_format((float) $value, 0, ',', '.');
-}
-
-function formatSectionLabel($sectionKey) {
-    $labels = [
-        'posts'   => 'Posts',
-        'reels'   => 'Reels',
-        'stories' => 'Stories',
-    ];
-
-    return $labels[$sectionKey] ?? ucfirst($sectionKey);
-}
-
-function getMetricsForSection($sectionKey, $metricMode) {
-    if ($sectionKey === 'stories') {
-        if ($metricMode === 'reach_views') {
-            return ['reach', 'impressions', 'videoviews'];
-        }
-
-        if ($metricMode === 'interactions') {
-            return ['interactions', 'replies'];
-        }
-
-        return ['interactions'];
-    }
-
-    if ($metricMode === 'engagement') {
-        return ['engagement'];
-    }
-
-    if ($metricMode === 'interactions') {
-        return ['interactions', 'likes', 'comments', 'shares', 'saved'];
-    }
-
-    if ($metricMode === 'reach_views') {
-        return ['reach', 'impressions', 'videoviews'];
-    }
-
-    if ($metricMode === 'paid') {
-        return ['videoviewspaid', 'postclickspaid', 'postinteractionspaid', 'spend'];
-    }
-
-    if ($metricMode === 'reels_extra') {
-        return $sectionKey === 'reels'
-            ? [
-                'ig_reels_avg_watch_time',
-                'ig_reels_duration',
-                'ig_reels_video_view_total_time',
-                'reels_skip_rate',
-                'reposts',
-            ]
-            : [];
-    }
-
-    return [
-        'engagement',
-        'interactions',
-        'likes',
-        'comments',
-        'shares',
-        'saved',
-        'reach',
-        'impressions',
-        'videoviews',
-    ];
-}
-
-$from        = $_GET['from']         ?? date('Y-m-01');
-$to          = $_GET['to']           ?? date('Y-m-d');
-$testMode    = $_GET['test']         ?? 'timeline';
-$metricMode  = $_GET['metric_mode']  ?? 'engagement';
-$sectionMode = $_GET['section_mode'] ?? 'both';
-
-$allowedMetricModes = [
-    'engagement',
-    'interactions',
-    'reach_views',
-    'paid',
-    'reels_extra',
-    'both'
-];
-
-if (!in_array($metricMode, $allowedMetricModes, true)) {
-    $metricMode = 'engagement';
-}
-
-$allowedSectionModes = ['posts', 'reels', 'stories', 'both'];
-if (!in_array($sectionMode, $allowedSectionModes, true)) {
-    $sectionMode = 'both';
-}
-
-$globalErrors = [];
-
-if ($token === '') {
-    $globalErrors[] = 'Geen Metricool token ingesteld.';
-}
-
-if ($from > $to) {
-    $globalErrors[] = 'De startdatum mag niet later zijn dan de einddatum.';
-}
-
+$from = $_POST['from'] ?? date('Y-m-01');
+$to   = $_POST['to']   ?? date('Y-m-d');
 $fromIso = $from . 'T00:00:00+01:00';
 $toIso   = $to   . 'T23:59:59+01:00';
 
-$configurations = [
-    'timeline' => [
-        'endpoint' => '/api/v2/analytics/timelines',
-        'params'   => [
-            'from'     => $fromIso,
-            'to'       => $toIso,
-            'network'  => 'instagram',
-            'timezone' => 'Europe/Brussels',
-            'userId'   => $userId,
-            'blogId'   => $blogId,
-        ]
-    ],
-    'timeline_profile' => [
-        'endpoint' => '/api/v2/analytics/timelines',
-        'params'   => [
-            'from'     => $fromIso,
-            'to'       => $toIso,
-            'network'  => 'instagram',
-            'timezone' => 'Europe/Brussels',
-            'subject'  => 'profile',
-            'userId'   => $userId,
-            'blogId'   => $blogId,
-        ]
-    ],
-    'metrics' => [
-        'endpoint' => '/api/v2/analytics/metrics',
-        'params'   => [
-            'from'     => $fromIso,
-            'to'       => $toIso,
-            'network'  => 'instagram',
-            'timezone' => 'Europe/Brussels',
-            'userId'   => $userId,
-            'blogId'   => $blogId,
-        ]
-    ],
-];
-
-$config = $configurations[$testMode] ?? $configurations['timeline'];
-
-$availableSections = [
+$availableMetrics = [
     'posts' => [
-        'label'  => 'Posts',
-        'params' => ['subject' => 'posts'],
+        ['key' => 'engagement',   'label' => 'Engagement',  'api' => 'engagement',   'page' => 'instagram_engagement_detail.php',   'color' => '#e1306c', 'bg' => '#fde8f0', 'icon' => '📈'],
+        ['key' => 'interactions', 'label' => 'Interacties', 'api' => 'interactions', 'page' => 'instagram_interactions_detail.php', 'color' => '#405de6', 'bg' => '#f0f2ff', 'icon' => '💬'],
+        ['key' => 'likes',        'label' => 'Likes',       'api' => 'likes',        'page' => 'instagram_likes_detail.php',        'color' => '#e1306c', 'bg' => '#fde8f0', 'icon' => '❤️'],
+        ['key' => 'comments',     'label' => 'Reacties',    'api' => 'comments',     'page' => 'instagram_comments_detail.php',     'color' => '#5b51d8', 'bg' => '#f3f1ff', 'icon' => '💭'],
+        ['key' => 'reach',        'label' => 'Bereik',      'api' => 'reach',        'page' => 'instagram_reach_detail.php',        'color' => '#833ab4', 'bg' => '#fef0ff', 'icon' => '👁️'],
     ],
     'reels' => [
-        'label'  => 'Reels',
-        'params' => ['subject' => 'reels'],
-    ],
-    'stories' => [
-        'label'  => 'Stories',
-        'params' => ['subject' => 'stories'],
+        ['key' => 'engagement',   'label' => 'Engagement',  'api' => 'engagement',   'page' => 'instagram_engagement_detail.php',   'color' => '#e1306c', 'bg' => '#fde8f0', 'icon' => '📈'],
+        ['key' => 'interactions', 'label' => 'Interacties', 'api' => 'interactions', 'page' => 'instagram_interactions_detail.php', 'color' => '#405de6', 'bg' => '#f0f2ff', 'icon' => '💬'],
+        ['key' => 'likes',        'label' => 'Likes',       'api' => 'likes',        'page' => 'instagram_likes_detail.php',        'color' => '#e1306c', 'bg' => '#fde8f0', 'icon' => '❤️'],
+        ['key' => 'comments',     'label' => 'Reacties',    'api' => 'comments',     'page' => 'instagram_comments_detail.php',     'color' => '#5b51d8', 'bg' => '#f3f1ff', 'icon' => '💭'],
+        ['key' => 'videoviews',   'label' => 'Video Views', 'api' => 'videoviews',   'page' => 'instagram_videoviews_detail.php',   'color' => '#f77737', 'bg' => '#fff4e6', 'icon' => '▶️'],
+        ['key' => 'reach',        'label' => 'Bereik',      'api' => 'reach',        'page' => 'instagram_reach_detail.php',        'color' => '#833ab4', 'bg' => '#fef0ff', 'icon' => '👁️'],
     ],
 ];
 
-$metricApiMap = [
-    'engagement' => 'engagement',
-    'interactions' => 'interactions',
-    'likes' => 'likes',
-    'comments' => 'comments',
-    'shares' => 'shares',
-    'saved' => 'saved',
-    'reach' => 'reach',
-    'impressions' => 'impressions',
-    'clicks' => 'clicks',
-    'videoviews' => 'videoviews',
-    'videoviewspaid' => 'videoviewspaid',
-    'postclickspaid' => 'postclickspaid',
-    'postinteractionspaid' => 'postinteractionspaid',
-    'spend' => 'spend',
-    'ig_reels_avg_watch_time' => 'ig_reels_avg_watch_time',
-    'ig_reels_duration' => 'ig_reels_duration',
-    'ig_reels_video_view_total_time' => 'ig_reels_video_view_total_time',
-    'reels_skip_rate' => 'reels_skip_rate',
-    'reposts' => 'reposts',
-    'replies' => 'replies',
-];
-
-if ($sectionMode === 'both') {
-    $sectionsToLoad = ['posts', 'reels'];
-} elseif (isset($availableSections[$sectionMode])) {
-    $sectionsToLoad = [$sectionMode];
-} else {
-    $sectionsToLoad = ['posts', 'reels'];
+$metricLookup = [];
+foreach ($availableMetrics as $section => $metrics) {
+    foreach ($metrics as $m) {
+        $metricLookup[$section][$m['key']] = $m;
+    }
 }
 
-$resultsBySection = [];
-$errorsBySection  = [];
-$emptyBySection   = [];
+$selectedMetricsJson = $_POST['selected_metrics'] ?? '[]';
+$selectedMetrics = json_decode($selectedMetricsJson, true);
+if (!is_array($selectedMetrics)) $selectedMetrics = [];
 
-if (empty($globalErrors)) {
-    foreach ($sectionsToLoad as $sectionKey) {
-        if (!isset($availableSections[$sectionKey])) {
-            continue;
-        }
+$selectedSection = $_POST['selected_section'] ?? 'posts';
+if (!isset($availableMetrics[$selectedSection])) $selectedSection = 'posts';
 
-        $resultsBySection[$sectionKey] = [];
-        $errorsBySection[$sectionKey]  = [];
-        $emptyBySection[$sectionKey]   = [];
+$metricsData = [];
 
-        $sectionParams = array_merge($config['params'], $availableSections[$sectionKey]['params']);
+if (!empty($selectedMetrics) && $token !== '') {
+    foreach ($selectedMetrics as $metricKey) {
+        $metricInfo = $metricLookup[$selectedSection][$metricKey] ?? null;
+        if (!$metricInfo) continue;
 
-        $metrics = getMetricsForSection($sectionKey, $metricMode);
+        $params = [
+            'from'     => $fromIso,
+            'to'       => $toIso,
+            'network'  => 'instagram',
+            'timezone' => 'Europe/Brussels',
+            'userId'   => $userId,
+            'blogId'   => $blogId,
+            'subject'  => $selectedSection,
+            'metric'   => $metricInfo['api'],
+        ];
 
-        foreach ($metrics as $metricName) {
-            $apiMetricName = $metricApiMap[$metricName] ?? $metricName;
+        $result = callMetricool('/api/v2/analytics/timelines', $params, $headers);
 
-            $params = array_merge($sectionParams, [
-                'metric' => $apiMetricName
-            ]);
-
-            $result = callMetricool($config['endpoint'], $params, $headers);
-
-            $resultsBySection[$sectionKey][$metricName] = [
-                'request'       => $result,
-                'parsed'        => null,
-                'apiMetricName' => $apiMetricName,
-            ];
-
-            if (isset($result['error'])) {
-                $errorsBySection[$sectionKey][$metricName] = $result['error'];
-                continue;
+        if (($result['httpCode'] ?? 0) === 200) {
+            $parsed = getMetricData($result['body'], $metricInfo['api']);
+            if (!isset($parsed['error']) && empty($parsed['empty'])) {
+                $metricsData[$metricKey] = ['info' => $metricInfo, 'data' => $parsed];
             }
-
-            if (($result['httpCode'] ?? 0) !== 200) {
-                $apiMsg =
-                    $result['body']['detail']
-                    ?? $result['body']['message']
-                    ?? $result['body']['error']
-                    ?? $result['raw']
-                    ?? '';
-
-                $errorsBySection[$sectionKey][$metricName] =
-                    'HTTP ' . ($result['httpCode'] ?? '?') .
-                    ' voor ' . $metricName .
-                    ' in ' . $sectionKey .
-                    ($apiMsg ? ' — API: ' . $apiMsg : '');
-
-                continue;
-            }
-
-            $parsed = getMetricData($result['body'], $apiMetricName);
-
-            if (isset($parsed['error'])) {
-                $errorsBySection[$sectionKey][$metricName] = $parsed['error'];
-                continue;
-            }
-
-            if (!empty($parsed['empty'])) {
-                $emptyBySection[$sectionKey][$metricName] =
-                    'Geen data gevonden voor ' .
-                    formatMetricLabel($metricName) .
-                    ' in ' .
-                    formatSectionLabel($sectionKey) .
-                    '.';
-                continue;
-            }
-
-            $resultsBySection[$sectionKey][$metricName]['parsed'] = $parsed;
         }
     }
 }
@@ -445,243 +143,239 @@ if (empty($globalErrors)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Dashboard - Metrics</title>
+    <title>Instagram — SkyByte</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        body { background: #f0f2f7; }
+        .sb-page { max-width: 1320px; margin: 0 auto; }
+        .sb-title { font-size: 22px; font-weight: 700; color: #1a2233; letter-spacing: -0.3px; margin-bottom: 4px; }
+        .sb-subtitle { font-size: 13px; color: #7a8599; margin-bottom: 28px; }
+        .sb-toolbar {
+            display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+            background: #fff; border: 1px solid #e4e8ef; border-radius: 12px;
+            padding: 14px 18px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+        .sb-toolbar label { font-size: 11px; font-weight: 700; color: #9aa3b4; text-transform: uppercase; letter-spacing: 0.6px; margin: 0; }
+        .sb-toolbar input[type="date"] {
+            border: 1px solid #dde2ec; border-radius: 8px; padding: 7px 11px;
+            font-size: 13px; color: #1a2233; background: #fafbfd;
+        }
+        .sb-toolbar input[type="date"]:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+        .sb-divider { width: 1px; height: 28px; background: #e4e8ef; margin: 0 4px; }
+        .sb-tabs {
+            display: flex; gap: 4px; margin-left: auto;
+            background: #f0f2f7; padding: 3px; border-radius: 9px;
+        }
+        .sb-tab {
+            padding: 6px 18px; border-radius: 7px; font-size: 13px; font-weight: 600;
+            color: #7a8599; background: transparent; border: none; cursor: pointer; transition: all .15s;
+        }
+        .sb-tab:hover { color: #e1306c; }
+        .sb-tab.active { background: #fff; color: #1a2233; box-shadow: 0 1px 4px rgba(0,0,0,.10); }
+        .sb-layout { display: grid; grid-template-columns: 210px 1fr; gap: 16px; align-items: start; }
+        .sb-sidebar {
+            background: #fff; border: 1px solid #e4e8ef; border-radius: 12px;
+            padding: 16px; position: sticky; top: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+        .sb-sidebar-title { font-size: 11px; font-weight: 700; color: #9aa3b4; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px; }
+        .sb-chip {
+            display: flex; align-items: center; gap: 9px; padding: 9px 11px; margin-bottom: 5px;
+            border-radius: 8px; border: 1px solid #e8edf4; background: #fafbfd; cursor: grab;
+            font-size: 13px; font-weight: 500; color: #3a4460; transition: all .15s; user-select: none;
+        }
+        .sb-chip:hover { transform: translateX(2px); box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+        .sb-chip.dragging { opacity: .35; }
+        .sb-chip-icon { font-size: 14px; line-height: 1; }
+        .sb-canvas {
+            background: #fff; border: 2px dashed #dde2ec; border-radius: 12px;
+            min-height: 480px; padding: 24px; transition: border-color .2s, background .2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+        .sb-canvas.drag-over { border-color: #e1306c; background: #fde8f0; }
+        .sb-canvas.has-content { border-style: solid; border-color: #e4e8ef; }
+        .sb-empty { height: 100%; min-height: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: #b0bac8; }
+        .sb-empty-icon { width: 52px; height: 52px; border-radius: 14px; background: #fde8f0; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; font-size: 24px; }
+        .sb-empty p { font-size: 13px; font-weight: 500; color: #b0bac8; margin: 0; }
+        .sb-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+        .sb-card-link { display: block; text-decoration: none; color: inherit; border-radius: 12px; transition: transform .18s, box-shadow .18s; }
+        .sb-card-link:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.11); }
+        .sb-card-link:hover .sb-card-open { opacity: 1; transform: translateX(0); }
+        .sb-card { border: 1px solid #e4e8ef; border-radius: 12px; padding: 18px; position: relative; background: #fafbfd; overflow: hidden; }
+        .sb-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--card-color, #e1306c); border-radius: 12px 12px 0 0; }
+        .sb-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+        .sb-card-label-wrap { display: flex; align-items: center; gap: 7px; }
+        .sb-card-icon { width: 28px; height: 28px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: var(--card-bg, #fde8f0); flex-shrink: 0; }
+        .sb-card-label { font-size: 11px; font-weight: 700; color: #7a8599; text-transform: uppercase; letter-spacing: 0.5px; }
+        .sb-card-actions { display: flex; align-items: center; gap: 6px; }
+        .sb-card-open { display: flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 600; color: var(--card-color, #e1306c); background: var(--card-bg, #fde8f0); padding: 3px 8px; border-radius: 20px; opacity: 0; transform: translateX(-4px); transition: opacity .18s, transform .18s; white-space: nowrap; }
+        .sb-card-open svg { width: 11px; height: 11px; }
+        .sb-card-remove { width: 24px; height: 24px; border-radius: 6px; border: 1px solid #e4e8ef; background: #fff; color: #b0bac8; font-size: 15px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; padding: 0; flex-shrink: 0; z-index: 2; position: relative; }
+        .sb-card-remove:hover { background: #fff0f0; border-color: #fca5a5; color: #ef4444; }
+        .sb-card-avg { font-size: 34px; font-weight: 800; color: var(--card-color, #1a2233); letter-spacing: -1.5px; margin-bottom: 14px; line-height: 1; }
+        .sb-card-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+        .sb-card-stat { background: #fff; border: 1px solid #edf0f5; border-radius: 8px; padding: 8px 10px; }
+        .sb-card-stat-label { font-size: 10px; font-weight: 700; color: #b0bac8; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; }
+        .sb-card-stat-value { font-size: 15px; font-weight: 700; color: #3a4460; }
+        .sb-reset { display: inline-flex; align-items: center; gap: 6px; margin-top: 18px; padding: 8px 14px; border: 1px solid #e4e8ef; border-radius: 8px; background: #fff; font-size: 13px; font-weight: 600; color: #7a8599; cursor: pointer; transition: all .15s; }
+        .sb-reset:hover { border-color: #ef4444; color: #ef4444; background: #fff8f8; }
+        @media (max-width: 768px) { .sb-layout { grid-template-columns: 1fr; } .sb-sidebar { position: static; } .sb-tabs { margin-left: 0; } }
+    </style>
 </head>
 <body>
 
-<nav class="navbar">
-    <a href="config.php" class="nav-link">📥 Inbox</a>
-    <a href="facebook_dashboard.php" class="nav-link">👥 Facebook</a>
-    <a href="instagram_dashboard.php" class="nav-link active">📸 Instagram</a>
-    <a href="tiktok_dashboard.php" class="nav-link">🎵 TikTok</a>
-    <a href="gmb_dashboard.php" class="nav-link">🏢 Google Business</a>
-</nav>
+<div class="sb-page">
 
-<div class="header">
-    <h1>📸 Instagram Dashboard</h1>
-    <p class="header-subtitle">Bekijk en analyseer je Instagram statistieken</p>
-    <span class="test-mode">
-        <strong>Modus:</strong> <?= htmlspecialchars($testMode) ?> |
-        <strong>Metrics:</strong> <?= htmlspecialchars($metricMode) ?> |
-        <strong>Secties:</strong> <?= htmlspecialchars($sectionMode) ?>
-    </span>
-</div>
+    <nav class="navbar">
+        <a href="config.php" class="nav-link">Inbox</a>
+        <a href="facebook_dashboard.php" class="nav-link">Facebook</a>
+        <a href="instagram_dashboard.php" class="nav-link active">Instagram</a>
+        <a href="tiktok_dashboard.php" class="nav-link">TikTok</a>
+        <a href="gmb_dashboard.php" class="nav-link">Google Business</a>
+    </nav>
 
-<?php foreach ($globalErrors as $globalError): ?>
-    <div class="error"><?= htmlspecialchars($globalError) ?></div>
-<?php endforeach; ?>
+    <p class="sb-title">Instagram</p>
+    <p class="sb-subtitle">Sleep metrics naar het overzicht om te analyseren</p>
 
-<form method="get">
-    <div class="form-row">
-        <div class="form-group">
-            <label for="from">📅 Van datum</label>
-            <input type="date" id="from" name="from" value="<?= htmlspecialchars($from) ?>">
+    <form method="POST" id="dashboardForm">
+        <input type="hidden" name="selected_section" id="selectedSection" value="<?= htmlspecialchars($selectedSection) ?>">
+        <input type="hidden" name="selected_metrics" id="selectedMetrics" value="">
+
+        <div class="sb-toolbar">
+            <label>Van</label>
+            <input type="date" name="from" value="<?= htmlspecialchars($from) ?>">
+            <label>Tot</label>
+            <input type="date" name="to" value="<?= htmlspecialchars($to) ?>">
+            <div class="sb-divider"></div>
+            <div class="sb-tabs">
+                <button type="button" class="sb-tab <?= $selectedSection === 'posts' ? 'active' : '' ?>" onclick="selectSection('posts')">Posts</button>
+                <button type="button" class="sb-tab <?= $selectedSection === 'reels' ? 'active' : '' ?>" onclick="selectSection('reels')">Reels</button>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label for="to">📅 Tot datum</label>
-            <input type="date" id="to" name="to" value="<?= htmlspecialchars($to) ?>">
-        </div>
+        <div class="sb-layout">
 
-        <div class="form-group">
-            <label for="test">⚙️ API Configuratie</label>
-            <select id="test" name="test">
-                <option value="timeline" <?= $testMode === 'timeline' ? 'selected' : '' ?>>Timeline</option>
-                <option value="timeline_profile" <?= $testMode === 'timeline_profile' ? 'selected' : '' ?>>Timeline profiel</option>
-                <option value="metrics" <?= $testMode === 'metrics' ? 'selected' : '' ?>>Metrics endpoint</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="metric_mode">📊 Welke metrics</label>
-            <select id="metric_mode" name="metric_mode">
-                <option value="engagement" <?= $metricMode === 'engagement' ? 'selected' : '' ?>>Alleen engagement</option>
-                <option value="interactions" <?= $metricMode === 'interactions' ? 'selected' : '' ?>>Interacties (likes/reacties/delingen)</option>
-                <option value="reach_views" <?= $metricMode === 'reach_views' ? 'selected' : '' ?>>Bereik & weergaven</option>
-                <option value="paid" <?= $metricMode === 'paid' ? 'selected' : '' ?>>Betaalde metrics</option>
-                <option value="reels_extra" <?= $metricMode === 'reels_extra' ? 'selected' : '' ?>>Extra reels metrics</option>
-                <option value="both" <?= $metricMode === 'both' ? 'selected' : '' ?>>Alle basis metrics</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="section_mode">📂 Welke secties</label>
-            <select id="section_mode" name="section_mode">
-                <option value="posts" <?= $sectionMode === 'posts' ? 'selected' : '' ?>>Alleen posts</option>
-                <option value="reels" <?= $sectionMode === 'reels' ? 'selected' : '' ?>>Alleen reels</option>
-                <option value="stories" <?= $sectionMode === 'stories' ? 'selected' : '' ?>>Alleen stories</option>
-                <option value="both" <?= $sectionMode === 'both' ? 'selected' : '' ?>>Posts + reels</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <button type="submit">🔍 Data ophalen</button>
-        </div>
-    </div>
-</form>
-
-<div class="endpoint-info">
-    <p><strong>📡 Basis endpoint:</strong> <?= htmlspecialchars($config['endpoint']) ?></p>
-    <?php foreach ($sectionsToLoad as $sectionKey): ?>
-        <?php foreach (($resultsBySection[$sectionKey] ?? []) as $metricName => $metricResult): ?>
-            <p>
-                <strong><?= htmlspecialchars(formatSectionLabel($sectionKey)) ?> – <?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
-                <code><?= htmlspecialchars($metricResult['request']['url'] ?? '-') ?></code>
-            </p>
-        <?php endforeach; ?>
-    <?php endforeach; ?>
-</div>
-
-<?php foreach ($sectionsToLoad as $sectionKey): ?>
-    <div class="section-card">
-        <div class="section-header">
-            <h2><?= htmlspecialchars(formatSectionLabel($sectionKey)) ?></h2>
-            <span class="section-pill"><?= htmlspecialchars(formatSectionLabel($sectionKey)) ?></span>
-        </div>
-
-        <?php foreach (($resultsBySection[$sectionKey] ?? []) as $metricName => $metricResult): ?>
-            <?php
-                $data  = $metricResult['parsed'] ?? null;
-                $error = $errorsBySection[$sectionKey][$metricName] ?? null;
-                $empty = $emptyBySection[$sectionKey][$metricName] ?? null;
-            ?>
-
-            <div class="metric-block">
-                <?php if ($error): ?>
-                    <div class="error">
-                        <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
-                        <?= htmlspecialchars($error) ?>
-                    </div>
-
-                <?php elseif ($empty): ?>
-                    <div class="info">
-                        <strong><?= htmlspecialchars(formatMetricLabel($metricName)) ?>:</strong>
-                        <?= htmlspecialchars($empty) ?>
-                    </div>
-
-                <?php elseif ($data): ?>
-
-                    <div class="card">
-                        <h3>
-                            📊 <?= htmlspecialchars(formatMetricLabel($metricName)) ?> overzicht
-                            <span class="data-point-badge"><?= $data['dataPointCount'] ?> datapunt(en)</span>
-                        </h3>
-
-                        <p style="color:#666; margin-bottom:20px;">
-                            <strong>📅 Periode:</strong> <?= htmlspecialchars($from) ?> tot <?= htmlspecialchars($to) ?>
-                        </p>
-
-                        <div class="stats-grid">
-                            <div class="stat-item">
-                                <div class="stat-label">📍 Aantal datapunten</div>
-                                <div class="stat-value"><?= (int) $data['dataPointCount'] ?></div>
-                            </div>
-
-                            <div class="stat-item">
-                                <div class="stat-label">📊 Gemiddelde</div>
-                                <div class="stat-value"><?= formatMetricValue($data['averageValue'], $metricName) ?></div>
-                            </div>
-
-                            <div class="stat-item">
-                                <div class="stat-label">🎯 Mediaan</div>
-                                <div class="stat-value"><?= formatMetricValue($data['medianValue'], $metricName) ?></div>
-                            </div>
-
-                            <div class="stat-item">
-                                <div class="stat-label">⬆️ Hoogste waarde</div>
-                                <div class="stat-value positive"><?= formatMetricValue($data['maxValue'], $metricName) ?></div>
-                            </div>
-
-                            <div class="stat-item">
-                                <div class="stat-label">🏆 Beste datapunt</div>
-                                <div class="stat-value">#<?= $data['maxIndex'] + 1 ?></div>
-                                <div class="stat-subtext"><?= htmlspecialchars($data['maxRow']['dateTime'] ?? '-') ?></div>
-                            </div>
-
-                            <div class="stat-item">
-                                <div class="stat-label">⬇️ Laagste waarde</div>
-                                <div class="stat-value negative"><?= formatMetricValue($data['minValue'], $metricName) ?></div>
-                            </div>
-
-                            <div class="stat-item">
-                                <div class="stat-label">📉 Zwakste datapunt</div>
-                                <div class="stat-value">#<?= $data['minIndex'] + 1 ?></div>
-                                <div class="stat-subtext"><?= htmlspecialchars($data['minRow']['dateTime'] ?? '-') ?></div>
-                            </div>
-
-                            <div class="stat-item">
-                                <div class="stat-label">📏 Spreiding</div>
-                                <div class="stat-value neutral"><?= formatMetricValue($data['rangeValue'], $metricName) ?></div>
-                            </div>
+            <div class="sb-sidebar">
+                <div class="sb-sidebar-title">Metrics</div>
+                <div id="metricsList">
+                    <?php foreach ($availableMetrics[$selectedSection] as $metric): ?>
+                        <div class="sb-chip" draggable="true" data-metric="<?= htmlspecialchars($metric['key']) ?>"
+                             style="border-left: 3px solid <?= htmlspecialchars($metric['color']) ?>;">
+                            <span class="sb-chip-icon"><?= $metric['icon'] ?></span>
+                            <?= htmlspecialchars($metric['label']) ?>
                         </div>
-                    </div>
-
-                    <div class="card">
-                        <h3>📋 <?= htmlspecialchars(formatMetricLabel($metricName)) ?> per datapunt</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>📅 Datum & Tijd</th>
-                                    <th>📊 <?= htmlspecialchars(formatMetricLabel($metricName)) ?></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($data['values'] as $index => $row): ?>
-                                    <?php
-                                        $isBest  = $index === $data['maxIndex'];
-                                        $isWorst = $index === $data['minIndex'];
-                                        $rowClass = $isBest ? 'row-best' : ($isWorst ? 'row-worst' : '');
-                                    ?>
-                                    <tr class="<?= $rowClass ?>">
-                                        <td>
-                                            <?= $index + 1 ?>
-                                            <?php if ($isBest): ?>
-                                                <span class="badge-best">🏆 Beste</span>
-                                            <?php elseif ($isWorst): ?>
-                                                <span class="badge-worst">📉 Zwakste</span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td><?= htmlspecialchars($row['dateTime'] ?? '-') ?></td>
-                                        <td><strong><?= formatMetricValue($row['value'] ?? 0, $metricName) ?></strong></td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-
-                <?php endif; ?>
+                    <?php endforeach; ?>
+                </div>
             </div>
-        <?php endforeach; ?>
-    </div>
-<?php endforeach; ?>
 
-<div class="card">
-    <h3>🐛 Debug Informatie</h3>
+            <div class="sb-canvas <?= !empty($metricsData) ? 'has-content' : '' ?>" id="dropZone">
 
-    <?php foreach ($sectionsToLoad as $sectionKey): ?>
-        <?php foreach (($resultsBySection[$sectionKey] ?? []) as $metricName => $metricResult): ?>
-            <div class="debug-box">
-                <strong>
-                    <?= htmlspecialchars(formatSectionLabel($sectionKey)) ?>
-                    –
-                    <?= htmlspecialchars(formatMetricLabel($metricName)) ?>
-                    (API metric: <code><?= htmlspecialchars($metricResult['apiMetricName'] ?? '-') ?></code>)
-                </strong>
+                <?php if (empty($metricsData)): ?>
+                    <div class="sb-empty">
+                        <div class="sb-empty-icon">📸</div>
+                        <p>Sleep een metric hierheen</p>
+                        <p style="font-size:12px; color:#c8d0de;">Kies links wat je wilt zien</p>
+                    </div>
 
-                <?php if (($metricResult['request']['httpCode'] ?? 0) !== 200): ?>
-                    <p style="color:#c62828;font-weight:700;">
-                        HTTP <?= htmlspecialchars($metricResult['request']['httpCode'] ?? '?') ?>
-                    </p>
-                    <pre><?= htmlspecialchars($metricResult['request']['raw'] ?? '-') ?></pre>
                 <?php else: ?>
-                    <pre><?php var_dump($metricResult['request']['body'] ?? null); ?></pre>
+                    <div class="sb-cards" id="metricsDisplay">
+                        <?php foreach ($metricsData as $key => $metric):
+                            $color = htmlspecialchars($metric['info']['color'] ?? '#e1306c');
+                            $bg    = htmlspecialchars($metric['info']['bg']    ?? '#fde8f0');
+                            $page  = htmlspecialchars($metric['info']['page']  ?? '#');
+                            $icon  = $metric['info']['icon'] ?? '📊';
+                            $detailUrl = $page . '?from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=' . urlencode($selectedSection);
+                        ?>
+                            <a href="<?= $detailUrl ?>" class="sb-card-link" data-metric="<?= htmlspecialchars($key) ?>"
+                               style="--card-color: <?= $color ?>; --card-bg: <?= $bg ?>;">
+                                <div class="sb-card" style="--card-color: <?= $color ?>; --card-bg: <?= $bg ?>;">
+                                    <div class="sb-card-header">
+                                        <div class="sb-card-label-wrap">
+                                            <div class="sb-card-icon"><?= $icon ?></div>
+                                            <span class="sb-card-label"><?= htmlspecialchars($metric['info']['label']) ?></span>
+                                        </div>
+                                        <div class="sb-card-actions">
+                                            <span class="sb-card-open">Details <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+                                            <button type="button" class="sb-card-remove" onclick="event.preventDefault(); removeMetric('<?= htmlspecialchars($key) ?>')">×</button>
+                                        </div>
+                                    </div>
+                                    <div class="sb-card-avg"><?= formatValue($metric['data']['averageValue'], $key) ?></div>
+                                    <div class="sb-card-stats">
+                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Highest</div><div class="sb-card-stat-value"><?= formatValue($metric['data']['maxValue'], $key) ?></div></div>
+                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Lowest</div><div class="sb-card-stat-value"><?= formatValue($metric['data']['minValue'], $key) ?></div></div>
+                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Median</div><div class="sb-card-stat-value"><?= formatValue($metric['data']['medianValue'], $key) ?></div></div>
+                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Datapoints</div><div class="sb-card-stat-value"><?= $metric['data']['dataPointCount'] ?></div></div>
+                                    </div>
+                                </div>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                    <button type="button" class="sb-reset" onclick="clearAll()">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/>
+                        </svg>
+                        Clear all
+                    </button>
                 <?php endif; ?>
+
             </div>
-        <?php endforeach; ?>
-    <?php endforeach; ?>
+        </div>
+    </form>
+
 </div>
+
+<script>
+let selectedMetricsList = <?= json_encode(array_keys($metricsData)) ?>;
+const metricsConfig     = <?= json_encode($availableMetrics) ?>;
+let currentSection      = '<?= htmlspecialchars($selectedSection) ?>';
+
+function selectSection(section) {
+    currentSection = section;
+    document.getElementById('selectedSection').value = section;
+    selectedMetricsList = [];
+    submitForm();
+}
+
+function submitForm() {
+    document.getElementById('selectedMetrics').value = JSON.stringify(selectedMetricsList);
+    document.getElementById('dashboardForm').submit();
+}
+
+function removeMetric(metric) {
+    selectedMetricsList = selectedMetricsList.filter(m => m !== metric);
+    submitForm();
+}
+
+function clearAll() {
+    selectedMetricsList = [];
+    submitForm();
+}
+
+document.querySelectorAll('.sb-chip').forEach(chip => {
+    chip.addEventListener('dragstart', e => {
+        chip.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('metric', chip.dataset.metric);
+    });
+    chip.addEventListener('dragend', () => chip.classList.remove('dragging'));
+});
+
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const metric = e.dataTransfer.getData('metric');
+    if (metric && !selectedMetricsList.includes(metric)) {
+        selectedMetricsList.push(metric);
+        submitForm();
+    }
+});
+
+document.querySelectorAll('input[type="date"]').forEach(input => {
+    input.addEventListener('change', submitForm);
+});
+</script>
 
 </body>
 </html>
