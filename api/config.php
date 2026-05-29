@@ -67,16 +67,14 @@ function extractItems($decodedData) {
         return [];
     }
 
-    // Try different possible array keys
     $possibleKeys = ['data', 'results', 'conversations', 'reviews', 'comments', 'items'];
-    
+
     foreach ($possibleKeys as $key) {
         if (isset($decodedData[$key]) && is_array($decodedData[$key])) {
             return $decodedData[$key];
         }
     }
 
-    // Check if the data itself is a numeric array
     if (array_keys($decodedData) === range(0, count($decodedData) - 1)) {
         return $decodedData;
     }
@@ -208,19 +206,29 @@ function normalizeMessage($msg, $provider, $endpointType) {
     }
 
     elseif ($endpointType === 'reviews') {
-        $name = pickFirstNonEmpty([
-            $msg['reviewer']['name'] ?? '',
-            $msg['author']['name'] ?? '',
-            $msg['name'] ?? '',
-            $msg['userName'] ?? '',
-        ], 'Onbekend');
+        // Bij GMB reviews zit de naam van de reviewer in "participants",
+        // net zoals bij conversaties. De reviewer is de deelnemer met een "name".
+        // De andere deelnemer is ons eigen account (die heeft een id dat begint met "accounts/").
+        if (!empty($msg['participants']) && is_array($msg['participants'])) {
+            foreach ($msg['participants'] as $participant) {
+                $participantName = trim((string)($participant['name'] ?? ''));
+                // We nemen de deelnemer die een echte naam heeft
+                if ($participantName !== '') {
+                    $name = $participantName;
+                    $avatar = $participant['imageProfileUrl'] ?? '';
+                    break;
+                }
+            }
+        }
 
-        $avatar = pickFirstNonEmpty([
-            $msg['reviewer']['imageProfileUrl'] ?? '',
-            $msg['reviewer']['avatar'] ?? '',
-            $msg['avatar'] ?? '',
-        ], '');
+        // De sterren van de review zitten in "stars" (een getal van 1 tot 5)
+        $stars = $msg['stars'] ?? null;
+        if ($stars !== null) {
+            $extraMeta = (string)$stars;
+        }
 
+        // GMB reviews hebben vaak geen geschreven tekst, alleen sterren.
+        // We tonen dan een nette melding in plaats van lege tekst.
         $fullMessage = pickFirstNonEmpty([
             $msg['comment'] ?? '',
             $msg['text'] ?? '',
@@ -228,17 +236,17 @@ function normalizeMessage($msg, $provider, $endpointType) {
             $msg['message'] ?? '',
         ], '');
 
+        if ($fullMessage === '' && $stars !== null) {
+            $fullMessage = 'Deze review heeft ' . $stars . ' van de 5 sterren (geen geschreven tekst).';
+        }
+
         $time = pickFirstNonEmpty([
-            $msg['date'] ?? '',
             $msg['creationDate'] ?? '',
-            $msg['createdAt'] ?? '',
-            $msg['created_at'] ?? '',
-            $msg['publicationDateTime'] ?? '',
+            $msg['date'] ?? '',
+            $msg['lastUpdateTime'] ?? '',
         ], '');
 
-        $status = pickFirstNonEmpty([
-            $msg['status'] ?? '',
-        ], '');
+        $status = (string)($msg['status'] ?? '');
 
         $subject = 'Review via ' . ucfirst($provider);
     }
@@ -318,621 +326,187 @@ usort($allMessages, function ($a, $b) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inbox</title>
+    <title>Inbox — SkyByte</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-primary: #0a0e1a;
-            --bg-secondary: #111827;
-            --bg-tertiary: #1a202e;
-            --bg-hover: #1e2432;
-            --border: #2d3748;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --accent: #06b6d4;
-            --accent-soft: #0891b2;
-            --accent-glow: rgba(6, 182, 212, 0.15);
-            --orange: #fb923c;
-            --pink: #ec4899;
-            --green: #10b981;
-            --purple: #a855f7;
-            
-            --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-            --font-mono: 'DM Mono', monospace;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: var(--font-main);
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        /* Background effects */
-        body::before {
-            content: '';
-            position: fixed;
-            top: -50%;
-            right: -20%;
-            width: 80%;
-            height: 100%;
-            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        .app-shell {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 32px 24px;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Header */
-        .topbar {
-            margin-bottom: 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        .topbar h1 {
-            font-size: 48px;
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stats-pills {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .stat-pill {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            padding: 8px 16px;
-            border-radius: 100px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            font-family: var(--font-mono);
-        }
-
-        .stat-pill strong {
-            color: var(--accent);
-            margin-right: 6px;
-        }
-
-        /* Layout */
-        .layout {
-            display: grid;
-            grid-template-columns: 460px 1fr;
-            gap: 24px;
-            min-height: calc(100vh - 200px);
-        }
-
-        .panel {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .panel::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--accent), transparent);
-            opacity: 0.5;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 200px);
-        }
-
-        .sidebar-header {
-            padding: 28px 24px 24px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-tertiary);
-        }
-
-        .sidebar-header h2 {
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            letter-spacing: -0.01em;
-            text-transform: uppercase;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .filters {
-            display: grid;
-            gap: 12px;
-        }
-
-        .search-input,
-        .filter-select {
-            width: 100%;
-            border: 1px solid var(--border);
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            padding: 12px 16px;
-            font-size: 14px;
-            border-radius: 12px;
-            font-family: var(--font-main);
-            font-weight: 500;
-            outline: none;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .search-input:focus,
-        .filter-select:focus {
-            border-color: var(--accent);
-            background: var(--bg-primary);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-        }
-
-        .search-input::placeholder {
-            color: var(--text-muted);
-        }
-
-        /* Message list */
-        .message-list {
-            overflow-y: auto;
-            flex: 1;
-            padding: 8px;
-        }
-
-        .message-list::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .message-list::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
-        }
-
-        .message-list::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 4px;
-        }
-
-        .message-list::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
-        }
-
-        .message-item {
-            display: flex;
-            gap: 14px;
-            padding: 16px;
-            margin-bottom: 6px;
-            border-radius: 16px;
-            cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid transparent;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .message-item::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: var(--accent);
-            transform: scaleY(0);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .message-item:hover {
-            background: var(--bg-hover);
-            border-color: var(--border);
-        }
-
-        .message-item.active {
-            background: var(--bg-tertiary);
-            border-color: var(--accent);
-        }
-
-        .message-item.active::before {
-            transform: scaleY(1);
-        }
-
-        /* Avatar */
-        .avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent), var(--purple));
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 16px;
-            flex-shrink: 0;
-            overflow: hidden;
-            border: 2px solid var(--bg-secondary);
-            position: relative;
-        }
-
-        .avatar::after {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            border-radius: 50%;
-            padding: 2px;
-            background: linear-gradient(135deg, var(--accent), var(--purple));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            opacity: 0.3;
-        }
-
-        .avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        /* Message meta */
-        .message-meta {
-            min-width: 0;
-            flex: 1;
-        }
-
-        .message-row-top {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            align-items: baseline;
-            margin-bottom: 8px;
-        }
-
-        .message-name {
-            font-weight: 700;
-            font-size: 15px;
-            color: var(--text-primary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .message-time {
-            font-size: 11px;
-            color: var(--text-muted);
-            flex-shrink: 0;
-            font-family: var(--font-mono);
-        }
-
-        .badge-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 8px;
-        }
-
-        .provider-badge,
-        .type-badge,
-        .status-badge {
-            display: inline-block;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-family: var(--font-mono);
-        }
-
-        .provider-badge {
-            background: linear-gradient(135deg, var(--accent), var(--accent-soft));
-            color: white;
-        }
-
-        .type-badge {
-            background: var(--bg-primary);
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-        }
-
-        .status-badge {
-            background: linear-gradient(135deg, var(--green), #059669);
-            color: white;
-        }
-
-        .message-preview {
-            font-size: 13px;
-            line-height: 1.5;
-            color: var(--text-secondary);
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        /* Content panel */
-        .content {
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 200px);
-        }
-
-        .content-header {
-            padding: 32px;
-            border-bottom: 1px solid var(--border);
-            background: var(--bg-tertiary);
-        }
-
-        .content-subject {
-            font-size: 32px;
-            font-weight: 800;
-            margin: 0 0 16px 0;
-            letter-spacing: -0.02em;
-            line-height: 1.2;
-        }
-
-        .content-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            align-items: center;
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-family: var(--font-mono);
-        }
-
-        .content-meta strong {
-            color: var(--accent);
-            margin-right: 6px;
-        }
-
-        .content-body {
-            padding: 32px;
-            font-size: 15px;
-            line-height: 1.8;
-            color: var(--text-secondary);
-            white-space: pre-wrap;
-            overflow-y: auto;
-            flex: 1;
-        }
-
-        .content-body::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .content-body::-webkit-scrollbar-track {
-            background: var(--bg-secondary);
-        }
-
-        .content-body::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 4px;
-        }
-
-        /* Empty states */
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--text-muted);
-            gap: 16px;
-            padding: 60px 30px;
-            text-align: center;
-        }
-
-        .empty-state-icon {
-            font-size: 64px;
-            opacity: 0.3;
-        }
-
-        .empty-state-text {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .empty-list {
-            padding: 32px 20px;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        /* Debug section */
-        .debug-section {
-            margin-top: 32px;
-        }
-
-        .debug-toggle {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            color: var(--text-primary);
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-family: var(--font-mono);
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .debug-toggle:hover {
-            background: var(--bg-tertiary);
-            border-color: var(--accent);
-        }
-
-        .debug-content {
-            display: none;
-            margin-top: 16px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 24px;
-        }
-
-        .debug-content.visible {
-            display: block;
-        }
-
-        .debug-content h3 {
-            margin: 0 0 20px 0;
-            font-size: 16px;
-            color: var(--accent);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-family: var(--font-mono);
-        }
-
-        .debug-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 16px;
-        }
-
-        .debug-card {
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            font-size: 12px;
-            font-family: var(--font-mono);
-        }
-
-        .debug-card strong {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 13px;
-            color: var(--accent);
-        }
-
-        .debug-card div {
-            margin-bottom: 6px;
-            color: var(--text-secondary);
-        }
-
-        .debug-card .error {
-            color: var(--orange);
-        }
-
-        .debug-card .success {
-            color: var(--green);
-        }
+        body { background: #f0f2f7; }
+
+        .sb-page { max-width: 1600px; margin: 0 auto; }
+
+        /* ── Navbar (zelfde als dashboards) ── */
+        .sb-title { font-size: 22px; font-weight: 700; color: #1a2233; letter-spacing: -0.3px; margin-bottom: 4px; }
+        .sb-subtitle { font-size: 13px; color: #7a8599; margin-bottom: 24px; }
+
+        /* ── Stat pills ── */
+        .sb-stats-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+        .sb-stat-pill {
+            background: #fff; border: 1px solid #e4e8ef; padding: 8px 16px;
+            border-radius: 100px; font-size: 13px; font-weight: 600; color: #7a8599;
+            box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+        .sb-stat-pill strong { color: #06b6d4; margin-right: 6px; }
+
+        /* ── Layout ── */
+        .sb-inbox-layout {
+            display: grid; grid-template-columns: 440px 1fr; gap: 16px;
+            min-height: calc(100vh - 240px); align-items: start;
+        }
+
+        .sb-panel {
+            background: #fff; border: 1px solid #e4e8ef; border-radius: 14px;
+            overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        }
+
+        /* ── Sidebar ── */
+        .sb-sidebar-inbox { display: flex; flex-direction: column; height: calc(100vh - 240px); }
+        .sb-sidebar-header { padding: 20px; border-bottom: 1px solid #eef1f6; background: #fafbfd; }
+        .sb-sidebar-header h2 {
+            font-size: 11px; font-weight: 700; margin-bottom: 14px;
+            text-transform: uppercase; letter-spacing: 0.6px; color: #9aa3b4;
+        }
+        .sb-filters { display: grid; gap: 10px; }
+        .sb-search-input, .sb-filter-select {
+            width: 100%; border: 1px solid #dde2ec; background: #fff; color: #1a2233;
+            padding: 10px 13px; font-size: 14px; border-radius: 9px; font-weight: 500;
+            outline: none; transition: all 0.18s;
+        }
+        .sb-search-input:focus, .sb-filter-select:focus {
+            border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,.12);
+        }
+        .sb-search-input::placeholder { color: #b0bac8; }
+
+        /* ── Datumfilter ── */
+        .sb-date-row { display: flex; gap: 8px; }
+        .sb-date-field { flex: 1; }
+        .sb-date-field label {
+            display: block; font-size: 10px; font-weight: 700; color: #9aa3b4;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;
+        }
+        .sb-date-field input[type="date"] { padding: 8px 10px; font-size: 13px; }
+
+        /* ── Sterrenfilter knoppen ── */
+        .sb-stars-filter { margin-top: 4px; }
+        .sb-stars-label {
+            font-size: 10px; font-weight: 700; color: #9aa3b4;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+        }
+        .sb-stars-buttons { display: flex; gap: 5px; flex-wrap: wrap; }
+        .sb-star-btn {
+            flex: 1; min-width: 38px; padding: 7px 6px; font-size: 12px; font-weight: 600;
+            border: 1px solid #dde2ec; background: #fff; color: #7a8599;
+            border-radius: 8px; cursor: pointer; transition: all 0.15s;
+        }
+        .sb-star-btn:hover { border-color: #fbbc04; color: #f59e0b; }
+        .sb-star-btn.active { background: #fbbc04; border-color: #fbbc04; color: #fff; }
+
+        /* ── Message list ── */
+        .sb-message-list { overflow-y: auto; flex: 1; padding: 8px; }
+        .sb-message-list::-webkit-scrollbar { width: 7px; }
+        .sb-message-list::-webkit-scrollbar-track { background: transparent; }
+        .sb-message-list::-webkit-scrollbar-thumb { background: #dde2ec; border-radius: 4px; }
+        .sb-message-list::-webkit-scrollbar-thumb:hover { background: #b0bac8; }
+
+        .sb-message-item {
+            display: flex; gap: 12px; padding: 14px; margin-bottom: 5px; border-radius: 11px;
+            cursor: pointer; transition: all 0.15s; border: 1px solid transparent;
+            position: relative; overflow: hidden;
+        }
+        .sb-message-item::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+            background: #06b6d4; transform: scaleY(0); transition: transform 0.2s;
+        }
+        .sb-message-item:hover { background: #f7f9fc; border-color: #eef1f6; }
+        .sb-message-item.active { background: #f0fbfd; border-color: #06b6d4; }
+        .sb-message-item.active::before { transform: scaleY(1); }
+
+        /* ── Avatar ── */
+        .sb-avatar {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: linear-gradient(135deg, #06b6d4, #a855f7); color: white;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 15px; flex-shrink: 0; overflow: hidden;
+        }
+        .sb-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* ── Message meta ── */
+        .sb-message-meta { min-width: 0; flex: 1; }
+        .sb-message-row-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; margin-bottom: 6px; }
+        .sb-message-name {
+            font-weight: 700; font-size: 14px; color: #1a2233;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .sb-message-time { font-size: 11px; color: #b0bac8; flex-shrink: 0; }
+
+        .sb-badge-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 7px; }
+        .sb-provider-badge, .sb-type-badge, .sb-status-badge {
+            display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+            text-transform: uppercase; padding: 3px 9px; border-radius: 6px;
+        }
+        .sb-provider-badge { color: white; }
+        .sb-provider-badge.facebook { background: #1877f2; }
+        .sb-provider-badge.instagram { background: #e1306c; }
+        .sb-provider-badge.gmb { background: #4285f4; }
+        .sb-provider-badge.tiktokBusiness { background: #1a2233; }
+        .sb-type-badge { background: #f0f2f7; color: #7a8599; border: 1px solid #e4e8ef; }
+        .sb-status-badge { background: #10b981; color: white; }
+
+        .sb-message-preview {
+            font-size: 13px; line-height: 1.5; color: #7a8599;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+
+        /* ── Content panel ── */
+        .sb-content { display: flex; flex-direction: column; height: calc(100vh - 240px); }
+        .sb-content-header { padding: 26px 28px; border-bottom: 1px solid #eef1f6; background: #fafbfd; }
+        .sb-content-subject { font-size: 22px; font-weight: 800; margin: 0 0 14px 0; letter-spacing: -0.4px; line-height: 1.2; color: #1a2233; }
+        .sb-content-meta { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; font-size: 13px; color: #7a8599; }
+        .sb-content-meta strong { color: #06b6d4; margin-right: 5px; }
+
+        .sb-content-body { padding: 28px; font-size: 15px; line-height: 1.8; color: #3a4460; white-space: pre-wrap; overflow-y: auto; flex: 1; }
+        .sb-content-body::-webkit-scrollbar { width: 7px; }
+        .sb-content-body::-webkit-scrollbar-thumb { background: #dde2ec; border-radius: 4px; }
+
+        /* ── Empty states ── */
+        .sb-empty-state {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100%; color: #b0bac8; gap: 14px; padding: 60px 30px; text-align: center;
+        }
+        .sb-empty-state-icon { font-size: 52px; opacity: 0.4; }
+        .sb-empty-state-text { font-size: 16px; font-weight: 600; color: #b0bac8; }
+        .sb-empty-list { padding: 32px 20px; text-align: center; color: #b0bac8; font-size: 14px; }
+
+        /* ── Debug section ── */
+        .sb-debug-section { margin-top: 20px; }
+        .sb-debug-toggle {
+            background: #fff; border: 1px solid #e4e8ef; color: #7a8599;
+            padding: 9px 18px; border-radius: 9px; font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .sb-debug-toggle:hover { border-color: #06b6d4; color: #06b6d4; }
+        .sb-debug-content {
+            display: none; margin-top: 14px; background: #fff; border: 1px solid #e4e8ef;
+            border-radius: 14px; padding: 20px;
+        }
+        .sb-debug-content.visible { display: block; }
+        .sb-debug-content h3 { margin: 0 0 16px 0; font-size: 12px; color: #06b6d4; text-transform: uppercase; letter-spacing: 0.05em; }
+        .sb-debug-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+        .sb-debug-card { background: #fafbfd; border: 1px solid #eef1f6; border-radius: 10px; padding: 14px; font-size: 12px; }
+        .sb-debug-card strong { display: block; margin-bottom: 8px; font-size: 13px; color: #1a2233; }
+        .sb-debug-card div { margin-bottom: 5px; color: #7a8599; }
+        .sb-debug-card .err { color: #ef4444; }
+        .sb-debug-card .ok { color: #10b981; }
 
-        /* Responsive */
         @media (max-width: 1100px) {
-            .layout {
-                grid-template-columns: 1fr;
-            }
-
-            .sidebar {
-                height: auto;
-                max-height: 500px;
-            }
-
-            .content {
-                height: auto;
-                min-height: 600px;
-            }
+            .sb-inbox-layout { grid-template-columns: 1fr; }
+            .sb-sidebar-inbox { height: auto; max-height: 500px; }
+            .sb-content { height: auto; min-height: 500px; }
         }
-
-        @media (max-width: 640px) {
-            .app-shell {
-                padding: 16px;
-            }
-
-            .topbar h1 {
-                font-size: 32px;
-            }
-
-            .stat-pill {
-                font-size: 11px;
-                padding: 6px 12px;
-            }
-
-            .content-subject {
-                font-size: 24px;
-            }
-        }
-
-        /* Animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .message-item {
-            animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .message-item:nth-child(1) { animation-delay: 0.05s; }
-        .message-item:nth-child(2) { animation-delay: 0.1s; }
-        .message-item:nth-child(3) { animation-delay: 0.15s; }
-        .message-item:nth-child(4) { animation-delay: 0.2s; }
-        .message-item:nth-child(5) { animation-delay: 0.25s; }
-        /* Navbar Styles */
-        .navbar {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-        .nav-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            padding: 8px 16px;
-            border-radius: 12px;
-            transition: all 0.2s;
-        }
-        .nav-link:hover {
-            background: var(--bg-hover);
-            color: var(--text-primary);
-        }
-        .nav-link.active {
-            background: var(--accent);
-            color: white;
-        }
-
     </style>
 </head>
 <body>
-    <!-- Let's add a navbar from which you can switch between different social media platforms -->
+
+<div class="sb-page">
+
     <nav class="navbar">
         <a href="config.php" class="nav-link active">Inbox</a>
         <a href="facebook_dashboard.php" class="nav-link">Facebook</a>
@@ -940,249 +514,349 @@ usort($allMessages, function ($a, $b) {
         <a href="tiktok_dashboard.php" class="nav-link">TikTok</a>
         <a href="gmb_dashboard.php" class="nav-link">Google Business</a>
     </nav>
-    <div class="app-shell">
-        <div class="topbar">
-            <h1>Inbox</h1>
-            <div class="stats-pills">
-                <div class="stat-pill">
-                    <strong><?php echo count($allMessages); ?></strong> berichten
-                </div>
-                <?php
-                $providers = array_unique(array_column($allMessages, 'provider'));
-                ?>
-                <div class="stat-pill">
-                    <strong><?php echo count($providers); ?></strong> platforms
-                </div>
-            </div>
-        </div>
 
-        <div class="layout">
-            <div class="panel sidebar">
-                <div class="sidebar-header">
-                    <h2>Berichten</h2>
-                    <div class="filters">
-                        <input
-                            type="text"
-                            id="searchInput"
-                            class="search-input"
-                            placeholder="Zoeken..."
-                        >
+    <p class="sb-title">Inbox</p>
+    <p class="sb-subtitle">Al je berichten, reacties en reviews op één plek</p>
 
-                        <select id="providerFilter" class="filter-select">
-                            <option value="">Alle providers</option>
-                            <option value="facebook">Facebook</option>
-                            <option value="instagram">Instagram</option>
-                            <option value="gmb">GMB</option>
-                            <option value="tiktokBusiness">TikTok</option>
-                        </select>
+    <div class="sb-stats-pills">
+        <div class="sb-stat-pill"><strong><?php echo count($allMessages); ?></strong> berichten</div>
+        <?php $providers = array_unique(array_column($allMessages, 'provider')); ?>
+        <div class="sb-stat-pill"><strong><?php echo count($providers); ?></strong> platforms</div>
+    </div>
 
-                        <select id="typeFilter" class="filter-select">
-                            <option value="">Alle types</option>
-                            <option value="conversations">Conversations</option>
-                            <option value="post-comments">Comments</option>
-                            <option value="reviews">Reviews</option>
-                        </select>
+    <div class="sb-inbox-layout">
+        <div class="sb-panel sb-sidebar-inbox">
+            <div class="sb-sidebar-header">
+                <h2>Berichten</h2>
+                <div class="sb-filters">
+                    <input type="text" id="searchInput" class="sb-search-input" placeholder="Zoeken...">
+                    <select id="providerFilter" class="sb-filter-select">
+                        <option value="">Alle platforms</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="instagram">Instagram</option>
+                        <option value="gmb">Google Business</option>
+                        <option value="tiktokBusiness">TikTok</option>
+                    </select>
+                    <select id="typeFilter" class="sb-filter-select">
+                        <option value="">Alle types</option>
+                        <option value="conversations">Conversaties</option>
+                        <option value="post-comments">Reacties</option>
+                        <option value="reviews">Reviews</option>
+                    </select>
+
+                    <!-- Datumfilter: van datum tot datum -->
+                    <div class="sb-date-row">
+                        <div class="sb-date-field">
+                            <label for="dateFrom">Van</label>
+                            <input type="date" id="dateFrom" class="sb-filter-select">
+                        </div>
+                        <div class="sb-date-field">
+                            <label for="dateTo">Tot</label>
+                            <input type="date" id="dateTo" class="sb-filter-select">
+                        </div>
+                    </div>
+
+                    <!-- Sterrenfilter: knoppen om reviews op sterren te filteren.
+                         Dit blok is standaard verborgen (style="display:none").
+                         Het verschijnt alleen als je op Google Business filtert. -->
+                    <div class="sb-stars-filter" id="starsFilter" style="display:none;">
+                        <div class="sb-stars-label">Sterren (reviews)</div>
+                        <div class="sb-stars-buttons">
+                            <button type="button" class="sb-star-btn active" data-stars="0" onclick="setStarFilter(0, this)">Alle</button>
+                            <button type="button" class="sb-star-btn" data-stars="5" onclick="setStarFilter(5, this)">5★</button>
+                            <button type="button" class="sb-star-btn" data-stars="4" onclick="setStarFilter(4, this)">4★</button>
+                            <button type="button" class="sb-star-btn" data-stars="3" onclick="setStarFilter(3, this)">3★</button>
+                            <button type="button" class="sb-star-btn" data-stars="2" onclick="setStarFilter(2, this)">2★</button>
+                            <button type="button" class="sb-star-btn" data-stars="1" onclick="setStarFilter(1, this)">1★</button>
+                        </div>
                     </div>
                 </div>
-
-                <div class="message-list" id="messageList"></div>
             </div>
-
-            <div class="panel content" id="contentPanel">
-                <div class="empty-state">
-                    <div class="empty-state-icon">💬</div>
-                    <div class="empty-state-text">Selecteer een bericht om te lezen</div>
-                </div>
-            </div>
+            <div class="sb-message-list" id="messageList"></div>
         </div>
 
-        <div class="debug-section">
-            <button class="debug-toggle" onclick="toggleDebug()">
-                🔧 Debug Info
-            </button>
-            <div class="debug-content" id="debugContent">
-                <h3>API Endpoints Status</h3>
-                <div class="debug-grid">
-                    <?php foreach ($debugInfo as $dbg): ?>
-                        <div class="debug-card">
-                            <strong><?php echo htmlspecialchars($dbg['provider']); ?></strong>
-                            <div>Type: <?php echo htmlspecialchars($dbg['endpointType']); ?></div>
-                            <div>HTTP: <span class="<?php echo $dbg['httpCode'] == 200 ? 'success' : 'error'; ?>"><?php echo htmlspecialchars((string) $dbg['httpCode']); ?></span></div>
-                            <div>Items: <?php echo htmlspecialchars((string) $dbg['count']); ?></div>
-                            <?php if (!empty($dbg['rawDataKeys'])): ?>
-                                <div>Keys: <?php echo htmlspecialchars(implode(', ', $dbg['rawDataKeys'])); ?></div>
-                            <?php endif; ?>
-                            <div class="<?php echo $dbg['error'] ? 'error' : 'success'; ?>">
-                                <?php echo $dbg['error'] ? htmlspecialchars($dbg['error']) : '✓ OK'; ?>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+        <div class="sb-panel sb-content" id="contentPanel">
+            <div class="sb-empty-state">
+                <div class="sb-empty-state-icon">💬</div>
+                <div class="sb-empty-state-text">Selecteer een bericht om te lezen</div>
             </div>
         </div>
     </div>
 
-    <script>
-        const messages = <?php echo json_encode($allMessages, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
-
-        const messageList = document.getElementById('messageList');
-        const contentPanel = document.getElementById('contentPanel');
-        const searchInput = document.getElementById('searchInput');
-        const providerFilter = document.getElementById('providerFilter');
-        const typeFilter = document.getElementById('typeFilter');
-
-        function toggleDebug() {
-            document.getElementById('debugContent').classList.toggle('visible');
-        }
-
-        function escapeHtml(str) {
-            return String(str ?? '')
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#039;');
-        }
-
-        function nl2br(str) {
-            return escapeHtml(str).replace(/\n/g, '<br>');
-        }
-
-        function formatTime(time) {
-            if (!time) return '';
-            try {
-                const date = new Date(time);
-                return date.toLocaleString('nl-NL', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-            } catch {
-                return time;
-            }
-        }
-
-        function providerLabel(provider) {
-            const labels = {
-                'tiktokBusiness': 'TikTok',
-                'gmb': 'GMB',
-                'facebook': 'Facebook',
-                'instagram': 'Instagram'
-            };
-            return labels[provider] || provider;
-        }
-
-        function renderContent(message) {
-            contentPanel.innerHTML = `
-                <div class="content-header">
-                    <h2 class="content-subject">${escapeHtml(message.subject || 'Bericht')}</h2>
-                    <div class="content-meta">
-                        <span><strong>Van:</strong> ${escapeHtml(message.name || 'Onbekend')}</span>
-                        <span><strong>Platform:</strong> ${escapeHtml(providerLabel(message.provider || ''))}</span>
-                        <span><strong>Type:</strong> ${escapeHtml(message.endpointType || '')}</span>
-                        ${message.status ? `<span><strong>Status:</strong> ${escapeHtml(message.status)}</span>` : ''}
-                        <span><strong>Tijd:</strong> ${escapeHtml(formatTime(message.time || ''))}</span>
-                    </div>
-                </div>
-                <div class="content-body">
-                    ${nl2br(message.fullMessage || 'Geen inhoud beschikbaar.')}
-                </div>
-            `;
-        }
-
-        function getFilteredMessages() {
-            const term = searchInput.value.trim().toLowerCase();
-            const providerValue = providerFilter.value;
-            const typeValue = typeFilter.value;
-
-            return messages.filter(message => {
-                const haystack = [
-                    message.name,
-                    message.provider,
-                    message.endpointType,
-                    message.subject,
-                    message.preview,
-                    message.fullMessage,
-                    message.status
-                ].join(' ').toLowerCase();
-
-                const matchesSearch = haystack.includes(term);
-                const matchesProvider = providerValue === '' || message.provider === providerValue;
-                const matchesType = typeValue === '' || message.endpointType === typeValue;
-
-                return matchesSearch && matchesProvider && matchesType;
-            });
-        }
-
-        function renderList() {
-            const filtered = getFilteredMessages();
-
-            if (filtered.length === 0) {
-                messageList.innerHTML = `<div class="empty-list">Geen berichten gevonden.</div>`;
-                contentPanel.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🔍</div>
-                        <div class="empty-state-text">Geen resultaat voor de huidige filters</div>
-                    </div>
-                `;
-                return;
-            }
-
-            messageList.innerHTML = filtered.map((message, index) => {
-                const avatarHtml = message.avatar
-                    ? `<div class="avatar"><img src="${escapeHtml(message.avatar)}" alt=""></div>`
-                    : `<div class="avatar">${escapeHtml(message.initials || 'O')}</div>`;
-
-                const statusHtml = message.status
-                    ? `<span class="status-badge">${escapeHtml(message.status)}</span>`
-                    : '';
-
-                return `
-                    <div class="message-item ${index === 0 ? 'active' : ''}" data-id="${escapeHtml(message.id)}">
-                        ${avatarHtml}
-                        <div class="message-meta">
-                            <div class="badge-row">
-                                <span class="provider-badge">${escapeHtml(providerLabel(message.provider))}</span>
-                                <span class="type-badge">${escapeHtml(message.endpointType || '')}</span>
-                                ${statusHtml}
-                            </div>
-                            <div class="message-row-top">
-                                <div class="message-name">${escapeHtml(message.name || 'Onbekend')}</div>
-                                <div class="message-time">${escapeHtml(formatTime(message.time || ''))}</div>
-                            </div>
-                            <div class="message-preview">${escapeHtml(message.preview || '')}</div>
+    <div class="sb-debug-section">
+        <button class="sb-debug-toggle" onclick="toggleDebug()">🔧 Debug info</button>
+        <div class="sb-debug-content" id="debugContent">
+            <h3>API endpoints status</h3>
+            <div class="sb-debug-grid">
+                <?php foreach ($debugInfo as $dbg): ?>
+                    <div class="sb-debug-card">
+                        <strong><?php echo htmlspecialchars($dbg['provider']); ?></strong>
+                        <div>Type: <?php echo htmlspecialchars($dbg['endpointType']); ?></div>
+                        <div>HTTP: <span class="<?php echo $dbg['httpCode'] == 200 ? 'ok' : 'err'; ?>"><?php echo htmlspecialchars((string) $dbg['httpCode']); ?></span></div>
+                        <div>Items: <?php echo htmlspecialchars((string) $dbg['count']); ?></div>
+                        <?php if (!empty($dbg['rawDataKeys'])): ?>
+                            <div>Keys: <?php echo htmlspecialchars(implode(', ', $dbg['rawDataKeys'])); ?></div>
+                        <?php endif; ?>
+                        <div class="<?php echo $dbg['error'] ? 'err' : 'ok'; ?>">
+                            <?php echo $dbg['error'] ? htmlspecialchars($dbg['error']) : '✓ OK'; ?>
                         </div>
                     </div>
-                `;
-            }).join('');
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
 
-            const first = filtered[0];
-            if (first) {
-                renderContent(first);
+</div>
+
+<script>
+    const messages = <?php echo json_encode($allMessages, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+
+    const messageList = document.getElementById('messageList');
+    const contentPanel = document.getElementById('contentPanel');
+    const searchInput = document.getElementById('searchInput');
+    const providerFilter = document.getElementById('providerFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const dateFrom = document.getElementById('dateFrom');
+    const dateTo = document.getElementById('dateTo');
+
+    // Hier bewaren we welk sterrenfilter actief is.
+    // 0 = alle reviews tonen, 1 t/m 5 = alleen reviews met dat aantal sterren.
+    let activeStarFilter = 0;
+
+    // Deze functie toont of verbergt de sterrenknoppen.
+    // Sterren bestaan alleen bij Google Business reviews,
+    // dus we tonen de knoppen enkel als het platform op "gmb" staat.
+    function updateStarFilterVisibility() {
+        const starsFilter = document.getElementById('starsFilter');
+
+        if (providerFilter.value === 'gmb') {
+            starsFilter.style.display = 'block'; // tonen
+        } else {
+            starsFilter.style.display = 'none';  // verbergen
+
+            // Als we wegklikken van Google Business, zetten we het sterrenfilter
+            // terug op "Alle", zodat er geen verborgen filter actief blijft.
+            activeStarFilter = 0;
+            document.querySelectorAll('.sb-star-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.sb-star-btn[data-stars="0"]').classList.add('active');
+        }
+    }
+
+    // Als het platformfilter verandert: eerst de sterrenknoppen tonen/verbergen,
+    // daarna de lijst opnieuw opbouwen.
+    function onProviderChange() {
+        updateStarFilterVisibility();
+        renderList();
+    }
+
+    // Deze functie wordt aangeroepen als je op een sterrenknop klikt.
+    function setStarFilter(stars, button) {
+        activeStarFilter = stars;
+
+        // Maak alle knoppen weer "uit" en zet alleen de aangeklikte "aan"
+        document.querySelectorAll('.sb-star-btn').forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        // Toon de lijst opnieuw met het nieuwe filter
+        renderList();
+    }
+
+    function toggleDebug() {
+        document.getElementById('debugContent').classList.toggle('visible');
+    }
+
+    function escapeHtml(str) {
+        return String(str ?? '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')
+            .replaceAll('"', '&quot;')
+            .replaceAll("'", '&#039;');
+    }
+
+    function nl2br(str) {
+        return escapeHtml(str).replace(/\n/g, '<br>');
+    }
+
+    function formatTime(time) {
+        if (!time) return '';
+        try {
+            const date = new Date(time);
+            return date.toLocaleString('nl-NL', {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+        } catch {
+            return time;
+        }
+    }
+
+    function providerLabel(provider) {
+        const labels = {
+            'tiktokBusiness': 'TikTok', 'gmb': 'Google Business',
+            'facebook': 'Facebook', 'instagram': 'Instagram'
+        };
+        return labels[provider] || provider;
+    }
+
+    function typeLabel(type) {
+        const labels = {
+            'conversations': 'Conversatie', 'post-comments': 'Reactie', 'reviews': 'Review'
+        };
+        return labels[type] || type;
+    }
+
+    function ratingStars(extraMeta) {
+        const n = parseInt(extraMeta, 10);
+        if (!n || n < 1 || n > 5) return '';
+        return '⭐'.repeat(n);
+    }
+
+    function renderContent(message) {
+        const stars = message.endpointType === 'reviews' ? ratingStars(message.extraMeta) : '';
+        contentPanel.innerHTML = `
+            <div class="sb-content-header">
+                <h2 class="sb-content-subject">${escapeHtml(message.subject || 'Bericht')} ${stars}</h2>
+                <div class="sb-content-meta">
+                    <span><strong>Van:</strong> ${escapeHtml(message.name || 'Onbekend')}</span>
+                    <span><strong>Platform:</strong> ${escapeHtml(providerLabel(message.provider || ''))}</span>
+                    <span><strong>Type:</strong> ${escapeHtml(typeLabel(message.endpointType || ''))}</span>
+                    ${message.status ? `<span><strong>Status:</strong> ${escapeHtml(message.status)}</span>` : ''}
+                    <span><strong>Tijd:</strong> ${escapeHtml(formatTime(message.time || ''))}</span>
+                </div>
+            </div>
+            <div class="sb-content-body">
+                ${nl2br(message.fullMessage || 'Geen inhoud beschikbaar.')}
+            </div>
+        `;
+    }
+
+    function getFilteredMessages() {
+        const term = searchInput.value.trim().toLowerCase();
+        const providerValue = providerFilter.value;
+        const typeValue = typeFilter.value;
+        const fromValue = dateFrom.value; // bv. "2026-05-01" of leeg
+        const toValue = dateTo.value;     // bv. "2026-05-29" of leeg
+
+        return messages.filter(message => {
+            const haystack = [
+                message.name, message.provider, message.endpointType,
+                message.subject, message.preview, message.fullMessage, message.status
+            ].join(' ').toLowerCase();
+
+            const matchesSearch = haystack.includes(term);
+            const matchesProvider = providerValue === '' || message.provider === providerValue;
+            const matchesType = typeValue === '' || message.endpointType === typeValue;
+
+            // ── Datumfilter ──
+            // We pakken alleen het datum-gedeelte (de eerste 10 tekens, bv. "2026-05-23").
+            // Zo kunnen we makkelijk vergelijken met de gekozen datums.
+            let matchesDate = true;
+            const messageDate = (message.time || '').substring(0, 10);
+            if (fromValue !== '' && messageDate < fromValue) {
+                matchesDate = false;
+            }
+            if (toValue !== '' && messageDate > toValue) {
+                matchesDate = false;
             }
 
-            document.querySelectorAll('.message-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    document.querySelectorAll('.message-item').forEach(el => el.classList.remove('active'));
-                    item.classList.add('active');
+            // ── Sterrenfilter ──
+            // Dit geldt alleen voor reviews. Andere berichten blijven gewoon zichtbaar.
+            let matchesStars = true;
+            if (activeStarFilter > 0) {
+                if (message.endpointType === 'reviews') {
+                    // extraMeta bevat het aantal sterren als tekst, dus we maken er een getal van
+                    const stars = parseInt(message.extraMeta, 10);
+                    matchesStars = (stars === activeStarFilter);
+                } else {
+                    // Geen review? Dan verbergen we het als er op sterren gefilterd wordt.
+                    matchesStars = false;
+                }
+            }
 
-                    const id = item.getAttribute('data-id');
-                    const message = filtered.find(m => String(m.id) === String(id));
+            return matchesSearch && matchesProvider && matchesType && matchesDate && matchesStars;
+        });
+    }
 
-                    if (message) {
-                        renderContent(message);
-                    }
-                });
-            });
+    function renderList() {
+        const filtered = getFilteredMessages();
+
+        if (filtered.length === 0) {
+            messageList.innerHTML = `<div class="sb-empty-list">Geen berichten gevonden.</div>`;
+            contentPanel.innerHTML = `
+                <div class="sb-empty-state">
+                    <div class="sb-empty-state-icon">🔍</div>
+                    <div class="sb-empty-state-text">Geen resultaat voor de huidige filters</div>
+                </div>
+            `;
+            return;
         }
 
-        searchInput.addEventListener('input', renderList);
-        providerFilter.addEventListener('change', renderList);
-        typeFilter.addEventListener('change', renderList);
+        messageList.innerHTML = filtered.map((message, index) => {
+            const avatarHtml = message.avatar
+                ? `<div class="sb-avatar"><img src="${escapeHtml(message.avatar)}" alt=""></div>`
+                : `<div class="sb-avatar">${escapeHtml(message.initials || 'O')}</div>`;
 
-        renderList();
-    </script>
+            const statusHtml = message.status
+                ? `<span class="sb-status-badge">${escapeHtml(message.status)}</span>`
+                : '';
+
+            // Bij reviews tonen we de sterren in de preview
+            let previewHtml = escapeHtml(message.preview || '');
+            if (message.endpointType === 'reviews') {
+                const stars = ratingStars(message.extraMeta);
+                if (stars) {
+                    previewHtml = stars + '<br>' + previewHtml;
+                }
+            }
+
+            return `
+                <div class="sb-message-item ${index === 0 ? 'active' : ''}" data-id="${escapeHtml(message.id)}">
+                    ${avatarHtml}
+                    <div class="sb-message-meta">
+                        <div class="sb-badge-row">
+                            <span class="sb-provider-badge ${escapeHtml(message.provider)}">${escapeHtml(providerLabel(message.provider))}</span>
+                            <span class="sb-type-badge">${escapeHtml(typeLabel(message.endpointType || ''))}</span>
+                            ${statusHtml}
+                        </div>
+                        <div class="sb-message-row-top">
+                            <div class="sb-message-name">${escapeHtml(message.name || 'Onbekend')}</div>
+                            <div class="sb-message-time">${escapeHtml(formatTime(message.time || ''))}</div>
+                        </div>
+                        <div class="sb-message-preview">${previewHtml}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        const first = filtered[0];
+        if (first) {
+            renderContent(first);
+        }
+
+        document.querySelectorAll('.sb-message-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.sb-message-item').forEach(el => el.classList.remove('active'));
+                item.classList.add('active');
+
+                const id = item.getAttribute('data-id');
+                const message = filtered.find(m => String(m.id) === String(id));
+
+                if (message) {
+                    renderContent(message);
+                }
+            });
+        });
+    }
+
+    searchInput.addEventListener('input', renderList);
+    providerFilter.addEventListener('change', onProviderChange);
+    typeFilter.addEventListener('change', renderList);
+    dateFrom.addEventListener('change', renderList);
+    dateTo.addEventListener('change', renderList);
+
+    renderList();
+</script>
+
 </body>
 </html>
