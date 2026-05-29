@@ -277,18 +277,19 @@ $totalAvgDuration = $totalVisits > 0 ? $totalAvg_duration / $totalVisits : 0;
 <head>
     <meta charset="UTF-8">
     <title>Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/Dashboard/fathem/dist/output.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
 <body class="bg-gray-100 ">
 
-<section class="flex justify-between items-center w-full p-4 rounded gap-4 mb-8 bg-[#5603AD]">
+<section class="flex justify-between items-center w-full p-4 rounded gap-16 mb-8 bg-[#5603AD]">
 
     <!-- Realtime -->
     <div id="realtimeD" class="relative text-white p-4 rounded">
         Totaal realtime visitors: <?= $currentVisitors ?>
-        <div id="exp-realtime" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 p-4 text-white">
+        <div id="exp-realtime"
+     class="hidden transition-none absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 w-full text-white">
             Het aantal mensen dat nu op je website zit.
         </div>
     </div>
@@ -296,7 +297,7 @@ $totalAvgDuration = $totalVisits > 0 ? $totalAvg_duration / $totalVisits : 0;
     <!-- Visits -->
     <div id="visitsD" class="relative text-white p-4 rounded">
         Totaal visits: <?= $totalVisits ?>
-        <div id="exp-visits" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2  w-[1/2] p-4 text-white">
+        <div id="exp-visits" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2  w-full p-4 text-white">
             Het aantal bezoeken aan je website. Als iemand 3 pagina’s bekijkt, telt dat als 1 visit.
         </div>
     </div>
@@ -304,7 +305,7 @@ $totalAvgDuration = $totalVisits > 0 ? $totalAvg_duration / $totalVisits : 0;
     <!-- Pageviews -->
     <div id="pageviewsD" class="relative text-white p-4 rounded">
         Totaal pageviews: <?= $totalPageViews ?>
-        <div id="exp-pageviews" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 w-max p-4 text-white">
+        <div id="exp-pageviews" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 w-full p-4 text-white">
             Hoeveel pagina’s in totaal bekeken zijn.
         </div>
     </div>
@@ -312,7 +313,7 @@ $totalAvgDuration = $totalVisits > 0 ? $totalAvg_duration / $totalVisits : 0;
     <!-- Views per visit -->
     <div id="viewsD" class="relative text-white p-4 rounded">
         Views per visit: <?= number_format($totalViewsPerVisit, 2) ?>
-        <div id="exp-vpv" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 w-max p-4 text-white">
+        <div id="exp-vpv" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 w-full p-4 text-white">
             Gemiddeld aantal pagina’s per bezoek.
         </div>
     </div>
@@ -320,7 +321,7 @@ $totalAvgDuration = $totalVisits > 0 ? $totalAvg_duration / $totalVisits : 0;
     <!-- Bounce -->
     <div id="bounceD" class="relative text-white p-4 rounded">
         Bounce rate: <?= number_format($totalBounceRate, 2) ?>%
-        <div id="exp-bounce" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 w-max p-4 text-white">
+        <div id="exp-bounce" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 w-full p-4 text-white">
             Percentage dat direct weggaat na 1 pagina.
         </div>
     </div>
@@ -328,7 +329,7 @@ $totalAvgDuration = $totalVisits > 0 ? $totalAvg_duration / $totalVisits : 0;
     <!-- Duration -->
     <div id="durationD" class="relative text-white p-4 rounded">
         Gemiddelde sessieduur: <?= gmdate("i:s", (int)round($totalAvgDuration)) ?>
-        <div id="exp-duration" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 max-w-full p-4 text-white">
+        <div id="exp-duration" class="hidden absolute bg-[#240046] border-2 border-red-500 p-2 rounded top-full left-1/2 -translate-x-1/2 mt-2 w-full p-4 text-white">
             Gemiddelde tijd dat iemand op je site blijft.
         </div>
     </div>
@@ -340,13 +341,18 @@ function setupTooltip(triggerId, tooltipId) {
     const trigger = document.getElementById(triggerId);
     const tooltip = document.getElementById(tooltipId);
 
-    trigger.addEventListener("mouseenter", () => {
-        tooltip.classList.remove("hidden");
-    });
+    let hoverTimer;
 
-    trigger.addEventListener("mouseleave", () => {
-        tooltip.classList.add("hidden");
-    });
+trigger.addEventListener("mouseenter", () => {
+    hoverTimer = setTimeout(() => {
+        tooltip.classList.remove("hidden");
+    }, 1000);
+});
+
+trigger.addEventListener("mouseleave", () => {
+    clearTimeout(hoverTimer);
+    tooltip.classList.add("hidden");
+});
 }
 
 // Apply to ALL blocks
@@ -435,8 +441,8 @@ setupTooltip("durationD", "exp-duration");
 </ul>
 </section>
 
-<section>
-    <form class="max-w-md" action="">
+<section class="w-full max-w-[80%]">
+    <form class="" action="">
         
     </form>
     <div>
@@ -522,6 +528,7 @@ setupTooltip("durationD", "exp-duration");
     </div>
 </section>
 <script defer>
+    const websiteInput = document.getElementById('website-naam');
     const mediumSelect = document.getElementById('mediumSelect');
     const mediumCustom = document.getElementById('mediumCustom');
 
@@ -542,7 +549,7 @@ setupTooltip("durationD", "exp-duration");
      
     
     function generateUTM() {
-        const link = source.value + '?utm_source=' + encodeURIComponent(source.value) +
+        const link = websiteInput.value + '?utm_source=' + encodeURIComponent(source.value) +
         '&utm_medium=' + encodeURIComponent(mediumSelect.value === 'custom' ? mediumCustom.value : mediumSelect.value) +
         '&utm_campaign=' + encodeURIComponent(campaign.value) +
         '&utm_content=' + encodeURIComponent(content.value);
