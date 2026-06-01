@@ -10,6 +10,98 @@ $headers = [
     "X-Mc-Auth: $token",
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// REPLY-HANDLER
+// Wanneer de gebruiker op "Verstuur" klikt in de UI, stuurt JavaScript
+// een POST-request naar deze pagina met action=reply.
+// Wij sturen dat dan door naar Metricool.
+// ─────────────────────────────────────────────────────────────────────────────
+
+if (($_POST['action'] ?? '') === 'reply') {
+    // We sturen een JSON-antwoord terug naar JavaScript
+    header('Content-Type: application/json');
+
+    $messageId    = $_POST['messageId']    ?? '';
+    $provider     = $_POST['provider']     ?? '';
+    $endpointType = $_POST['endpointType'] ?? '';
+    $replyText    = trim($_POST['replyText'] ?? '');
+
+    // Basis-validatie
+    if ($replyText === '' || $messageId === '') {
+        echo json_encode(['success' => false, 'error' => 'Antwoord of bericht-ID ontbreekt.']);
+        exit;
+    }
+
+    if ($token === '') {
+        echo json_encode(['success' => false, 'error' => 'Geen Metricool token ingesteld.']);
+        exit;
+    }
+
+    // Metricool gebruikt verschillende endpoints afhankelijk van het type bericht.
+    // We proberen de meest waarschijnlijke endpoints één voor één.
+    // Zodra er een werkt (HTTP 200/201), stoppen we.
+    $endpointsToTry = [
+        '/api/v2/inbox/' . $endpointType . '/' . $messageId . '/reply',
+        '/api/v2/inbox/' . $endpointType . '/' . $messageId . '/answer',
+        '/api/v2/inbox/' . $endpointType . '/' . $messageId . '/respond',
+        '/api/v2/inbox/reply',
+    ];
+
+    $body = json_encode([
+        'text'     => $replyText,
+        'provider' => $provider,
+        'userId'   => $userId,
+        'blogId'   => $blogId,
+        'messageId'=> $messageId,
+    ]);
+
+    $tried = [];
+    foreach ($endpointsToTry as $endpoint) {
+        $url = "https://app.metricool.com" . $endpoint . "?" . http_build_query([
+            'userId' => $userId,
+            'blogId' => $blogId,
+        ]);
+
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL            => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER     => $headers,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $body,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_TIMEOUT        => 30,
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $tried[] = $endpoint . ' → HTTP ' . $httpCode;
+
+        // 200 of 201 betekent: gelukt
+        if ($httpCode === 200 || $httpCode === 201) {
+            echo json_encode([
+                'success'  => true,
+                'endpoint' => $endpoint,
+                'response' => json_decode($response, true),
+            ]);
+            exit;
+        }
+    }
+
+    // Niets werkte — we geven een nette foutmelding terug met wat we geprobeerd hebben.
+    echo json_encode([
+        'success' => false,
+        'error'   => 'Geen werkend reply-endpoint gevonden.',
+        'tried'   => $tried,
+    ]);
+    exit;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HIER BEGINT DE NORMALE PAGINA (inbox tonen)
+// ─────────────────────────────────────────────────────────────────────────────
+
 $endpointMap = [
     'reviews'       => '/api/v2/inbox/reviews',
     'conversations' => '/api/v2/inbox/conversations',
@@ -121,6 +213,7 @@ function normalizeMessage($msg, $provider, $endpointType) {
     $subject = ucfirst($endpointType) . ' via ' . ucfirst($provider);
     $status = '';
     $extraMeta = '';
+    $postLink = ''; // link naar de originele post (Instagram, Facebook, ...)
 
     if ($endpointType === 'conversations') {
         if (!empty($msg['participants']) && is_array($msg['participants'])) {
@@ -161,26 +254,39 @@ function normalizeMessage($msg, $provider, $endpointType) {
     }
 
     elseif ($endpointType === 'post-comments') {
-        $name = pickFirstNonEmpty([
-            $msg['name'] ?? '',
-            $msg['userName'] ?? '',
-            $msg['username'] ?? '',
-            $msg['author']['name'] ?? '',
-            $msg['from']['name'] ?? '',
-            $msg['commenter']['name'] ?? '',
-            $msg['user']['name'] ?? '',
-        ], 'Onbekend');
+        // Bij Instagram (en soms andere platforms) zit de naam van de reageerder
+        // in "participants", net als bij conversaties en reviews.
+        // We proberen dat eerst.
+        if (!empty($msg['participants']) && is_array($msg['participants'])) {
+            foreach ($msg['participants'] as $participant) {
+                $participantName = trim((string)($participant['name'] ?? ''));
+                if ($participantName !== '') {
+                    $name = $participantName;
+                    $avatar = $participant['imageProfileUrl'] ?? '';
+                    break;
+                }
+            }
+        }
 
-        $avatar = pickFirstNonEmpty([
-            $msg['imageProfileUrl'] ?? '',
-            $msg['avatar'] ?? '',
-            $msg['avatarUrl'] ?? '',
-            $msg['author']['avatar'] ?? '',
-            $msg['user']['avatar'] ?? '',
-            $msg['author']['imageProfileUrl'] ?? '',
-        ], '');
+        // Lukt dat niet, dan proberen we de oude velden (voor andere platforms).
+        if ($name === 'Onbekend') {
+            $name = pickFirstNonEmpty([
+                $msg['name'] ?? '',
+                $msg['userName'] ?? '',
+                $msg['username'] ?? '',
+                $msg['author']['name'] ?? '',
+                $msg['from']['name'] ?? '',
+                $msg['root']['owner'] ?? '',   // bij Instagram staat de username ook hier
+            ], 'Onbekend');
+        }
 
+        // Link naar de originele post — handig om door te klikken naar Instagram/Facebook.
+        $postLink = (string)($msg['root']['element']['link'] ?? '');
+
+        // De reactietekst zit bij Instagram in "root" -> "text".
+        // We proberen die eerst, daarna de losse velden voor andere platforms.
         $fullMessage = pickFirstNonEmpty([
+            $msg['root']['text'] ?? '',    // <-- Instagram reactietekst
             $msg['text'] ?? '',
             $msg['comment'] ?? '',
             $msg['message'] ?? '',
@@ -189,18 +295,13 @@ function normalizeMessage($msg, $provider, $endpointType) {
         ], '');
 
         $time = pickFirstNonEmpty([
+            $msg['creationDate'] ?? '',
             $msg['publicationDateTime'] ?? '',
             $msg['date'] ?? '',
             $msg['createdAt'] ?? '',
-            $msg['created_at'] ?? '',
-            $msg['creationDate'] ?? '',
-            $msg['timestamp'] ?? '',
         ], '');
 
-        $status = pickFirstNonEmpty([
-            $msg['status'] ?? '',
-            $msg['commentStatus'] ?? '',
-        ], '');
+        $status = (string)($msg['status'] ?? '');
 
         $subject = 'Reactie via ' . ucfirst($provider);
     }
@@ -276,6 +377,7 @@ function normalizeMessage($msg, $provider, $endpointType) {
         'avatar' => $avatar,
         'status' => $status,
         'extraMeta' => $extraMeta,
+        'postLink' => $postLink,
         'initials' => getInitials($name),
         'raw' => $msg
     ];
@@ -465,6 +567,54 @@ usort($allMessages, function ($a, $b) {
         .sb-content-body { padding: 28px; font-size: 15px; line-height: 1.8; color: #3a4460; white-space: pre-wrap; overflow-y: auto; flex: 1; }
         .sb-content-body::-webkit-scrollbar { width: 7px; }
         .sb-content-body::-webkit-scrollbar-thumb { background: #dde2ec; border-radius: 4px; }
+
+        /* ── Bekijk-knop (link naar originele post) ── */
+        .sb-view-btn {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #f0f6ff; color: #3b82f6; border: 1px solid #dbeafe;
+            padding: 4px 10px; border-radius: 7px; font-size: 12px; font-weight: 600;
+            text-decoration: none; transition: all 0.15s;
+        }
+        .sb-view-btn:hover { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+        /* ── Antwoord-blok onderaan de berichtweergave ── */
+        .sb-reply-box {
+            padding: 20px 28px 24px; border-top: 1px solid #eef1f6; background: #fafbfd;
+        }
+        .sb-reply-label {
+            font-size: 11px; font-weight: 700; color: #9aa3b4;
+            text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;
+        }
+
+        /* Snel-antwoord knoppen */
+        .sb-quick-replies { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .sb-quick-btn {
+            background: #fff; border: 1px solid #dde2ec; color: #7a8599;
+            padding: 6px 11px; border-radius: 20px; font-size: 12px; font-weight: 500;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .sb-quick-btn:hover { border-color: #06b6d4; color: #06b6d4; background: #f0fbfd; }
+
+        /* Tekstveld voor het antwoord */
+        .sb-reply-input {
+            width: 100%; border: 1px solid #dde2ec; background: #fff; color: #1a2233;
+            padding: 12px 14px; font-size: 14px; border-radius: 10px;
+            font-family: inherit; resize: vertical; outline: none;
+            transition: all 0.15s; min-height: 70px;
+        }
+        .sb-reply-input:focus { border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,.12); }
+
+        /* Verzendknop + status */
+        .sb-reply-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 10px; }
+        .sb-reply-status { font-size: 12px; font-weight: 600; color: #7a8599; }
+        .sb-reply-status.ok { color: #10b981; }
+        .sb-reply-status.err { color: #ef4444; }
+        .sb-reply-send {
+            background: #06b6d4; color: #fff; border: none; padding: 9px 20px;
+            border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .sb-reply-send:hover { background: #0891b2; }
 
         /* ── Empty states ── */
         .sb-empty-state {
@@ -714,6 +864,23 @@ usort($allMessages, function ($a, $b) {
 
     function renderContent(message) {
         const stars = message.endpointType === 'reviews' ? ratingStars(message.extraMeta) : '';
+
+        // "Bekijk post"-knop: alleen tonen als er een link beschikbaar is
+        const viewBtn = message.postLink
+            ? `<a href="${escapeHtml(message.postLink)}" target="_blank" rel="noopener" class="sb-view-btn">↗ Bekijk origineel</a>`
+            : '';
+
+        // Snelle antwoord-templates die je kan klikken om in te vullen
+        const quickReplies = [
+            'Bedankt voor je bericht! 🙏',
+            'Bedankt voor je positieve review! ⭐',
+            'Dank je wel, we waarderen je feedback!',
+            'Sorry voor het ongemak, we nemen contact op.',
+        ];
+        const quickBtns = quickReplies.map(t =>
+            `<button type="button" class="sb-quick-btn" onclick="fillReply(this.dataset.txt)" data-txt="${escapeHtml(t)}">${escapeHtml(t)}</button>`
+        ).join('');
+
         contentPanel.innerHTML = `
             <div class="sb-content-header">
                 <h2 class="sb-content-subject">${escapeHtml(message.subject || 'Bericht')} ${stars}</h2>
@@ -723,12 +890,77 @@ usort($allMessages, function ($a, $b) {
                     <span><strong>Type:</strong> ${escapeHtml(typeLabel(message.endpointType || ''))}</span>
                     ${message.status ? `<span><strong>Status:</strong> ${escapeHtml(message.status)}</span>` : ''}
                     <span><strong>Tijd:</strong> ${escapeHtml(formatTime(message.time || ''))}</span>
+                    ${viewBtn}
                 </div>
             </div>
             <div class="sb-content-body">
                 ${nl2br(message.fullMessage || 'Geen inhoud beschikbaar.')}
             </div>
+
+            <!-- Antwoord-blok onderaan -->
+            <div class="sb-reply-box">
+                <div class="sb-reply-label">Antwoorden</div>
+                <div class="sb-quick-replies">${quickBtns}</div>
+                <textarea id="replyText" class="sb-reply-input" placeholder="Schrijf je antwoord..." rows="3"></textarea>
+                <div class="sb-reply-actions">
+                    <span class="sb-reply-status" id="replyStatus"></span>
+                    <button type="button" class="sb-reply-send" onclick="sendReply('${escapeHtml(message.id)}', '${escapeHtml(message.provider)}', '${escapeHtml(message.endpointType)}')">
+                        Verstuur
+                    </button>
+                </div>
+            </div>
         `;
+    }
+
+    // Vult het tekstveld met een gekozen snel-antwoord
+    function fillReply(text) {
+        const input = document.getElementById('replyText');
+        if (input) {
+            input.value = text;
+            input.focus();
+        }
+    }
+
+    // Stuurt het antwoord naar config.php (action=reply), die het doorstuurt naar Metricool.
+    async function sendReply(messageId, provider, endpointType) {
+        const input = document.getElementById('replyText');
+        const status = document.getElementById('replyStatus');
+        const replyText = input.value.trim();
+
+        if (replyText === '') {
+            status.textContent = 'Schrijf eerst een antwoord.';
+            status.className = 'sb-reply-status err';
+            return;
+        }
+
+        status.textContent = 'Bezig met versturen...';
+        status.className = 'sb-reply-status';
+
+        // We bouwen de form-data op die we naar PHP sturen
+        const formData = new FormData();
+        formData.append('action', 'reply');
+        formData.append('messageId', messageId);
+        formData.append('provider', provider);
+        formData.append('endpointType', endpointType);
+        formData.append('replyText', replyText);
+
+        try {
+            const response = await fetch('config.php', { method: 'POST', body: formData });
+            const result = await response.json();
+
+            if (result.success) {
+                status.textContent = '✓ Antwoord verstuurd!';
+                status.className = 'sb-reply-status ok';
+                input.value = '';
+            } else {
+                status.textContent = '✗ ' + (result.error || 'Onbekende fout');
+                status.className = 'sb-reply-status err';
+                console.log('Geprobeerde endpoints:', result.tried);
+            }
+        } catch (err) {
+            status.textContent = '✗ Netwerk-fout: ' + err.message;
+            status.className = 'sb-reply-status err';
+        }
     }
 
     function getFilteredMessages() {
