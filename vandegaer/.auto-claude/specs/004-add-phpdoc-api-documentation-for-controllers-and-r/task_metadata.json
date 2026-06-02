@@ -1,8 +1,0 @@
-{
-  "sourceType": "ideation",
-  "ideationType": "documentation_gaps",
-  "ideaId": "doc-003",
-  "rationale": "API documentation is essential for maintaining code quality and enabling team collaboration. Without proper PHPDoc, IDEs can't provide autocomplete, and developers must trace through code to understand method contracts. This affects both internal development speed and external API consumers.",
-  "category": "documentation",
-  "priority": "medium"
-}

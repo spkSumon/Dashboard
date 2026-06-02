@@ -1,8 +1,0 @@
-{
-  "sourceType": "ideation",
-  "ideationType": "documentation_gaps",
-  "ideaId": "doc-005",
-  "rationale": "The gap between planning docs and reality creates confusion. New developers might try to implement the PostgreSQL schema from DATABASE_ARCHITECTURE.md when the actual system uses MySQL. Clear documentation of the current state plus migration scripts would accelerate onboarding.",
-  "category": "documentation",
-  "priority": "medium"
-}
