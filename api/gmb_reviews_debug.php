@@ -8,7 +8,7 @@
 
 $userId = 4394337;
 $blogId = 5668624;
-$token  = 'YTQGUMFFSNCTTTRMJPHRVFOHDACWTAULVIIPDJQOUIJDTONUCOIJUELBHLAZQDUB'; // <-- vul hier je token in zoals in je andere bestanden
+$token  = ''; // <-- vul hier je token in zoals in je andere bestanden
 
 $headers = [
     "Accept: application/json",

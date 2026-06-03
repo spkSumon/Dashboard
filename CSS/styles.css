@@ -642,6 +642,316 @@ tr:hover {
 }
 
 /* ===================================
+   Fathom Dashboard — targets unmodified PHP
+   (uses IDs + :has() so the PHP's Tailwind
+   classes don't need to be removed)
+   =================================== */
+
+/* JS toggle helper for tooltips */
+.hidden {
+    display: none !important;
+}
+
+/* --- KPI strip (section containing #realtimeD) --- */
+section:has(> #realtimeD) {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    background: var(--primary-color);
+    box-shadow: var(--shadow-md);
+    flex-wrap: wrap;
+}
+
+section:has(> #realtimeD) > div {
+    position: relative;
+    flex: 1 1 0;
+    min-width: 140px;
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    color: var(--white);
+    font-weight: 600;
+    text-align: center;
+    cursor: help;
+    transition: background 0.2s ease;
+}
+
+section:has(> #realtimeD) > div:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* Tooltips inside the KPI strip */
+#exp-realtime,
+#exp-visits,
+#exp-pageviews,
+#exp-vpv,
+#exp-bounce,
+#exp-duration {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: var(--spacing-sm);
+    width: max-content;
+    max-width: 240px;
+    padding: var(--spacing-md);
+    background: var(--primary-dark);
+    color: var(--white);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 400;
+    line-height: 1.4;
+    box-shadow: var(--shadow-lg);
+    z-index: 10;
+}
+
+/* --- Chart wrapper (section containing #Chart) --- */
+section:has(#Chart) {
+    background: var(--white);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-md);
+}
+
+section:has(#Chart) > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 360px;
+    margin: 0 !important;
+}
+
+#Chart {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* --- Range filter form (override the generic `form` rule) --- */
+form:has(> button[name="range"]) {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin: 0 0 var(--spacing-lg);
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    flex-wrap: wrap;
+}
+
+form > button[name="range"] {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+form > button[name="range"]:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Active range button: PHP adds the `bg-black` Tailwind class */
+form > button[name="range"].bg-black {
+    background: var(--gray-900);
+}
+
+form > button[name="range"].bg-black:hover {
+    background: var(--gray-800);
+}
+
+/* --- Referrer + UTM lists (sections with a direct <ul>) --- */
+section:has(> ul) {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--spacing-lg);
+}
+
+section > ul {
+    list-style: none;
+    width: 100%;
+    max-width: 800px;
+    padding: 0;
+    margin: 0;
+}
+
+section > ul > li {
+    background: var(--white);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-sm);
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--primary-color);
+    color: var(--gray-900);
+    transition: all 0.2s ease;
+}
+
+section > ul > li:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+/* Referrer rows have two <span> children → side-by-side */
+section > ul > li:has(> span) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+}
+
+section > ul > li > span:first-child {
+    font-weight: 700;
+    color: var(--gray-900);
+    font-size: var(--font-size-base);
+}
+
+section > ul > li > span:last-child {
+    color: var(--gray-700);
+    font-size: var(--font-size-sm);
+}
+
+/* UTM rows have multiple <div> children → stacked */
+section > ul > li > div {
+    color: var(--gray-800);
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-xs) 0;
+}
+
+section > ul > li > div:last-child {
+    color: var(--gray-600);
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--gray-200);
+    margin-top: var(--spacing-sm);
+}
+
+/* --- UTM generator (section containing #sourceSelect) --- */
+section:has(#sourceSelect) {
+    display: block;
+    background: var(--white);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
+    max-width: 800px;
+    margin: 0 auto var(--spacing-lg);
+}
+
+section:has(#sourceSelect) > div {
+    margin-bottom: var(--spacing-md);
+}
+
+/* Inputs and selects inside the UTM generator */
+#sourceSelect,
+#mediumSelect,
+#sourceCustom,
+#mediumCustom,
+#campaignInput,
+#contentInput {
+    width: 100%;
+    padding: var(--spacing-md);
+    font-size: var(--font-size-base);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--border-radius-sm);
+    background-color: var(--white);
+    color: var(--gray-900);
+    transition: all 0.2s ease;
+    font-family: var(--font-family);
+}
+
+#sourceSelect:focus,
+#mediumSelect:focus,
+#sourceCustom:focus,
+#mediumCustom:focus,
+#campaignInput:focus,
+#contentInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+#sourceCustom,
+#mediumCustom {
+    margin-top: var(--spacing-sm);
+}
+
+/* "Genereer UTM link" button */
+section:has(#sourceSelect) button[onclick="generateUTM()"] {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+section:has(#sourceSelect) button[onclick="generateUTM()"]:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Generated-link display */
+#result {
+    min-height: 80px;
+    padding: var(--spacing-md);
+    background: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-sm);
+    color: var(--gray-700);
+    word-break: break-all;
+    font-family: 'Courier New', monospace;
+    line-height: 1.5;
+    margin-bottom: var(--spacing-sm);
+}
+
+/* "Kopieer link" button */
+section:has(#sourceSelect) button[onclick="copyLink()"] {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background: var(--success-color);
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius-sm);
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: var(--spacing-sm);
+}
+
+section:has(#sourceSelect) button[onclick="copyLink()"]:hover {
+    background: #1b5e20;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Responsive: stack KPI strip on small screens */
+@media (max-width: 900px) {
+    section:has(> #realtimeD) {
+        flex-direction: column;
+    }
+
+    section:has(> #realtimeD) > div {
+        min-width: 0;
+    }
+}
+
+/* ===================================
    Print Styles
    =================================== */
 

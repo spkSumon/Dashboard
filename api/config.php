@@ -2,7 +2,7 @@
 
 $userId = 4394337;
 $blogId = 5668624;
-$token  = "YTQGUMFFSNCTTTRMJPHRVFOHDACWTAULVIIPDJQOUIJDTONUCOIJUELBHLAZQDUB";
+$token  = "";
 
 $headers = [
     "Accept: application/json",
@@ -663,6 +663,7 @@ usort($allMessages, function ($a, $b) {
         <a href="instagram_dashboard.php" class="nav-link">Instagram</a>
         <a href="tiktok_dashboard.php" class="nav-link">TikTok</a>
         <a href="gmb_dashboard.php" class="nav-link">Google Business</a>
+        <a href="../fathem/fathom-info2.php" class="nav-link">Fathom Analytics</a>
     </nav>
 
     <p class="sb-title">Inbox</p>
