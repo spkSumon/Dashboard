@@ -2,7 +2,7 @@
 
 $userId = 4394337;
 $blogId = 5668624;
-$token  = "";
+$token  = "YTQGUMFFSNCTTTRMJPHRVFOHDACWTAULVIIPDJQOUIJDTONUCOIJUELBHLAZQDUB";
 
 $headers = [
     "Accept: application/json",
@@ -429,7 +429,7 @@ usort($allMessages, function ($a, $b) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inbox — SkyByte</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../CSS/styles.css">
     <style>
         body { background: #f0f2f7; }
 

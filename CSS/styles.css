@@ -180,17 +180,15 @@ button {
 
 
 /* ─────────── 6. Toolbar (datumvelden + tabs) ───────────
-   Geen achtergrond, geen rand. Alleen twee dunne horizontale lijntjes
-   die de toolbar afbakenen — wel rustig, niet als een doos. */
+   Géén borders boven/onder. De toolbar drijft gewoon in de pagina,
+   gescheiden door witruimte. */
 .sb-toolbar {
     display: flex;
     align-items: center;
     gap: 28px;
     flex-wrap: wrap;
-    padding: 18px 0;
-    margin-bottom: 40px;
-    border-top: 1px solid var(--rule-soft);
-    border-bottom: 1px solid var(--rule-soft);
+    padding: 0;
+    margin-bottom: 56px;
 }
 
 .sb-toolbar label {
@@ -251,20 +249,20 @@ button {
 
 
 /* ─────────── 7. Layout: sidebar + canvas ───────────
-   Twee kolommen, gescheiden door één verticale hairline.
-   Géén kaders, géén achtergronden. */
+   Twee kolommen, gescheiden door alléén witruimte (géén verticale
+   lijn). De pagina leest als één geheel: links staat de menu-tekst,
+   rechts de inhoud. */
 .sb-layout {
     display: grid;
     grid-template-columns: 180px 1fr;
-    gap: 56px;
+    gap: 72px;
     align-items: start;
 }
 
 .sb-sidebar {
     position: sticky;
     top: 24px;
-    padding-right: 24px;
-    border-right: 1px solid var(--rule-soft);
+    padding-right: 0;
 }
 
 .sb-sidebar-title {
@@ -277,7 +275,7 @@ button {
 }
 
 /* Elke metric in de sidebar is een rij tekst met een dunne lijn
-   eronder. Geen omkaderd "chipje". */
+   eronder — hetzelfde lijst-ritme als de hoofdpagina. */
 .sb-chip {
     display: flex;
     align-items: center;
@@ -286,17 +284,12 @@ button {
     font-size: 14px;
     color: var(--ink);
     cursor: grab;
-    border-bottom: 1px solid var(--rule-soft);
-    /* De gekleurde linkerstreep die in het PHP via inline-style komt
-       (border-left) maken we hier ongedaan, want we willen geen
-       kleurige randjes in deze stijl. */
-    border-left: none !important;
+    border: none !important;
+    border-bottom: 1px solid var(--rule-soft) !important;
     background: transparent;
     user-select: none;
     transition: color 0.15s, padding-left 0.15s;
 }
-
-.sb-chip:last-child { border-bottom: none; }
 
 .sb-chip:hover {
     color: var(--accent);
@@ -345,23 +338,21 @@ button {
 
 
 /* ─────────── 9. Metric "cards" ───────────
-   Géén omkaderde kaartjes meer. Elke metric is gewoon een blok tekst
-   op de pagina: bovenaan een dunne lijn als ritmische scheiding, dan
-   het label, het grote getal, en daaronder de detail-stats. */
+   We tonen de metrics als één doorlopende lijst, hetzelfde patroon
+   als de Fathom-pagina: één rij per metric, met een dunne lijn
+   ertussen. Geen aparte blokjes meer in een grid — alles is letterlijk
+   één lijst van boven naar onder. */
 .sb-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    /* Veel verticale ruimte → de "cards" lezen als secties, niet als
-       blokjes in een tabel. */
-    gap: 56px 48px;
+    display: block;
+    border-top: 1px solid var(--rule-soft);
 }
 
 .sb-card-link {
     display: block;
     text-decoration: none;
     color: inherit;
-    padding-top: 16px;
-    border-top: 1px solid var(--rule);
+    padding: 22px 0;
+    border-bottom: 1px solid var(--rule-soft);
     transition: opacity 0.15s;
 }
 
@@ -377,6 +368,12 @@ button {
     border-radius: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
+    /* Alle drie de kind-elementen (header, avg, stats) leggen we
+       in één horizontale rij naast elkaar, met grid. */
+    display: grid;
+    grid-template-columns: 200px minmax(140px, 1fr) 2fr;
+    gap: 32px;
+    align-items: center;
 }
 
 .sb-card::before {
@@ -384,44 +381,52 @@ button {
     display: none !important;
 }
 
+/* Header: icon + label aan de linkerkant, actie-knoppen heel rechts.
+   In de rij-layout staat de header in kolom 1. */
 .sb-card-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
-    margin-bottom: 18px;
+    align-items: center;
+    margin-bottom: 0;
 }
 
 .sb-card-label-wrap {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .sb-card-icon {
-    /* Geen gekleurd icon-vierkantje meer. Gewoon de emoji. */
     background: transparent !important;
     width: auto !important;
     height: auto !important;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1;
 }
 
 .sb-card-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    font-weight: 600;
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--ink);
+    text-transform: none;
+    letter-spacing: -0.01em;
 }
 
+/* De actieknoppen (Details + ×) staan absoluut rechtsboven elke
+   rij, los van de grid-kolommen. Zo blijven ze op een vaste plek
+   en versmallen ze de tekstkolommen niet. */
 .sb-card-actions {
+    position: absolute;
+    top: 24px;
+    right: 0;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
 }
 
-/* Het "Details →"-tekstje verschijnt enkel bij hover. Geen pilletje
-   meer, gewoon tekst in de accentkleur. */
+.sb-card-link { position: relative; }
+
 .sb-card-open {
     font-size: 11px;
     text-transform: uppercase;
@@ -436,7 +441,6 @@ button {
 
 .sb-card-open svg { display: none; }
 
-/* Klein x'je om een metric weg te halen. Geen randje. */
 .sb-card-remove {
     background: none !important;
     border: none !important;
@@ -454,26 +458,27 @@ button {
     background: transparent !important;
 }
 
-/* Het grote getal in serif → meteen karakter, niets cliché-saas-erig. */
+/* Het grote getal: middelgroot zodat de hele rij compact blijft. */
 .sb-card-avg {
     font-family: var(--serif);
     font-weight: 400;
-    font-size: 56px;
+    font-size: 36px;
     line-height: 1;
     letter-spacing: -0.02em;
     color: var(--ink);
-    margin-bottom: 24px;
+    margin: 0;
     transition: color 0.15s;
 }
 
-/* Onderaan elke metric: 4 paartjes label/waarde, geen kadertjes
-   meer rond elk paartje. Gescheiden door een dunne lijn bovenaan. */
+/* De 4 detailstats: gewoon in één regel naast elkaar, zoals de
+   "80 visits | 120 views | …" tekst op de Fathom-pagina.
+   Elke stat ziet eruit als "Label Waarde", gescheiden door witruimte. */
 .sb-card-stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px 24px;
-    padding-top: 16px;
-    border-top: 1px solid var(--rule-soft);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 28px;
+    padding-top: 0;
+    align-items: baseline;
 }
 
 .sb-card-stat {
@@ -481,6 +486,9 @@ button {
     border: none !important;
     border-radius: 0 !important;
     padding: 0 !important;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
 }
 
 .sb-card-stat-label {
@@ -488,11 +496,11 @@ button {
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--ink-soft);
-    margin-bottom: 2px;
+    margin-bottom: 0;
 }
 
 .sb-card-stat-value {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--ink);
 }
@@ -525,9 +533,7 @@ button {
 .sb-stats-pills {
     display: flex;
     gap: 32px;
-    margin-bottom: 40px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--rule-soft);
+    margin-bottom: 48px;
 }
 
 .sb-stat-pill {
@@ -564,17 +570,15 @@ button {
 }
 
 .sb-sidebar-inbox {
-    padding-right: 32px;
-    border-right: 1px solid var(--rule-soft);
+    padding-right: 40px;
     display: flex;
     flex-direction: column;
     height: calc(100vh - 320px);
 }
 
 .sb-sidebar-header {
-    padding: 0 0 20px 0;
+    padding: 0 0 18px 0;
     background: transparent !important;
-    border-bottom: 1px solid var(--rule-soft);
 }
 
 .sb-sidebar-header h2 {
@@ -665,6 +669,7 @@ button {
     overflow-y: auto;
     padding: 0;
     margin-top: 8px;
+    border-top: 1px solid var(--rule-soft);
 }
 .sb-message-list::-webkit-scrollbar { width: 6px; }
 .sb-message-list::-webkit-scrollbar-thumb { background: var(--rule); }
@@ -673,10 +678,9 @@ button {
     display: flex;
     gap: 14px;
     padding: 16px 0;
-    border-bottom: 1px solid var(--rule-soft);
     border-radius: 0 !important;
-    border-left: none !important;
-    border-right: none !important;
+    border: none !important;
+    border-bottom: 1px solid var(--rule-soft) !important;
     background: transparent !important;
     cursor: pointer;
     transition: opacity 0.15s;
@@ -684,11 +688,10 @@ button {
 
 .sb-message-item::before { display: none !important; }
 
-.sb-message-item:hover { opacity: 0.65; background: transparent !important; }
+.sb-message-item:hover { opacity: 0.6; background: transparent !important; }
 
 .sb-message-item.active {
     background: transparent !important;
-    border-color: var(--rule-soft);
     /* Markering van actief item: kleine accent-streep links */
     box-shadow: inset 3px 0 0 var(--accent);
     padding-left: 12px;
@@ -779,9 +782,8 @@ button {
 }
 
 .sb-content-header {
-    padding: 0 0 24px 0;
+    padding: 0 0 8px 0;
     background: transparent !important;
-    border-bottom: 1px solid var(--rule-soft);
 }
 
 .sb-content-subject {
@@ -835,9 +837,8 @@ button {
 
 /* Antwoordblok onderaan */
 .sb-reply-box {
-    padding: 24px 0 0 0;
+    padding: 32px 0 0 0;
     background: transparent !important;
-    border-top: 1px solid var(--rule-soft);
 }
 .sb-reply-label {
     font-size: 11px;
@@ -932,7 +933,7 @@ button {
 }
 
 /* Debug-blokje onderaan de inbox */
-.sb-debug-section { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--rule-soft); }
+.sb-debug-section { margin-top: 64px; padding-top: 0; }
 .sb-debug-toggle {
     background: none;
     border: none;
@@ -968,9 +969,8 @@ button {
 .sb-debug-card {
     background: transparent !important;
     border: none !important;
-    border-top: 1px solid var(--rule-soft) !important;
     border-radius: 0 !important;
-    padding: 12px 0 !important;
+    padding: 0 !important;
     font-size: 12px;
     font-family: var(--mono);
 }
@@ -1486,31 +1486,39 @@ tr:hover { background: rgba(0, 0, 0, 0.02); }
 /* ─────────── 11. Responsive ─────────── */
 @media (max-width: 900px) {
     body { padding: 24px 20px 64px; }
-    .sb-layout { grid-template-columns: 1fr; gap: 32px; }
+    .sb-layout { grid-template-columns: 1fr; gap: 48px; }
     .sb-sidebar {
         position: static;
-        border-right: none;
-        border-bottom: 1px solid var(--rule-soft);
         padding-right: 0;
-        padding-bottom: 24px;
+        padding-bottom: 8px;
     }
     .sb-inbox-layout { grid-template-columns: 1fr; }
     .sb-sidebar-inbox {
         height: auto;
         max-height: 500px;
-        border-right: none;
-        border-bottom: 1px solid var(--rule-soft);
         padding-right: 0;
         padding-bottom: 24px;
-        margin-bottom: 32px;
+        margin-bottom: 48px;
     }
     .sb-content { padding-left: 0; min-height: auto; }
     .sb-tabs { margin-left: 0; }
+
+    /* Op smal scherm wordt de rij-layout van een metric te krap, dus
+       stacken we hem terug verticaal: label boven, getal eronder,
+       stats onderaan. */
+    .sb-card {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .sb-card-actions {
+        position: static;
+        justify-content: flex-end;
+    }
 }
 
 @media (max-width: 600px) {
     .sb-title { font-size: 32px; }
-    .sb-card-avg { font-size: 44px; }
+    .sb-card-avg { font-size: 32px; }
 }
 
 /* Print */
