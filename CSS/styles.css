@@ -1,689 +1,1061 @@
-/* ===================================
-   Dashboard Styles - Social Media Analytics
-   =================================== */
+/* ============================================================
+   SkyByte — gemeenschappelijke stylesheet
+   ------------------------------------------------------------
+   Opzet: één rustige, redactionele pagina (zoals een artikel
+   in een krant of magazine), niet opgedeeld in kaartjes.
 
+   Hoofdregels die ik aanhoud:
+   1. Geen omkaderde "cards" (geen rand + schaduw + ronde hoeken
+      rond elk blok). Structuur komt van witruimte en typografie.
+   2. Hooguit dunne horizontale of verticale lijntjes als
+      scheiding waar het echt nodig is.
+   3. Eén warm-grijze achtergrond voor de hele pagina, geen
+      witte vakjes bovenop een grijze body.
+   4. Eén kleurenpalet, en per platform één accentkleur.
+      Die accentkleur wordt per pagina ingesteld via --accent.
+   5. Typografie: een klassiek serif lettertype (Georgia) voor
+      titels en grote getallen, een gewoon sans-serif voor de
+      rest. Georgia staat standaard op elk besturingssysteem,
+      dus geen externe lettertypen nodig.
+   ============================================================ */
+
+
+/* ─────────── 1. CSS-variabelen (het palet) ─────────── */
 :root {
-    /* Colors */
-    --primary-color: #c2185b;
-    --primary-light: #fce4ec;
-    --primary-dark: #880e4f;
-    --success-color: #2e7d32;
-    --warning-color: #f57c00;
-    --danger-color: #c62828;
-    --info-color: #0288d1;
-    
-    /* Neutrals */
-    --white: #ffffff;
-    --gray-50: #f9fafb;
-    --gray-100: #f5f5f5;
-    --gray-200: #e0e0e0;
-    --gray-300: #ddd;
-    --gray-400: #bdbdbd;
-    --gray-500: #9e9e9e;
-    --gray-600: #757575;
-    --gray-700: #616161;
-    --gray-800: #424242;
-    --gray-900: #212121;
-    
-    /* Typography */
-    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    --font-size-xs: 11px;
-    --font-size-sm: 13px;
-    --font-size-base: 14px;
-    --font-size-lg: 16px;
-    --font-size-xl: 18px;
-    --font-size-2xl: 24px;
-    --font-size-3xl: 32px;
-    
-    /* Spacing */
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 16px;
-    --spacing-lg: 24px;
-    --spacing-xl: 32px;
-    --spacing-2xl: 48px;
-    
-    /* Borders */
-    --border-radius-sm: 6px;
-    --border-radius-md: 12px;
-    --border-radius-lg: 16px;
-    
-    /* Shadows */
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-    --shadow-md: 0 2px 4px rgba(0,0,0,0.1);
-    --shadow-lg: 0 4px 8px rgba(0,0,0,0.1);
-    --shadow-xl: 0 8px 16px rgba(0,0,0,0.15);
+    /* ── SkyByte-merkkleuren (de "officiële" kleuren uit ons palet) ──
+       Deze veranderen nooit — ze zijn de identiteit van het merk. */
+    --brand-white:      #FFFFFA;   /* lichtachtergrond */
+    --brand-ink:        #30332E;   /* tekst — kracht, tijdloosheid */
+    --brand-purple:     #5603AD;   /* hoofdkleur — creativiteit, luxe */
+    --brand-blue-deep:  #1446A0;   /* secundair blauw — vertrouwen */
+    --brand-blue-soft:  #7798AB;   /* secundair blauw — vertrouwen */
+
+    /* ── Werkkleuren die we overal in de CSS gebruiken ── */
+    --bg:         var(--brand-white);   /* paginakleur */
+    --ink:        var(--brand-ink);     /* hoofdtekst */
+    --ink-soft:   #6e6c73;              /* zachtere tekst (labels) */
+    --ink-faint:  #a6a3ab;              /* nog zachter (placeholders) */
+
+    /* Lijntjes — koele lichtgrijzen met een flintertje paars
+       zodat ze visueel bij het merk passen. */
+    --rule:       #d8d4de;
+    --rule-soft:  #ece9f0;
+
+    /* Accentkleur — standaard het merkpaars, maar wordt per pagina
+       overschreven (bv. Facebook = blauw, Instagram = roze, …) */
+    --accent:     var(--brand-purple);
+
+    /* Lettertypen */
+    --serif: Georgia, "Times New Roman", serif;
+    --sans:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono:  "SF Mono", Menlo, Consolas, monospace;
 }
 
-/* ===================================
-   Base Styles
-   =================================== */
 
+/* ─────────── 2. Basis ─────────── */
 * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
 }
 
 body {
-    font-family: var(--font-family);
-    background-color: var(--gray-100);
-    color: var(--gray-900);
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
     line-height: 1.6;
-    font-size: var(--font-size-base);
-    padding: var(--spacing-lg);
+    /* Royale padding zodat de pagina ademt */
+    padding: 40px clamp(20px, 5vw, 64px) 96px;
+    -webkit-font-smoothing: antialiased;
+    position: relative;
 }
 
-/* ===================================
-   Navigation
-   =================================== */
+/* SkyByte-knipoog: een dun gradient-streepje bovenaan elke pagina,
+   in de twee merkkleuren paars → blauw (zoals in het logo). */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+        90deg,
+        var(--brand-purple) 0%,
+        var(--brand-blue-deep) 60%,
+        var(--brand-blue-soft) 100%
+    );
+    z-index: 1000;
+}
 
+a { color: inherit; }
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+}
+
+
+/* ─────────── 3. Pagina-container ─────────── */
+.sb-page {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+
+/* ─────────── 4. Navigatie ───────────
+   Geen kader, geen achtergrondvlak. Gewoon een rij tekstlinks
+   met een hairline eronder die de bovenkant van de pagina markeert.
+   Bovendien: een "SkyByte"-woordmerk links via ::before, in de
+   merkkleur paars-blauw, als zachte branding zonder een logo in
+   te moeten laden. */
 .navbar {
-    background: var(--white);
-    border-radius: var(--border-radius-md);
-    padding: var(--spacing-md) var(--spacing-lg);
-    margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-sm);
     display: flex;
-    gap: var(--spacing-sm);
     flex-wrap: wrap;
     align-items: center;
+    gap: 28px;
+    padding-bottom: 18px;
+    margin-bottom: 56px;
+    border-bottom: 1px solid var(--rule);
+}
+
+.navbar::before {
+    content: "SkyByte";
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: -0.01em;
+    /* Tekst-gradient: de letters zelf krijgen het merkverloop.
+       background-clip: text zorgt dat alleen de letters gekleurd
+       worden, de rest blijft transparant. */
+    background: linear-gradient(
+        135deg,
+        var(--brand-purple) 0%,
+        var(--brand-blue-deep) 100%
+    );
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+            color: transparent;
+    /* Duwt alle nav-links naar rechts */
+    margin-right: auto;
 }
 
 .nav-link {
     text-decoration: none;
-    color: var(--gray-700);
-    font-weight: 600;
-    font-size: var(--font-size-base);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--border-radius-sm);
-    transition: all 0.2s ease;
-    white-space: nowrap;
+    color: var(--ink-soft);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    transition: color 0.15s;
 }
 
-.nav-link:hover {
-    background-color: var(--gray-100);
-    color: var(--primary-color);
-}
+.nav-link:hover { color: var(--ink); }
 
 .nav-link.active {
-    background-color: var(--primary-color);
-    color: var(--white);
-}
-
-/* ===================================
-   Header
-   =================================== */
-
-.header {
-    background: var(--white);
-    padding: var(--spacing-xl);
-    border-radius: var(--border-radius-md);
-    margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
-}
-
-.header h1 {
-    font-size: var(--font-size-3xl);
-    font-weight: 700;
-    color: var(--gray-900);
-    margin-bottom: var(--spacing-md);
-}
-
-.header-subtitle {
-    color: var(--gray-600);
-    font-size: var(--font-size-lg);
-    margin-bottom: var(--spacing-lg);
-}
-
-.test-mode {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: var(--primary-light);
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-sm);
+    color: var(--accent);
     font-weight: 600;
-    color: var(--primary-dark);
 }
 
-/* ===================================
-   Forms
-   =================================== */
 
-form {
-    background: var(--white);
-    padding: var(--spacing-xl);
-    border-radius: var(--border-radius-md);
-    margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
+/* ─────────── 5. Paginatitel ───────────
+   Grote serif kop, geen kader eromheen. Dit geeft direct karakter. */
+.sb-title {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 8px;
 }
 
-.form-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
+.sb-subtitle {
+    color: var(--ink-soft);
+    font-size: 15px;
+    max-width: 60ch;
+    margin-bottom: 48px;
 }
 
-.form-group {
-    display: flex;
-    flex-direction: column;
-}
 
-label {
-    display: block;
-    font-weight: 600;
-    margin-bottom: var(--spacing-sm);
-    color: var(--gray-700);
-    font-size: var(--font-size-sm);
-}
-
-input[type="date"],
-select {
-    width: 100%;
-    padding: var(--spacing-md);
-    font-size: var(--font-size-base);
-    border: 2px solid var(--gray-300);
-    border-radius: var(--border-radius-sm);
-    background-color: var(--white);
-    color: var(--gray-900);
-    transition: all 0.2s ease;
-    font-family: var(--font-family);
-}
-
-input[type="date"]:focus,
-select:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px var(--primary-light);
-}
-
-button[type="submit"] {
-    width: 100%;
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: var(--primary-color);
-    color: var(--white);
-    border: none;
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-button[type="submit"]:hover {
-    background: var(--primary-dark);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
-}
-
-button[type="submit"]:active {
-    transform: translateY(0);
-}
-
-/* ===================================
-   Alerts & Messages
-   =================================== */
-
-.error,
-.info,
-.warning,
-.success {
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: var(--border-radius-sm);
-    margin-bottom: var(--spacing-lg);
-    font-weight: 500;
+/* ─────────── 6. Toolbar (datumvelden + tabs) ───────────
+   Geen achtergrond, geen rand. Alleen twee dunne horizontale lijntjes
+   die de toolbar afbakenen — wel rustig, niet als een doos. */
+.sb-toolbar {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
-}
-
-.error {
-    background: #ffebee;
-    border-left: 4px solid var(--danger-color);
-    color: #b71c1c;
-}
-
-.info {
-    background: var(--primary-light);
-    border-left: 4px solid var(--primary-color);
-    color: var(--primary-dark);
-}
-
-.warning {
-    background: #fff3e0;
-    border-left: 4px solid var(--warning-color);
-    color: #e65100;
-}
-
-.success {
-    background: #e8f5e9;
-    border-left: 4px solid var(--success-color);
-    color: #1b5e20;
-}
-
-.error::before,
-.info::before,
-.warning::before,
-.success::before {
-    font-size: var(--font-size-xl);
-}
-
-.error::before {
-    content: '⚠️';
-}
-
-.info::before {
-    content: 'ℹ️';
-}
-
-.warning::before {
-    content: '⚡';
-}
-
-.success::before {
-    content: '✅';
-}
-
-/* ===================================
-   Cards
-   =================================== */
-
-.card,
-.section-card {
-    background: var(--white);
-    padding: var(--spacing-xl);
-    border-radius: var(--border-radius-md);
-    margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
-    transition: all 0.2s ease;
-}
-
-.card:hover {
-    box-shadow: var(--shadow-lg);
-}
-
-.section-card {
-    border: 2px solid var(--primary-light);
-}
-
-.card h3 {
-    font-size: var(--font-size-xl);
-    font-weight: 700;
-    color: var(--gray-900);
-    margin-bottom: var(--spacing-md);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-}
-
-/* ===================================
-   Section Headers
-   =================================== */
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
+    gap: 28px;
     flex-wrap: wrap;
-    gap: var(--spacing-md);
+    padding: 18px 0;
+    margin-bottom: 40px;
+    border-top: 1px solid var(--rule-soft);
+    border-bottom: 1px solid var(--rule-soft);
 }
 
-.section-header h2 {
-    font-size: var(--font-size-2xl);
-    font-weight: 700;
-    color: var(--gray-900);
-}
-
-.section-pill {
-    display: inline-block;
-    padding: var(--spacing-sm) var(--spacing-lg);
-    background: var(--primary-color);
-    color: var(--white);
-    border-radius: 999px;
-    font-size: var(--font-size-xs);
-    font-weight: 700;
+.sb-toolbar label {
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* ===================================
-   Statistics Grid
-   =================================== */
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-}
-
-.stat-item {
-    padding: var(--spacing-lg);
-    background: var(--gray-50);
-    border-radius: var(--border-radius-sm);
-    border-left: 4px solid var(--primary-color);
-    transition: all 0.2s ease;
-}
-
-.stat-item:hover {
-    background: var(--white);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-2px);
-}
-
-.stat-label {
-    font-size: var(--font-size-xs);
-    color: var(--gray-600);
-    margin-bottom: var(--spacing-sm);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.stat-value {
-    font-size: var(--font-size-3xl);
-    color: var(--gray-900);
-    font-weight: 700;
-    margin-bottom: var(--spacing-xs);
-}
-
-.stat-subtext {
-    font-size: var(--font-size-sm);
-    color: var(--gray-600);
-    margin-top: var(--spacing-sm);
-}
-
-.positive {
-    color: var(--success-color);
-}
-
-.negative {
-    color: var(--danger-color);
-}
-
-.neutral {
-    color: var(--warning-color);
-}
-
-/* ===================================
-   Badges
-   =================================== */
-
-.data-point-badge {
-    display: inline-block;
-    padding: var(--spacing-xs) var(--spacing-md);
-    background: var(--primary-light);
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-xs);
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-left: var(--spacing-md);
-}
-
-.badge-best {
-    color: var(--success-color);
-    font-weight: 700;
-    margin-left: var(--spacing-sm);
-}
-
-.badge-worst {
-    color: var(--danger-color);
-    font-weight: 700;
-    margin-left: var(--spacing-sm);
-}
-
-/* ===================================
-   Tables
-   =================================== */
-
-table {
-    border-collapse: collapse;
-    width: 100%;
-    margin-top: var(--spacing-lg);
-    background: var(--white);
-    border-radius: var(--border-radius-sm);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-}
-
-th,
-td {
-    border: 1px solid var(--gray-200);
-    padding: var(--spacing-md);
-    text-align: left;
-}
-
-th {
-    background: var(--gray-100);
-    font-weight: 700;
-    color: var(--gray-700);
-    font-size: var(--font-size-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-td {
-    font-size: var(--font-size-base);
-    color: var(--gray-800);
-}
-
-.row-best {
-    background: #f1f8e9;
-}
-
-.row-worst {
-    background: #ffebee;
-}
-
-tr:hover {
-    background: var(--gray-50);
-}
-
-/* ===================================
-   Endpoint Info
-   =================================== */
-
-.endpoint-info {
-    background: var(--primary-light);
-    padding: var(--spacing-lg);
-    border-radius: var(--border-radius-sm);
-    margin-bottom: var(--spacing-lg);
-    font-size: var(--font-size-sm);
-    border: 2px solid var(--primary-color);
-}
-
-.endpoint-info strong {
-    color: var(--primary-dark);
-    font-weight: 700;
-}
-
-.endpoint-info code {
-    background: var(--white);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--border-radius-sm);
-    font-family: 'Courier New', monospace;
-    font-size: var(--font-size-xs);
-    color: var(--gray-700);
-    word-break: break-all;
-}
-
-/* ===================================
-   Debug Section
-   =================================== */
-
-.debug-box {
-    background: var(--gray-100);
-    border: 1px solid var(--gray-300);
-    border-radius: var(--border-radius-sm);
-    padding: var(--spacing-lg);
-    margin-bottom: var(--spacing-md);
-    font-size: var(--font-size-sm);
-    overflow-x: auto;
-    font-family: 'Courier New', monospace;
-}
-
-.debug-box pre {
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
     margin: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    color: var(--gray-700);
+    font-weight: 600;
 }
 
-.debug-box strong {
-    color: var(--primary-color);
-    display: block;
-    margin-bottom: var(--spacing-sm);
+.sb-toolbar input[type="date"] {
+    border: none;
+    background: transparent;
+    color: var(--ink);
+    font-size: 14px;
+    font-family: var(--sans);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--rule);
+    border-radius: 0;
 }
 
-/* ===================================
-   Metric Block
-   =================================== */
-
-.metric-block {
-    margin-bottom: var(--spacing-xl);
+.sb-toolbar input[type="date"]:focus {
+    outline: none;
+    border-bottom-color: var(--accent);
 }
 
-/* ===================================
-   Responsive Design
-   =================================== */
-
-@media (max-width: 768px) {
-    body {
-        padding: var(--spacing-md);
-    }
-    
-    .header h1 {
-        font-size: var(--font-size-2xl);
-    }
-    
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .navbar {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .nav-link {
-        text-align: center;
-    }
-    
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+.sb-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--rule);
 }
 
-@media (max-width: 480px) {
-    .stat-value {
-        font-size: var(--font-size-2xl);
-    }
-    
-    table {
-        font-size: var(--font-size-sm);
-    }
-    
-    th,
-    td {
-        padding: var(--spacing-sm);
-    }
+/* Tabs: gewoon tekst, actief = onderlijntje in accentkleur. */
+.sb-tabs {
+    display: flex;
+    gap: 24px;
+    margin-left: auto;
 }
 
-/* ===================================
-   Utility Classes
-   =================================== */
+.sb-tab {
+    background: none;
+    border: none;
+    padding: 4px 0;
+    font-size: 14px;
+    color: var(--ink-soft);
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+}
 
-.text-center {
+.sb-tab:hover { color: var(--ink); }
+
+.sb-tab.active {
+    color: var(--ink);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+}
+
+
+/* ─────────── 7. Layout: sidebar + canvas ───────────
+   Twee kolommen, gescheiden door één verticale hairline.
+   Géén kaders, géén achtergronden. */
+.sb-layout {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 56px;
+    align-items: start;
+}
+
+.sb-sidebar {
+    position: sticky;
+    top: 24px;
+    padding-right: 24px;
+    border-right: 1px solid var(--rule-soft);
+}
+
+.sb-sidebar-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+    font-weight: 600;
+}
+
+/* Elke metric in de sidebar is een rij tekst met een dunne lijn
+   eronder. Geen omkaderd "chipje". */
+.sb-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0;
+    font-size: 14px;
+    color: var(--ink);
+    cursor: grab;
+    border-bottom: 1px solid var(--rule-soft);
+    /* De gekleurde linkerstreep die in het PHP via inline-style komt
+       (border-left) maken we hier ongedaan, want we willen geen
+       kleurige randjes in deze stijl. */
+    border-left: none !important;
+    background: transparent;
+    user-select: none;
+    transition: color 0.15s, padding-left 0.15s;
+}
+
+.sb-chip:last-child { border-bottom: none; }
+
+.sb-chip:hover {
+    color: var(--accent);
+    padding-left: 6px;
+}
+
+.sb-chip.dragging { opacity: 0.35; }
+.sb-chip-icon { font-size: 14px; line-height: 1; }
+
+
+/* ─────────── 8. Canvas (de drop-zone) ───────────
+   Geen gestippelde rand of doosje. Wanneer je iets sleept, lichten
+   we alleen de achtergrond een tikje op zodat duidelijk is waar je
+   het kan loslaten. */
+.sb-canvas {
+    min-height: 400px;
+    padding: 0;
+    transition: background 0.15s;
+}
+
+.sb-canvas.drag-over {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+/* Lege staat: italic tekst gecentreerd, geen icon-vakje. */
+.sb-empty {
+    padding: 80px 20px;
     text-align: center;
+    color: var(--ink-soft);
 }
 
-.text-right {
-    text-align: right;
+.sb-empty p {
+    margin: 4px 0;
+    font-style: italic;
 }
 
-.mb-0 {
-    margin-bottom: 0 !important;
+.sb-empty-icon {
+    font-size: 28px;
+    opacity: 0.4;
+    margin-bottom: 14px;
+    /* niet meer als een gekleurd vierkant */
+    background: transparent;
+    width: auto;
+    height: auto;
 }
 
-.mt-lg {
-    margin-top: var(--spacing-lg);
+
+/* ─────────── 9. Metric "cards" ───────────
+   Géén omkaderde kaartjes meer. Elke metric is gewoon een blok tekst
+   op de pagina: bovenaan een dunne lijn als ritmische scheiding, dan
+   het label, het grote getal, en daaronder de detail-stats. */
+.sb-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    /* Veel verticale ruimte → de "cards" lezen als secties, niet als
+       blokjes in een tabel. */
+    gap: 56px 48px;
 }
 
-.p-lg {
-    padding: var(--spacing-lg);
+.sb-card-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    transition: opacity 0.15s;
 }
 
-/* ===================================
-   Loading States
-   =================================== */
+.sb-card-link:hover .sb-card-avg { color: var(--accent); }
+.sb-card-link:hover .sb-card-open { opacity: 1; }
 
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
+/* De .sb-card div binnenin krijgt geen eigen styling — het PHP
+   zet daar inline een background/border op, die overschrijven we
+   hier zodat alles "plat" blijft. */
+.sb-card {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
 }
 
-.loading {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* ===================================
-   Fathom Dashboard — targets unmodified PHP
-   (uses IDs + :has() so the PHP's Tailwind
-   classes don't need to be removed)
-   =================================== */
-
-/* JS toggle helper for tooltips */
-.hidden {
+.sb-card::before {
+    /* Het inline ::before-streepje uit de oude stijl uitzetten. */
     display: none !important;
 }
 
-/* --- KPI strip (section containing #realtimeD) --- */
-section:has(> #realtimeD) {
+.sb-card-header {
     display: flex;
-    align-items: stretch;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 18px;
+}
+
+.sb-card-label-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sb-card-icon {
+    /* Geen gekleurd icon-vierkantje meer. Gewoon de emoji. */
+    background: transparent !important;
+    width: auto !important;
+    height: auto !important;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.sb-card-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    font-weight: 600;
+}
+
+.sb-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+/* Het "Details →"-tekstje verschijnt enkel bij hover. Geen pilletje
+   meer, gewoon tekst in de accentkleur. */
+.sb-card-open {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    background: transparent !important;
+    padding: 0 !important;
+    opacity: 0;
+    transform: none !important;
+    transition: opacity 0.15s;
+}
+
+.sb-card-open svg { display: none; }
+
+/* Klein x'je om een metric weg te halen. Geen randje. */
+.sb-card-remove {
+    background: none !important;
+    border: none !important;
+    color: var(--ink-faint);
+    font-size: 20px;
+    line-height: 1;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    transition: color 0.15s;
+}
+
+.sb-card-remove:hover {
+    color: var(--ink) !important;
+    background: transparent !important;
+}
+
+/* Het grote getal in serif → meteen karakter, niets cliché-saas-erig. */
+.sb-card-avg {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 56px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 24px;
+    transition: color 0.15s;
+}
+
+/* Onderaan elke metric: 4 paartjes label/waarde, geen kadertjes
+   meer rond elk paartje. Gescheiden door een dunne lijn bovenaan. */
+.sb-card-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule-soft);
+}
+
+.sb-card-stat {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+}
+
+.sb-card-stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-soft);
+    margin-bottom: 2px;
+}
+
+.sb-card-stat-value {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--ink);
+}
+
+
+/* ─────────── 10. Reset-knop ("Alles wissen") ───────────
+   Onderaan, gewoon een onderstreepte tekstlink. */
+.sb-reset {
+    background: none !important;
+    border: none !important;
+    color: var(--ink-soft);
+    font-size: 13px;
+    margin-top: 56px;
+    padding: 0 !important;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    transition: color 0.15s;
+}
+
+.sb-reset:hover { color: var(--accent); }
+.sb-reset svg { display: none; }
+
+
+/* ============================================================
+   INBOX (config.php)
+   Zelfde idee: twee kolommen, gescheiden door één verticale lijn.
+   Geen panelen, geen ronde hoeken, geen schaduwen.
+   ============================================================ */
+
+.sb-stats-pills {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 40px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--rule-soft);
+}
+
+.sb-stat-pill {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-size: 13px;
+    color: var(--ink-soft);
+}
+
+.sb-stat-pill strong {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 24px;
+    color: var(--ink);
+    margin-right: 8px;
+}
+
+.sb-inbox-layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 0;
+    align-items: start;
+    min-height: calc(100vh - 320px);
+}
+
+.sb-panel {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+}
+
+.sb-sidebar-inbox {
+    padding-right: 32px;
+    border-right: 1px solid var(--rule-soft);
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 320px);
+}
+
+.sb-sidebar-header {
+    padding: 0 0 20px 0;
+    background: transparent !important;
+    border-bottom: 1px solid var(--rule-soft);
+}
+
+.sb-sidebar-header h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+    font-weight: 600;
+}
+
+.sb-filters { display: grid; gap: 10px; }
+
+/* Filters: dezelfde minimale stijl als de toolbar-inputs */
+.sb-search-input,
+.sb-filter-select {
     width: 100%;
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-md);
-    gap: var(--spacing-md);
-    margin-bottom: var(--spacing-lg);
-    background: var(--primary-color);
-    box-shadow: var(--shadow-md);
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 8px 0;
+    border-radius: 0;
+}
+
+.sb-search-input:focus,
+.sb-filter-select:focus {
+    outline: none;
+    border-bottom-color: var(--accent);
+}
+
+.sb-search-input::placeholder { color: var(--ink-faint); }
+
+.sb-date-row { display: flex; gap: 20px; }
+.sb-date-field { flex: 1; }
+.sb-date-field label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    margin-bottom: 4px;
+    font-weight: 600;
+}
+.sb-date-field input[type="date"] {
+    padding: 6px 0;
+    font-size: 13px;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    background: transparent;
+    width: 100%;
+}
+
+/* Sterrenknoppen voor reviews */
+.sb-stars-filter { margin-top: 8px; }
+.sb-stars-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+.sb-stars-buttons { display: flex; gap: 4px; flex-wrap: wrap; }
+.sb-star-btn {
+    flex: 1;
+    min-width: 36px;
+    padding: 6px 4px;
+    font-size: 12px;
+    border: 1px solid var(--rule);
+    background: transparent;
+    color: var(--ink-soft);
+    border-radius: 0;
+    transition: color 0.15s, border-color 0.15s;
+}
+.sb-star-btn:hover { color: var(--accent); border-color: var(--accent); }
+.sb-star-btn.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+}
+
+/* Berichtenlijst: gewoon een lijst met dunne scheidingslijntjes. */
+.sb-message-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    margin-top: 8px;
+}
+.sb-message-list::-webkit-scrollbar { width: 6px; }
+.sb-message-list::-webkit-scrollbar-thumb { background: var(--rule); }
+
+.sb-message-item {
+    display: flex;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    background: transparent !important;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.sb-message-item::before { display: none !important; }
+
+.sb-message-item:hover { opacity: 0.65; background: transparent !important; }
+
+.sb-message-item.active {
+    background: transparent !important;
+    border-color: var(--rule-soft);
+    /* Markering van actief item: kleine accent-streep links */
+    box-shadow: inset 3px 0 0 var(--accent);
+    padding-left: 12px;
+}
+
+/* Avatar: gewoon een cirkel met initialen, één neutrale kleur. */
+.sb-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    font-size: 13px;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+.sb-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.sb-message-meta { min-width: 0; flex: 1; }
+
+.sb-message-row-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    align-items: baseline;
+    margin-bottom: 4px;
+}
+
+.sb-message-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sb-message-time { font-size: 11px; color: var(--ink-faint); flex-shrink: 0; }
+
+/* Badges: gewoon kleine tekst, geen pilletjes met kleurvlakken.
+   Het platform staat als één klein woord, in lichtgrijs. */
+.sb-badge-row {
+    display: flex;
     flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 6px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+}
+.sb-provider-badge,
+.sb-type-badge,
+.sb-status-badge {
+    background: transparent !important;
+    color: var(--ink-soft) !important;
+    border: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    font-weight: 600;
+}
+/* Behalve de provider-badge: die krijgt z'n eigen merkkleur als
+   subtiel accent, alléén in de tekst. */
+.sb-provider-badge.facebook  { color: #1877f2 !important; }
+.sb-provider-badge.instagram { color: #e1306c !important; }
+.sb-provider-badge.gmb       { color: #4285f4 !important; }
+.sb-provider-badge.tiktokBusiness { color: #ff0050 !important; }
+
+.sb-message-preview {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Rechterkolom: bericht-weergave. Geen panel-styling. */
+.sb-content {
+    padding-left: 40px;
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 320px);
+}
+
+.sb-content-header {
+    padding: 0 0 24px 0;
+    background: transparent !important;
+    border-bottom: 1px solid var(--rule-soft);
+}
+
+.sb-content-subject {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 32px;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    color: var(--ink);
+    margin: 0 0 14px 0;
+}
+
+.sb-content-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    font-size: 12px;
+    color: var(--ink-soft);
+}
+.sb-content-meta strong {
+    color: var(--ink);
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.sb-content-body {
+    padding: 28px 0;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--ink);
+    white-space: pre-wrap;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.sb-view-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    color: var(--accent);
+    border: none;
+    padding: 0;
+    border-radius: 0;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.sb-view-btn:hover { color: var(--ink); }
+
+/* Antwoordblok onderaan */
+.sb-reply-box {
+    padding: 24px 0 0 0;
+    background: transparent !important;
+    border-top: 1px solid var(--rule-soft);
+}
+.sb-reply-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.sb-quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+.sb-quick-btn {
+    background: transparent;
+    border: none;
+    color: var(--ink-soft);
+    padding: 0;
+    border-radius: 0;
+    font-size: 12px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.15s;
+}
+.sb-quick-btn:hover { color: var(--accent); }
+
+.sb-reply-input {
+    width: 100%;
+    border: 1px solid var(--rule);
+    background: transparent;
+    color: var(--ink);
+    padding: 12px 14px;
+    font-size: 14px;
+    border-radius: 0;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+}
+.sb-reply-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.sb-reply-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    gap: 10px;
+}
+.sb-reply-status { font-size: 12px; color: var(--ink-soft); }
+.sb-reply-status.ok  { color: #2e7d32; }
+.sb-reply-status.err { color: #c62828; }
+
+.sb-reply-send {
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    padding: 10px 22px;
+    border-radius: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    transition: background 0.15s;
+}
+.sb-reply-send:hover { background: var(--accent); }
+
+/* Lege staten in de inbox */
+.sb-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--ink-soft);
+    gap: 12px;
+    padding: 80px 30px;
+    text-align: center;
+    font-style: italic;
+}
+.sb-empty-state-icon { font-size: 32px; opacity: 0.4; }
+.sb-empty-state-text { font-size: 14px; }
+.sb-empty-list {
+    padding: 32px 0;
+    text-align: center;
+    color: var(--ink-soft);
+    font-style: italic;
+    font-size: 14px;
+}
+
+/* Debug-blokje onderaan de inbox */
+.sb-debug-section { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--rule-soft); }
+.sb-debug-toggle {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    font-size: 12px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 0;
+}
+.sb-debug-toggle:hover { color: var(--ink); }
+.sb-debug-content {
+    display: none;
+    margin-top: 20px;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0;
+}
+.sb-debug-content.visible { display: block; }
+.sb-debug-content h3 {
+    margin-bottom: 14px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    font-weight: 600;
+}
+.sb-debug-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px 32px;
+}
+.sb-debug-card {
+    background: transparent !important;
+    border: none !important;
+    border-top: 1px solid var(--rule-soft) !important;
+    border-radius: 0 !important;
+    padding: 12px 0 !important;
+    font-size: 12px;
+    font-family: var(--mono);
+}
+.sb-debug-card strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--ink);
+    font-family: var(--sans);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.sb-debug-card div { margin-bottom: 3px; color: var(--ink-soft); }
+.sb-debug-card .ok  { color: #2e7d32; }
+.sb-debug-card .err { color: #c62828; }
+
+
+/* ============================================================
+   FATHOM dashboard
+   De HTML van fathom-info2.php gebruikt rechtstreeks Tailwind-
+   klassen op de elementen. We laten die HTML ongemoeid en mikken
+   met :has() en ID-selectors op de bestaande structuur.
+   ============================================================ */
+
+/* Voor Fathom willen we paars als accent — overschrijft het palet
+   alleen op die pagina via een class op de body, of via een eigen
+   :has() check. Hier kiezen we voor body:has(#realtimeD). */
+body:has(#realtimeD) {
+    --accent: #5603AD;
+}
+
+/* JS-toggle helper voor tooltips */
+.hidden { display: none !important; }
+
+/* KPI-strip bovenaan Fathom: was een paars vierkant met witte tekst
+   in vakjes. Nu: gewoon een rij getallen, naast elkaar, plat. */
+section:has(> #realtimeD) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 32px;
+    width: 100%;
+    padding: 24px 0;
+    margin-bottom: 32px;
+    background: transparent !important;
+    border-top: 1px solid var(--rule-soft);
+    border-bottom: 1px solid var(--rule-soft);
 }
 
 section:has(> #realtimeD) > div {
     position: relative;
-    flex: 1 1 0;
-    min-width: 140px;
-    padding: var(--spacing-md);
-    border-radius: var(--border-radius-sm);
-    color: var(--white);
+    padding: 0 !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft) !important;
     font-weight: 600;
-    text-align: center;
     cursor: help;
-    transition: background 0.2s ease;
+}
+
+/* Het getal achter de dubbele punt willen we groot.
+   Truc: we kunnen de PHP-output niet veranderen, maar we kunnen
+   wel het hele blokje stylen alsof het een label + getal is.
+   We doen dat door de hele tekst in groot serif te zetten en
+   het "label:" daarvoor klein te laten lijken. Helaas zit alles
+   in dezelfde tekstnode. Compromis: we maken alles in serif maar
+   wat groter, in dezelfde stijl als de metric-cards. */
+section:has(> #realtimeD) > div {
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    color: var(--ink) !important;
+    line-height: 1.3;
 }
 
 section:has(> #realtimeD) > div:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: transparent !important;
+    color: var(--accent) !important;
 }
 
-/* Tooltips inside the KPI strip */
+/* Tooltips bij KPI's: een rustig zwart blokje */
 #exp-realtime,
 #exp-visits,
 #exp-pageviews,
@@ -692,29 +1064,31 @@ section:has(> #realtimeD) > div:hover {
 #exp-duration {
     position: absolute;
     top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    margin-top: var(--spacing-sm);
+    left: 0;
+    transform: none !important;
+    margin-top: 8px;
     width: max-content;
     max-width: 240px;
-    padding: var(--spacing-md);
-    background: var(--primary-dark);
-    color: var(--white);
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-sm);
+    padding: 10px 14px;
+    background: var(--ink);
+    color: var(--bg);
+    border: none !important;
+    border-radius: 0;
+    font-family: var(--sans);
+    font-size: 12px;
     font-weight: 400;
-    line-height: 1.4;
-    box-shadow: var(--shadow-lg);
+    line-height: 1.45;
+    letter-spacing: 0;
     z-index: 10;
 }
 
-/* --- Chart wrapper (section containing #Chart) --- */
+/* Grafiek-wrapper */
 section:has(#Chart) {
-    background: var(--white);
-    padding: var(--spacing-xl);
-    border-radius: var(--border-radius-md);
-    margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
+    background: transparent !important;
+    padding: 24px 0 32px 0;
+    border-radius: 0;
+    margin-bottom: 32px;
+    box-shadow: none;
 }
 
 section:has(#Chart) > div {
@@ -724,17 +1098,15 @@ section:has(#Chart) > div {
     margin: 0 !important;
 }
 
-#Chart {
-    width: 100% !important;
-    height: 100% !important;
-}
+#Chart { width: 100% !important; height: 100% !important; }
 
-/* --- Range filter form (override the generic `form` rule) --- */
+/* Range-knoppen (vandaag / 7 dagen / 30 dagen).
+   De PHP zet op de actieve knop een `bg-black` class. */
 form:has(> button[name="range"]) {
     display: flex;
-    justify-content: center;
-    gap: var(--spacing-sm);
-    margin: 0 0 var(--spacing-lg);
+    justify-content: flex-start;
+    gap: 24px;
+    margin: 0 0 32px;
     background: transparent;
     padding: 0;
     box-shadow: none;
@@ -742,113 +1114,145 @@ form:has(> button[name="range"]) {
 }
 
 form > button[name="range"] {
-    padding: var(--spacing-sm) var(--spacing-lg);
-    background: var(--primary-color);
-    color: var(--white);
-    border: none;
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    padding: 4px 0 !important;
+    background: transparent !important;
+    color: var(--ink-soft) !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    border-radius: 0 !important;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 0.15s, border-color 0.15s;
 }
 
 form > button[name="range"]:hover {
-    background: var(--primary-dark);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    background: transparent !important;
+    color: var(--ink) !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
-/* Active range button: PHP adds the `bg-black` Tailwind class */
-form > button[name="range"].bg-black {
-    background: var(--gray-900);
-}
-
+form > button[name="range"].bg-black,
 form > button[name="range"].bg-black:hover {
-    background: var(--gray-800);
+    background: transparent !important;
+    color: var(--ink) !important;
+    border-bottom-color: var(--accent) !important;
+    font-weight: 600;
 }
 
-/* --- Referrer + UTM lists (sections with a direct <ul>) --- */
+/* Datumfilter-formulier van Fathom */
+form:has(> input[type="date"][name="date_from"]) {
+    background: transparent !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    margin: 32px 0 !important;
+}
+
+form > input[type="date"][name="date_from"],
+form > input[type="date"][name="date_to"] {
+    border: none !important;
+    border-bottom: 1px solid var(--rule) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    padding: 4px 0 !important;
+}
+
+form > button[type="submit"] {
+    width: auto;
+    background: var(--ink) !important;
+    color: var(--bg) !important;
+    padding: 8px 20px !important;
+    border-radius: 0 !important;
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 600;
+    box-shadow: none !important;
+}
+
+form > button[type="submit"]:hover {
+    background: var(--accent) !important;
+    transform: none !important;
+}
+
+/* Referrer- en UTM-lijsten: gewoon een opsomming, geen paarse balken. */
 section:has(> ul) {
-    display: flex;
-    justify-content: center;
-    margin-bottom: var(--spacing-lg);
+    display: block;
+    margin-bottom: 40px;
 }
 
 section > ul {
     list-style: none;
     width: 100%;
-    max-width: 800px;
+    max-width: 100%;
     padding: 0;
     margin: 0;
+    border-top: 1px solid var(--rule-soft);
 }
 
 section > ul > li {
-    background: var(--white);
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: var(--border-radius-md);
-    margin-bottom: var(--spacing-sm);
-    box-shadow: var(--shadow-sm);
-    border-left: 4px solid var(--primary-color);
-    color: var(--gray-900);
-    transition: all 0.2s ease;
+    background: transparent !important;
+    color: var(--ink) !important;
+    padding: 16px 0 !important;
+    border: none !important;
+    border-bottom: 1px solid var(--rule-soft) !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
 }
 
 section > ul > li:hover {
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+    background: transparent !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
-/* Referrer rows have two <span> children → side-by-side */
 section > ul > li:has(> span) {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: baseline;
     flex-wrap: wrap;
-    gap: var(--spacing-md);
+    gap: 16px;
 }
 
 section > ul > li > span:first-child {
-    font-weight: 700;
-    color: var(--gray-900);
-    font-size: var(--font-size-base);
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: 20px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
 }
 
 section > ul > li > span:last-child {
-    color: var(--gray-700);
-    font-size: var(--font-size-sm);
+    color: var(--ink-soft);
+    font-size: 13px;
 }
 
-/* UTM rows have multiple <div> children → stacked */
 section > ul > li > div {
-    color: var(--gray-800);
-    font-size: var(--font-size-sm);
-    padding: var(--spacing-xs) 0;
+    color: var(--ink);
+    font-size: 13px;
+    padding: 2px 0;
 }
 
 section > ul > li > div:last-child {
-    color: var(--gray-600);
-    padding-top: var(--spacing-sm);
-    border-top: 1px solid var(--gray-200);
-    margin-top: var(--spacing-sm);
+    color: var(--ink-soft);
+    padding-top: 8px;
+    margin-top: 8px;
+    border-top: none !important;
 }
 
-/* --- UTM generator (section containing #sourceSelect) --- */
+/* UTM-generator */
 section:has(#sourceSelect) {
     display: block;
-    background: var(--white);
-    padding: var(--spacing-xl);
-    border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-md);
-    max-width: 800px;
-    margin: 0 auto var(--spacing-lg);
+    background: transparent !important;
+    padding: 32px 0 !important;
+    border-top: 1px solid var(--rule-soft);
+    box-shadow: none !important;
+    max-width: 100%;
+    margin: 32px 0 !important;
 }
 
-section:has(#sourceSelect) > div {
-    margin-bottom: var(--spacing-md);
-}
+section:has(#sourceSelect) > div { margin-bottom: 18px; }
 
-/* Inputs and selects inside the UTM generator */
 #sourceSelect,
 #mediumSelect,
 #sourceCustom,
@@ -856,14 +1260,14 @@ section:has(#sourceSelect) > div {
 #campaignInput,
 #contentInput {
     width: 100%;
-    padding: var(--spacing-md);
-    font-size: var(--font-size-base);
-    border: 2px solid var(--gray-300);
-    border-radius: var(--border-radius-sm);
-    background-color: var(--white);
-    color: var(--gray-900);
-    transition: all 0.2s ease;
-    font-family: var(--font-family);
+    padding: 8px 0 !important;
+    font-size: 14px;
+    border: none !important;
+    border-bottom: 1px solid var(--rule) !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    font-family: var(--sans);
 }
 
 #sourceSelect:focus,
@@ -873,105 +1277,244 @@ section:has(#sourceSelect) > div {
 #campaignInput:focus,
 #contentInput:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px var(--primary-light);
+    border-bottom-color: var(--accent) !important;
+    box-shadow: none !important;
 }
 
 #sourceCustom,
-#mediumCustom {
-    margin-top: var(--spacing-sm);
-}
+#mediumCustom { margin-top: 8px; }
 
-/* "Genereer UTM link" button */
 section:has(#sourceSelect) button[onclick="generateUTM()"] {
-    width: 100%;
-    padding: var(--spacing-md) var(--spacing-lg);
-    background: var(--primary-color);
-    color: var(--white);
-    border: none;
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-base);
+    width: auto;
+    padding: 10px 22px !important;
+    background: var(--ink) !important;
+    color: var(--bg) !important;
+    border: none !important;
+    border-radius: 0 !important;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    text-transform: none;
+    letter-spacing: normal;
+    margin-top: 8px;
 }
 
 section:has(#sourceSelect) button[onclick="generateUTM()"]:hover {
-    background: var(--primary-dark);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    background: var(--accent) !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
-/* Generated-link display */
 #result {
-    min-height: 80px;
-    padding: var(--spacing-md);
-    background: var(--gray-50);
-    border: 2px solid var(--gray-200);
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-sm);
-    color: var(--gray-700);
+    min-height: 60px;
+    padding: 12px 0 !important;
+    background: transparent !important;
+    border: none !important;
+    border-top: 1px solid var(--rule-soft) !important;
+    border-bottom: 1px solid var(--rule-soft) !important;
+    border-radius: 0 !important;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-soft);
     word-break: break-all;
-    font-family: 'Courier New', monospace;
-    line-height: 1.5;
-    margin-bottom: var(--spacing-sm);
+    margin: 16px 0 12px !important;
 }
 
-/* "Kopieer link" button */
 section:has(#sourceSelect) button[onclick="copyLink()"] {
-    width: 100%;
-    padding: var(--spacing-sm) var(--spacing-lg);
-    background: var(--success-color);
-    color: var(--white);
-    border: none;
-    border-radius: var(--border-radius-sm);
-    font-size: var(--font-size-base);
+    width: auto;
+    padding: 8px 18px !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--ink) !important;
+    border-radius: 0 !important;
     font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    margin-top: var(--spacing-sm);
+    text-transform: none;
+    margin-top: 0;
 }
 
 section:has(#sourceSelect) button[onclick="copyLink()"]:hover {
-    background: #1b5e20;
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    background: var(--ink) !important;
+    color: var(--bg) !important;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
-/* Responsive: stack KPI strip on small screens */
+
+/* ============================================================
+   Algemene PHP-gegenereerde elementen
+   (de oude .card, .stats-grid, etc. die mogelijk in detail-
+   pagina's nog gebruikt worden — we drukken ze plat zonder
+   dat ze lelijk worden)
+   ============================================================ */
+
+.card,
+.section-card {
+    background: transparent;
+    padding: 32px 0;
+    border-radius: 0;
+    margin-bottom: 32px;
+    box-shadow: none;
+    border: none;
+    border-top: 1px solid var(--rule-soft);
+}
+
+.card h3 {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 16px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.section-header h2 {
+    font-family: var(--serif);
+    font-size: 28px;
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+}
+
+.section-pill {
+    display: inline-block;
+    padding: 0;
+    background: transparent;
+    color: var(--accent);
+    border-radius: 0;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 48px 32px;
+    margin-bottom: 32px;
+}
+
+.stat-item {
+    padding: 16px 0 0;
+    background: transparent;
+    border: none;
+    border-top: 1px solid var(--rule);
+    border-left: none;
+    border-radius: 0;
+}
+
+.stat-item:hover {
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+}
+
+.stat-label {
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.stat-value {
+    font-family: var(--serif);
+    font-size: 40px;
+    color: var(--ink);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+}
+
+.stat-subtext { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
+
+.positive { color: #2e7d32; }
+.negative { color: #c62828; }
+.neutral  { color: #b06800; }
+
+/* Tabellen */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 24px;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 0;
+}
+th, td {
+    border: none;
+    border-bottom: 1px solid var(--rule-soft);
+    padding: 12px 16px 12px 0;
+    text-align: left;
+}
+th {
+    background: transparent;
+    font-weight: 600;
+    color: var(--ink-soft);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid var(--rule);
+}
+td { font-size: 14px; color: var(--ink); }
+.row-best { background: rgba(46, 125, 50, 0.06); }
+.row-worst { background: rgba(198, 40, 40, 0.06); }
+tr:hover { background: rgba(0, 0, 0, 0.02); }
+
+/* Berichten / alerts */
+.error, .info, .warning, .success {
+    padding: 14px 0 14px 16px;
+    border-left: 2px solid;
+    border-radius: 0;
+    background: transparent;
+    margin-bottom: 24px;
+    font-size: 14px;
+}
+.error   { border-left-color: #c62828; color: #c62828; }
+.info    { border-left-color: var(--accent); color: var(--ink); }
+.warning { border-left-color: #b06800; color: #b06800; }
+.success { border-left-color: #2e7d32; color: #2e7d32; }
+
+
+/* ─────────── 11. Responsive ─────────── */
 @media (max-width: 900px) {
-    section:has(> #realtimeD) {
-        flex-direction: column;
+    body { padding: 24px 20px 64px; }
+    .sb-layout { grid-template-columns: 1fr; gap: 32px; }
+    .sb-sidebar {
+        position: static;
+        border-right: none;
+        border-bottom: 1px solid var(--rule-soft);
+        padding-right: 0;
+        padding-bottom: 24px;
     }
-
-    section:has(> #realtimeD) > div {
-        min-width: 0;
+    .sb-inbox-layout { grid-template-columns: 1fr; }
+    .sb-sidebar-inbox {
+        height: auto;
+        max-height: 500px;
+        border-right: none;
+        border-bottom: 1px solid var(--rule-soft);
+        padding-right: 0;
+        padding-bottom: 24px;
+        margin-bottom: 32px;
     }
+    .sb-content { padding-left: 0; min-height: auto; }
+    .sb-tabs { margin-left: 0; }
 }
 
-/* ===================================
-   Print Styles
-   =================================== */
+@media (max-width: 600px) {
+    .sb-title { font-size: 32px; }
+    .sb-card-avg { font-size: 44px; }
+}
 
+/* Print */
 @media print {
-    .navbar,
-    .debug-box,
-    form,
-    button {
-        display: none;
-    }
-    
-    body {
-        background: white;
-        padding: 0;
-    }
-    
-    .card,
-    .section-card {
-        box-shadow: none;
-        border: 1px solid var(--gray-300);
-        page-break-inside: avoid;
-    }
+    .navbar, .sb-toolbar, .sb-sidebar, .sb-debug-section, button { display: none; }
+    body { padding: 0; background: white; }
 }
