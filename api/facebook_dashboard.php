@@ -587,7 +587,6 @@ if (!empty($selectedMetrics) && $token !== '') {
         <a href="facebook_dashboard.php" class="nav-link active">Facebook</a>
         <a href="instagram_dashboard.php" class="nav-link">Instagram</a>
         <a href="tiktok_dashboard.php" class="nav-link">TikTok</a>
-        <a href="gmb_dashboard.php" class="nav-link">Google Business</a>
         <a href="../fathem/fathom-info2.php" class="nav-link">Fathom Analytics</a>
     </nav>
 

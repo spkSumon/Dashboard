@@ -5,7 +5,7 @@
 //
 // SITE_ID=WGXUYRJQ
  
-$API_KEY = "3377699761000144|ZhxxOuBDflYHpimJd7QtnAaf5TbSeu9c3mARhsFo";
+$API_KEY = "";
 $SITE_ID = "WGXUYRJQ";
  
  
@@ -278,10 +278,11 @@ $totalAvgDuration = $totalVisits > 0 ? $totalAvg_duration / $totalVisits : 0;
 </head>
 <head>
     <nav class="bg-[#5603AD] text-white p-4 flex gap-6">
-        <a href="fathom-info2.php" class="font-semibold hover:text-gray-300">Fathom</a>
+        <a href="../api/config.php" class="font-semibold hover:text-gray-300">Inbox</a>
         <a href="../api/instagram_dashboard.php" class="font-semibold hover:text-gray-300">Instagram</a>
         <a href="../api/tiktok_dashboard.php" class="font-semibold hover:text-gray-300">TikTok</a>
         <a href="../api/facebook_dashboard.php" class="font-semibold hover:text-gray-300">Facebook</a>
+        <a href="fathom-info2.php" class="font-semibold hover:text-gray-300">Fathom</a>
     </nav>
 </head>
 <body class="bg-gray-100 ">

@@ -993,11 +993,14 @@ button {
    De HTML van fathom-info2.php gebruikt rechtstreeks Tailwind-
    klassen op de elementen. We laten die HTML ongemoeid en mikken
    met :has() en ID-selectors op de bestaande structuur.
+
+   Belangrijk: de Fathom-pagina gebruikt GEEN .navbar of .sb-title
+   class — alleen een gewoon <nav>-element en geen titel-tag. We
+   stylen het hieronder dus apart, maar met dezelfde regels als de
+   andere pagina's, zodat het visueel hetzelfde voelt.
    ============================================================ */
 
-/* Voor Fathom willen we paars als accent — overschrijft het palet
-   alleen op die pagina via een class op de body, of via een eigen
-   :has() check. Hier kiezen we voor body:has(#realtimeD). */
+/* Voor Fathom willen we paars als accent. */
 body:has(#realtimeD) {
     --accent: #5603AD;
 }
@@ -1005,17 +1008,102 @@ body:has(#realtimeD) {
 /* JS-toggle helper voor tooltips */
 .hidden { display: none !important; }
 
-/* KPI-strip bovenaan Fathom: was een paars vierkant met witte tekst
-   in vakjes. Nu: gewoon een rij getallen, naast elkaar, plat. */
+/* ── Fathom-navbar gelijkschakelen met de andere pagina's ──
+   De Fathom-PHP gebruikt een <nav class="bg-[#5603AD] ..."> met
+   Tailwind-klassen. Tailwind is niet geladen, dus die klassen zelf
+   doen niets — maar het nav-element heeft ook geen .navbar class,
+   dus onze gewone navbar-regels grijpen er niet op aan. We
+   selecteren hem hier daarom apart via body:has(#realtimeD) nav. */
+body:has(#realtimeD) nav {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 28px !important;
+    padding: 0 0 18px 0 !important;
+    margin: 0 0 56px 0 !important;
+    background: transparent !important;
+    color: var(--ink) !important;
+    border: none !important;
+    border-bottom: 1px solid var(--rule) !important;
+    border-radius: 0 !important;
+}
+
+/* Het SkyByte-woordmerk linksboven (zelfde gradient-tekst als
+   op de andere pagina's). */
+body:has(#realtimeD) nav::before {
+    content: "SkyByte";
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 19px;
+    letter-spacing: -0.01em;
+    background: linear-gradient(
+        135deg,
+        var(--brand-purple) 0%,
+        var(--brand-blue-deep) 100%
+    );
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+            color: transparent;
+    margin-right: auto;
+}
+
+/* De links binnen de Fathom-navbar krijgen dezelfde stijl als
+   .nav-link op de andere pagina's. */
+body:has(#realtimeD) nav a {
+    text-decoration: none;
+    color: var(--ink-soft) !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.01em;
+    background: transparent !important;
+    padding: 0 !important;
+    transition: color 0.15s;
+}
+
+body:has(#realtimeD) nav a:hover {
+    color: var(--ink) !important;
+}
+
+/* "Fathom" is de huidige pagina — geven we het accent in paars
+   zodat duidelijk is welk tabblad actief is, net als de actieve
+   nav-link op de andere pagina's. */
+body:has(#realtimeD) nav a[href*="fathom"] {
+    color: var(--accent) !important;
+    font-weight: 600 !important;
+}
+
+/* ── Paginatitel "Website analytics" ──
+   De Fathom-pagina heeft geen <h1> of .sb-title, dus we voegen er
+   één toe via ::before op de KPI-strip. Zelfde lettertype/grootte
+   als .sb-title op de andere pagina's. grid-column: 1 / -1 zorgt
+   dat de titel de volle breedte van de grid pakt (boven de KPI's). */
+section:has(> #realtimeD)::before {
+    content: "Website analytics";
+    grid-column: 1 / -1;
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(36px, 5vw, 56px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-transform: none;
+    margin-bottom: 24px;
+}
+
+/* KPI-strip bovenaan Fathom: was eerst een paars vierkant met
+   witte tekst in vakjes, en daarna een "bordered box". Nu: gewoon
+   een horizontale rij getallen met een hairline eronder, hetzelfde
+   ritme als de social-dashboard rijen. */
 section:has(> #realtimeD) {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 32px;
+    gap: 32px 40px;
     width: 100%;
-    padding: 24px 0;
-    margin-bottom: 32px;
+    padding: 0 0 22px 0;
+    margin-bottom: 0;
     background: transparent !important;
-    border-top: 1px solid var(--rule-soft);
+    border: none;
     border-bottom: 1px solid var(--rule-soft);
 }
 
@@ -1023,31 +1111,15 @@ section:has(> #realtimeD) > div {
     position: relative;
     padding: 0 !important;
     background: transparent !important;
-    color: var(--ink) !important;
     text-align: left;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-soft) !important;
-    font-weight: 600;
     cursor: help;
-}
-
-/* Het getal achter de dubbele punt willen we groot.
-   Truc: we kunnen de PHP-output niet veranderen, maar we kunnen
-   wel het hele blokje stylen alsof het een label + getal is.
-   We doen dat door de hele tekst in groot serif te zetten en
-   het "label:" daarvoor klein te laten lijken. Helaas zit alles
-   in dezelfde tekstnode. Compromis: we maken alles in serif maar
-   wat groter, in dezelfde stijl als de metric-cards. */
-section:has(> #realtimeD) > div {
     font-family: var(--serif);
     font-size: 18px;
     font-weight: 400;
     text-transform: none;
     letter-spacing: -0.01em;
     color: var(--ink) !important;
-    line-height: 1.3;
+    line-height: 1.35;
 }
 
 section:has(> #realtimeD) > div:hover {

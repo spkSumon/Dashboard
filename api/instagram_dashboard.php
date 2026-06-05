@@ -144,7 +144,7 @@ if (!empty($selectedMetrics) && $token !== '') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instagram — SkyByte</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../CSS/styles.css">
     <style>
         body { background: #f0f2f7; }
         .sb-page { max-width: 1320px; margin: 0 auto; }
@@ -230,7 +230,6 @@ if (!empty($selectedMetrics) && $token !== '') {
         <a href="facebook_dashboard.php" class="nav-link">Facebook</a>
         <a href="instagram_dashboard.php" class="nav-link active">Instagram</a>
         <a href="tiktok_dashboard.php" class="nav-link">TikTok</a>
-        <a href="gmb_dashboard.php" class="nav-link">Google Business</a>
         <a href="../fathem/fathom-info2.php" class="nav-link">Fathom Analytics</a>
     </nav>
 
