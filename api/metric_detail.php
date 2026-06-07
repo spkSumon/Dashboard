@@ -1,14 +1,22 @@
 <?php
 /**
- * metric_detail.php — Generieke detailpagina voor één metric
+ * metric_detail.php — Generieke detailpagina voor één metric op één platform
  *
- * Gebruik: alle *_detail.php bestanden zijn gewoon een alias voor deze pagina.
- * Je kan ze aanmaken als:
- *   <?php $metricKeyOverride = 'engagement'; require 'metric_detail.php'; ?>
+ * Gebruik:
+ *   - Via stub-bestand (aanbevolen):
+ *       <?php
+ *       $metricKeyOverride = 'likes';
+ *       $networkOverride   = 'instagram';
+ *       require __DIR__ . '/metric_detail.php';
+ *       ?>
+ *   - Direct via URL:
+ *       metric_detail.php?metric=likes&network=facebook&from=2025-01-01&to=2025-01-31&section=posts
  *
- * Of je stuurt via de URL: metric_detail.php?metric=likes&from=...&to=...
+ * Per platform staat alle config (kleuren, API-keys, endpoints, ...) in $networkConfigs.
+ * Zo hoef ik maar één bestand te onderhouden voor alle 17 detailpagina's.
  */
 
+// ── 1. Authenticatie (zelfde token als de dashboards) ──
 $userId = 4394337;
 $blogId = 5668624;
 $token  = 'YTQGUMFFSNCTTTRMJPHRVFOHDACWTAULVIIPDJQOUIJDTONUCOIJUELBHLAZQDUB';
@@ -19,32 +27,110 @@ $headers = [
     "X-Mc-Auth: {$token}",
 ];
 
-// ── Metric configuratie (zelfde als dashboard) ──
-$allMetrics = [
-    'engagement'   => ['label' => 'Engagement',  'api' => 'engagement',           'color' => '#f59e0b', 'bg' => '#fffbeb', 'icon' => '📈', 'isPercent' => true],
-    'interactions' => ['label' => 'Interacties', 'api' => 'interactions',          'color' => '#8b5cf6', 'bg' => '#f5f3ff', 'icon' => '💬', 'isPercent' => false],
-    'likes'        => ['label' => 'Likes',        'api' => 'likes',                 'color' => '#ec4899', 'bg' => '#fdf2f8', 'icon' => '❤️',  'isPercent' => false],
-    'comments'     => ['label' => 'Reacties',     'api' => 'comments',              'color' => '#06b6d4', 'bg' => '#ecfeff', 'icon' => '💭', 'isPercent' => false],
-    'shares'       => ['label' => 'Delingen',     'api' => 'shares',                'color' => '#10b981', 'bg' => '#ecfdf5', 'icon' => '🔁', 'isPercent' => false],
-    'reach'        => ['label' => 'Bereik',       'api' => 'impressionsunique',     'color' => '#3b82f6', 'bg' => '#eff6ff', 'icon' => '👁️', 'isPercent' => false],
-    'video_views'  => ['label' => 'Video views',  'api' => 'blue_reels_play_count', 'color' => '#f43f5e', 'bg' => '#fff1f2', 'icon' => '▶️', 'isPercent' => false],
+// ── 2. Per-network configuratie ──
+// Elke key is een Metricool-netwerknaam. Bevat per platform:
+//   - label:        wat we tonen in breadcrumb/titel
+//   - dashboard:    bestand om naar terug te linken
+//   - cssPath:      pad naar de stylesheet vanuit deze pagina
+//   - postUrlBase:  fallback-URL als de API geen directe link teruggeeft
+//   - postEndpoints: lijst kandidaat-endpoints voor de posts-ranking
+//                    (Metricool documenteert dit niet publiek — we proberen er meerdere)
+//   - metrics:      per metric-key de bijbehorende API-naam, kleur, icoon, etc.
+//
+// Belangrijk: de api-namen verschillen per platform!
+//   FB bereik     = 'impressionsunique'   IG bereik     = 'reach'
+//   FB videoviews = 'blue_reels_play_count'   IG/TT       = 'videoviews'
+$networkConfigs = [
+    'facebook' => [
+        'label'        => 'Facebook',
+        'dashboard'    => 'facebook_dashboard.php',
+        'cssPath'      => 'styles.css',
+        'postUrlBase'  => 'https://www.facebook.com/',
+        'postEndpoints'=> [
+            '/api/v2/analytics/posts/facebook',
+            '/api/v2/analytics/facebook/posts',
+            '/api/v2/analytics/{section}/facebook',
+            '/api/v2/analytics/facebook/{section}',
+        ],
+        'metrics' => [
+            'engagement'   => ['label' => 'Engagement',  'api' => 'engagement',           'color' => '#f59e0b', 'bg' => '#fffbeb', 'icon' => '📈', 'isPercent' => true],
+            'interactions' => ['label' => 'Interacties', 'api' => 'interactions',          'color' => '#8b5cf6', 'bg' => '#f5f3ff', 'icon' => '💬', 'isPercent' => false],
+            'likes'        => ['label' => 'Likes',       'api' => 'likes',                 'color' => '#ec4899', 'bg' => '#fdf2f8', 'icon' => '❤️', 'isPercent' => false],
+            'comments'     => ['label' => 'Reacties',    'api' => 'comments',              'color' => '#06b6d4', 'bg' => '#ecfeff', 'icon' => '💭', 'isPercent' => false],
+            'shares'       => ['label' => 'Delingen',    'api' => 'shares',                'color' => '#10b981', 'bg' => '#ecfdf5', 'icon' => '🔁', 'isPercent' => false],
+            'reach'        => ['label' => 'Bereik',      'api' => 'impressionsunique',     'color' => '#3b82f6', 'bg' => '#eff6ff', 'icon' => '👁️', 'isPercent' => false],
+            'video_views'  => ['label' => 'Video views', 'api' => 'blue_reels_play_count', 'color' => '#f43f5e', 'bg' => '#fff1f2', 'icon' => '▶️', 'isPercent' => false],
+        ],
+    ],
+
+    'instagram' => [
+        'label'        => 'Instagram',
+        'dashboard'    => 'instagram_dashboard.php',
+        'cssPath'      => '../CSS/styles.css',
+        'postUrlBase'  => 'https://www.instagram.com/p/',
+        'postEndpoints'=> [
+            '/api/v2/analytics/posts/instagram',
+            '/api/v2/analytics/instagram/posts',
+            '/api/v2/analytics/{section}/instagram',
+            '/api/v2/analytics/instagram/{section}',
+        ],
+        'metrics' => [
+            'engagement'   => ['label' => 'Engagement',  'api' => 'engagement',   'color' => '#e1306c', 'bg' => '#fde8f0', 'icon' => '📈', 'isPercent' => true],
+            'interactions' => ['label' => 'Interacties', 'api' => 'interactions', 'color' => '#405de6', 'bg' => '#f0f2ff', 'icon' => '💬', 'isPercent' => false],
+            'likes'        => ['label' => 'Likes',       'api' => 'likes',        'color' => '#e1306c', 'bg' => '#fde8f0', 'icon' => '❤️', 'isPercent' => false],
+            'comments'     => ['label' => 'Reacties',    'api' => 'comments',     'color' => '#5b51d8', 'bg' => '#f3f1ff', 'icon' => '💭', 'isPercent' => false],
+            'reach'        => ['label' => 'Bereik',      'api' => 'reach',        'color' => '#833ab4', 'bg' => '#fef0ff', 'icon' => '👁️', 'isPercent' => false],
+            'videoviews'   => ['label' => 'Video views', 'api' => 'videoviews',   'color' => '#f77737', 'bg' => '#fff4e6', 'icon' => '▶️', 'isPercent' => false],
+        ],
+    ],
+
+    'tiktokBusiness' => [
+        'label'        => 'TikTok',
+        'dashboard'    => 'tiktok_Dashboard.php',
+        'cssPath'      => '../CSS/styles.css',
+        'postUrlBase'  => 'https://www.tiktok.com/',
+        'postEndpoints'=> [
+            '/api/v2/analytics/posts/tiktokBusiness',
+            '/api/v2/analytics/tiktokBusiness/posts',
+            '/api/v2/analytics/videos/tiktokBusiness',
+            '/api/v2/analytics/tiktokBusiness/videos',
+            '/api/v2/analytics/posts/tiktok',
+            '/api/v2/analytics/tiktok/posts',
+        ],
+        'metrics' => [
+            'engagement' => ['label' => 'Engagement', 'api' => 'engagement', 'color' => '#ff0050', 'bg' => '#fff0f5', 'icon' => '❤️', 'isPercent' => true],
+            'likes'      => ['label' => 'Likes',      'api' => 'likes',      'color' => '#ff0050', 'bg' => '#fff0f5', 'icon' => '👍', 'isPercent' => false],
+            'comments'   => ['label' => 'Reacties',   'api' => 'comments',   'color' => '#3366ff', 'bg' => '#f0f7ff', 'icon' => '💬', 'isPercent' => false],
+            'shares'     => ['label' => 'Delingen',   'api' => 'shares',     'color' => '#00b4d8', 'bg' => '#f0fafb', 'icon' => '🔁', 'isPercent' => false],
+            'videoviews' => ['label' => 'Video views','api' => 'videoviews', 'color' => '#000000', 'bg' => '#f5f5f5', 'icon' => '▶️', 'isPercent' => false],
+        ],
+    ],
 ];
 
-// ── Parameters ophalen ──
-$metricKey = $_GET['metric'] ?? ($metricKeyOverride ?? 'engagement');
+// ── 3. Parameters ophalen ──
+// Volgorde van prioriteit: URL-parameter > override-variabele uit stub > default
+$network   = $_GET['network'] ?? ($networkOverride   ?? 'facebook');
+$metricKey = $_GET['metric']  ?? ($metricKeyOverride ?? 'engagement');
 $from      = $_GET['from']    ?? date('Y-m-01');
 $to        = $_GET['to']      ?? date('Y-m-d');
 $section   = $_GET['section'] ?? 'posts';
 
-if (!isset($allMetrics[$metricKey])) {
-    $metricKey = 'engagement';
+// Veiligheid: als er een rare network-naam binnenkomt, val terug op facebook
+if (!isset($networkConfigs[$network])) {
+    $network = 'facebook';
 }
+$netConfig = $networkConfigs[$network];
 
-$metricInfo = $allMetrics[$metricKey];
-$fromIso    = $from . 'T00:00:00+01:00';
-$toIso      = $to   . 'T23:59:59+01:00';
+// Veiligheid: als de metric niet bestaat voor dit platform, val terug op de eerste
+if (!isset($netConfig['metrics'][$metricKey])) {
+    $metricKey = array_key_first($netConfig['metrics']);
+}
+$metricInfo = $netConfig['metrics'][$metricKey];
 
-// ── Helpers ──
+$fromIso = $from . 'T00:00:00+01:00';
+$toIso   = $to   . 'T23:59:59+01:00';
+
+// ── 4. Helper-functies ──
 function callMetricool($endpoint, $params, $headers) {
     $baseUrl  = "https://app.metricool.com";
     $endpoint = '/' . ltrim($endpoint, '/');
@@ -65,32 +151,36 @@ function callMetricool($endpoint, $params, $headers) {
     return ['httpCode' => $code, 'body' => json_decode($response, true), 'raw' => $response];
 }
 
+// Formatteer waarden: percentages krijgen 2 decimalen + %, andere zijn gehele getallen
 function fmt($value, $isPercent) {
     if ($isPercent) return number_format((float)$value, 2, ',', '.') . '%';
     return number_format((float)$value, 0, ',', '.');
 }
 
-// ── API: tijdlijn data ──
-$timelineData = [];
+// ── 5. Timeline-data ophalen ──
+$timelineData  = [];
 $timelineError = null;
+$postsData     = [];
+$postsError    = null;
 
 if ($token !== '') {
     $res = callMetricool('/api/v2/analytics/timelines', [
         'from'     => $fromIso,
         'to'       => $toIso,
-        'network'  => 'facebook',
+        'network'  => $network,           // dynamisch i.p.v. hardcoded 'facebook'
         'timezone' => 'Europe/Brussels',
-        'userId'   => $GLOBALS['userId'],
-        'blogId'   => $GLOBALS['blogId'],
+        'userId'   => $userId,
+        'blogId'   => $blogId,
         'subject'  => $section,
         'metric'   => $metricInfo['api'],
     ], $headers);
 
     if (($res['httpCode'] ?? 0) === 200) {
-        $body = $res['body'];
-        foreach (($body['data'] ?? []) as $block) {
+        // Zoek het juiste data-blok op basis van metric-naam (de API kan meerdere blokken teruggeven)
+        foreach (($res['body']['data'] ?? []) as $block) {
             if (($block['metric'] ?? '') === $metricInfo['api']) {
                 $vals = $block['values'] ?? [];
+                // Sorteer chronologisch zodat de grafiek correct is
                 usort($vals, fn($a,$b) => strcmp($a['dateTime'] ?? '', $b['dateTime'] ?? ''));
                 $timelineData = $vals;
                 break;
@@ -100,31 +190,23 @@ if ($token !== '') {
         $timelineError = 'API fout: HTTP ' . ($res['httpCode'] ?? '?');
     }
 
-    // ── API: posts ranking ──
-    // Metricool heeft geen publiek gedocumenteerd /posts endpoint.
-    // We proberen de bekende analytics endpoints voor posts/reels.
-    $postsData      = [];
-    $postsError     = null;
-    $postsEndpoints = [
-        '/api/v2/analytics/posts/facebook',
-        '/api/v2/analytics/facebook/posts',
-        '/api/v2/analytics/' . $section . '/facebook',
-        '/api/v2/analytics/facebook/' . $section,
-    ];
-
+    // ── 6. Posts ranking ophalen ──
+    // Metricool documenteert geen publiek posts-endpoint, dus we proberen er meerdere
+    // tot er één HTTP 200 met data teruggeeft. {section} wordt vervangen door 'posts'/'reels'/'videos'.
     $basePostParams = [
         'from'     => $fromIso,
         'to'       => $toIso,
         'timezone' => 'Europe/Brussels',
-        'userId'   => $GLOBALS['userId'],
-        'blogId'   => $GLOBALS['blogId'],
+        'userId'   => $userId,
+        'blogId'   => $blogId,
         'orderBy'  => $metricInfo['api'],
         'orderDir' => 'desc',
         'limit'    => 10,
     ];
 
     $triedEndpoints = [];
-    foreach ($postsEndpoints as $ep) {
+    foreach ($netConfig['postEndpoints'] as $epTemplate) {
+        $ep = str_replace('{section}', $section, $epTemplate);
         $postsRes = callMetricool($ep, $basePostParams, $headers);
         $triedEndpoints[] = $ep . ' → HTTP ' . ($postsRes['httpCode'] ?? '?');
         if (($postsRes['httpCode'] ?? 0) === 200) {
@@ -138,37 +220,44 @@ if ($token !== '') {
             . implode('<br>', array_map('htmlspecialchars', $triedEndpoints))
             . '</code><br><br>'
             . '💡 <strong>Hoe het juiste endpoint vinden:</strong> Open Metricool in Chrome, '
-            . 'ga naar Analytics > Facebook, open DevTools (F12) > Network > Fetch/XHR, '
+            . 'ga naar Analytics &gt; ' . htmlspecialchars($netConfig['label']) . ', open DevTools (F12) &gt; Network &gt; Fetch/XHR, '
             . 'en kijk welk endpoint Metricool zelf gebruikt voor de posts-lijst. '
-            . 'Voeg dat endpoint toe als <code>$postsEndpoints</code> in <code>metric_detail.php</code>.';
+            . 'Voeg dat endpoint toe aan <code>postEndpoints</code> in <code>metric_detail.php</code>.';
     }
 }
 
-// Bereken stats uit tijdlijn
+// ── 7. Statistieken berekenen ──
 $numericVals = array_map(fn($r) => (float)($r['value'] ?? 0), $timelineData);
 $avg    = count($numericVals) ? array_sum($numericVals) / count($numericVals) : 0;
 $maxVal = count($numericVals) ? max($numericVals) : 0;
 $minVal = count($numericVals) ? min($numericVals) : 0;
+// Mediaan: middelste waarde. Bij even aantal nemen we het gemiddelde van de twee middelste
 $sorted = $numericVals; sort($sorted); $c = count($sorted);
 $median = $c ? ($c % 2 === 0 ? ($sorted[$c/2-1] + $sorted[$c/2]) / 2 : $sorted[(int)floor($c/2)]) : 0;
 
-// Chart labels & values voor JS
+// Data voor de Chart.js grafiek (alleen datum-deel, geen tijd)
 $chartLabels = array_map(fn($r) => substr($r['dateTime'] ?? '', 0, 10), $timelineData);
 $chartValues = $numericVals;
 
+// Korte aliassen voor in de HTML
 $color  = $metricInfo['color'];
 $bg     = $metricInfo['bg'];
 $icon   = $metricInfo['icon'];
 $label  = $metricInfo['label'];
 $isPct  = $metricInfo['isPercent'];
+
+// Voor breadcrumb en terug-knop
+$dashboardLink = $netConfig['dashboard'];
+$platformLabel = $netConfig['label'];
+$cssPath       = $netConfig['cssPath'];
 ?>
 <!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= htmlspecialchars($label) ?> — SkyByte</title>
-    <link rel="stylesheet" href="styles.css">
+    <title><?= htmlspecialchars($label) ?> — <?= htmlspecialchars($platformLabel) ?> · SkyByte</title>
+    <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         body { background: #f0f2f7; }
@@ -316,7 +405,6 @@ $isPct  = $metricInfo['isPercent'];
         .sb-posts-table tr:last-child td { border-bottom: none; }
         .sb-posts-table tr:hover td { background: #fafbfd; }
 
-        /* Klikbare rij */
         .sb-post-row.clickable { cursor: pointer; }
         .sb-post-row.clickable:hover td { background: <?= $bg ?>; }
 
@@ -383,7 +471,6 @@ $isPct  = $metricInfo['isPercent'];
             gap: 10px;
         }
 
-        /* Empty / error state */
         .sb-info-state {
             padding: 40px 20px;
             text-align: center;
@@ -391,7 +478,6 @@ $isPct  = $metricInfo['isPercent'];
             font-size: 13px;
         }
 
-        /* ── Terug-knop ── */
         .sb-back {
             display: inline-flex;
             align-items: center;
@@ -421,22 +507,23 @@ $isPct  = $metricInfo['isPercent'];
 <body>
 <div class="sb-page">
 
+    <!-- Navbar: het 'active' platform wordt dynamisch gezet op basis van $network -->
     <nav class="navbar">
         <a href="config.php" class="nav-link">Inbox</a>
-        <a href="facebook_dashboard.php" class="nav-link active">Facebook</a>
-        <a href="instagram_dashboard.php" class="nav-link">Instagram</a>
-        <a href="tiktok_dashboard.php" class="nav-link">TikTok</a>
+        <a href="facebook_dashboard.php"  class="nav-link <?= $network === 'facebook'       ? 'active' : '' ?>">Facebook</a>
+        <a href="instagram_dashboard.php" class="nav-link <?= $network === 'instagram'      ? 'active' : '' ?>">Instagram</a>
+        <a href="tiktok_Dashboard.php"    class="nav-link <?= $network === 'tiktokBusiness' ? 'active' : '' ?>">TikTok</a>
     </nav>
 
     <!-- Breadcrumb -->
     <div class="sb-breadcrumb">
-        <a href="facebook_dashboard.php">Facebook</a>
+        <a href="<?= htmlspecialchars($dashboardLink) ?>"><?= htmlspecialchars($platformLabel) ?></a>
         <span class="sb-breadcrumb-sep">›</span>
         <span class="sb-breadcrumb-current"><?= htmlspecialchars($label) ?></span>
     </div>
 
-    <!-- Terug-knop -->
-    <a href="facebook_dashboard.php?from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
+    <!-- Terug-knop met behoud van datumrange -->
+    <a href="<?= htmlspecialchars($dashboardLink) ?>?from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>"
        class="sb-back">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
              stroke-linecap="round" stroke-linejoin="round">
@@ -445,19 +532,20 @@ $isPct  = $metricInfo['isPercent'];
         Terug naar dashboard
     </a>
 
-    <!-- Header -->
+    <!-- Header met icoon, titel en datumrange -->
     <div class="sb-detail-header">
         <div class="sb-detail-icon"><?= $icon ?></div>
         <div>
             <div class="sb-detail-title"><?= htmlspecialchars($label) ?></div>
             <div class="sb-detail-subtitle">
+                <?= htmlspecialchars($platformLabel) ?> ·
                 <?= htmlspecialchars(ucfirst($section)) ?> ·
                 <?= date('d M Y', strtotime($from)) ?> – <?= date('d M Y', strtotime($to)) ?>
             </div>
         </div>
     </div>
 
-    <!-- Stat cards -->
+    <!-- Statistiek-kaartjes: gemiddelde / hoogste / laagste / mediaan -->
     <div class="sb-stats-row">
         <div class="sb-stat-card">
             <div class="sb-stat-card-label">Gemiddelde</div>
@@ -477,7 +565,7 @@ $isPct  = $metricInfo['isPercent'];
         </div>
     </div>
 
-    <!-- Grafiek -->
+    <!-- Grafiek: evolutie over tijd -->
     <div class="sb-panel">
         <div class="sb-panel-title">
             <div class="sb-panel-title-dot"></div>
@@ -494,7 +582,7 @@ $isPct  = $metricInfo['isPercent'];
         <?php endif; ?>
     </div>
 
-    <!-- Posts ranking -->
+    <!-- Posts ranking: beste posts/reels/videos voor deze metric -->
     <div class="sb-panel">
         <div class="sb-panel-title">
             <div class="sb-panel-title-dot"></div>
@@ -520,13 +608,13 @@ $isPct  = $metricInfo['isPercent'];
                 <tbody>
                     <?php foreach ($postsData as $i => $post):
                         $rank     = $i + 1;
+                        // Verschillende API endpoints gebruiken verschillende veldnamen voor tekst
                         $text     = $post['text'] ?? $post['message'] ?? $post['caption'] ?? '(geen tekst)';
                         $dateRaw  = $post['publishDate'] ?? $post['date'] ?? $post['createdAt'] ?? '';
                         $dateStr  = $dateRaw ? date('d M Y', strtotime($dateRaw)) : '—';
                         $thumb    = $post['thumbnail'] ?? $post['image'] ?? null;
 
-                        // Link naar de originele Facebook-post zoeken in de post data.
-                        // Metricool gebruikt verschillende veldnamen afhankelijk van het endpoint.
+                        // Link naar originele post: zoek in alle bekende veldnamen
                         $postUrl = $post['url']
                             ?? $post['postUrl']
                             ?? $post['permalink']
@@ -535,15 +623,16 @@ $isPct  = $metricInfo['isPercent'];
                             ?? $post['externalUrl']
                             ?? null;
 
-                        // Als er geen directe URL is maar wel een post-id, bouw de FB-url zelf op
+                        // Als geen directe URL maar wel een post-id, bouw de URL zelf op
+                        // (de basis-URL komt uit netConfig, dus verschilt per platform)
                         if (!$postUrl) {
                             $postId = $post['id'] ?? $post['postId'] ?? $post['providerPostId'] ?? null;
                             if ($postId) {
-                                $postUrl = 'https://www.facebook.com/' . urlencode($postId);
+                                $postUrl = $netConfig['postUrlBase'] . urlencode($postId);
                             }
                         }
 
-                        // Metric waarde zoeken in post data
+                        // Metric-waarde voor deze post: probeer meerdere veldlocaties
                         $metricVal = $post[$metricInfo['api']]
                             ?? $post[$metricKey]
                             ?? $post['stats'][$metricInfo['api']]
@@ -593,6 +682,7 @@ $isPct  = $metricInfo['isPercent'];
 
 <?php if (!empty($timelineData)): ?>
 <script>
+// Data uit PHP doorgeven aan JavaScript voor de Chart.js grafiek
 const labels = <?= json_encode($chartLabels) ?>;
 const values = <?= json_encode($chartValues) ?>;
 const color  = '<?= $color ?>';
@@ -601,7 +691,7 @@ const isPct  = <?= $isPct ? 'true' : 'false' ?>;
 
 const ctx = document.getElementById('timelineChart').getContext('2d');
 
-// Gradient fill
+// Gradient-vulling voor onder de lijn (van metric-kleur naar transparant)
 const gradient = ctx.createLinearGradient(0, 0, 0, 260);
 gradient.addColorStop(0, color + '30');
 gradient.addColorStop(1, color + '00');
@@ -617,6 +707,7 @@ new Chart(ctx, {
             backgroundColor: gradient,
             fill: true,
             tension: 0.4,
+            // Bij veel datapunten geen losse stippen, anders 4px
             pointRadius: values.length > 30 ? 0 : 4,
             pointHoverRadius: 6,
             pointBackgroundColor: '#fff',
@@ -637,6 +728,7 @@ new Chart(ctx, {
                 padding: 10,
                 cornerRadius: 8,
                 callbacks: {
+                    // Tooltip-waarden formatteren met komma's voor NL en %-teken indien percentage
                     label: ctx => {
                         const v = ctx.parsed.y;
                         return ' ' + (isPct
