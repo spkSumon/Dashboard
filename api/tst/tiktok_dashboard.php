@@ -1,8 +1,8 @@
 <?php
 
 $userId = 4394337;
-$blogId = 6174355;
-$token  = 'YTQGUMFFSNCTTTRMJPHRVFOHDACWTAULVIIPDJQOUIJDTONUCOIJUELBHLAZQDUB';
+$blogId = 5668624;
+$token  = '';
 
 $headers = [
     "Accept: application/json",
@@ -78,13 +78,12 @@ $fromIso = $from . 'T00:00:00+01:00';
 $toIso   = $to   . 'T23:59:59+01:00';
 
 $availableMetrics = [
-    'posts' => [
-        ['key' => 'engagement',   'label' => 'Engagement',  'api' => 'engagement',   'color' => '#e1306c', 'bg' => '#fde8f0'],
-        ['key' => 'interactions', 'label' => 'Interacties', 'api' => 'interactions', 'color' => '#405de6', 'bg' => '#f0f2ff'],
-        ['key' => 'likes',        'label' => 'Likes',       'api' => 'likes',        'color' => '#e1306c', 'bg' => '#fde8f0'],
-        ['key' => 'comments',     'label' => 'Reacties',    'api' => 'comments',     'color' => '#5b51d8', 'bg' => '#f3f1ff'],
-        ['key' => 'videoviews',   'label' => 'Video Views', 'api' => 'videoviews',   'color' => '#f77737', 'bg' => '#fff4e6'],
-        ['key' => 'reach',        'label' => 'Bereik',      'api' => 'reach',        'color' => '#833ab4', 'bg' => '#fef0ff'],
+    'videos' => [
+        ['key' => 'videoviews',   'label' => 'Video Views',   'api' => 'videoviews',  'color' => '#000000', 'bg' => '#f5f5f5'],
+        ['key' => 'engagement',   'label' => 'Engagement',    'api' => 'engagement',  'color' => '#ff0050', 'bg' => '#fff0f5'],
+        ['key' => 'likes',        'label' => 'Likes',         'api' => 'likes',       'color' => '#ff0050', 'bg' => '#fff0f5'],
+        ['key' => 'comments',     'label' => 'Reacties',      'api' => 'comments',    'color' => '#3366ff', 'bg' => '#f0f7ff'],
+        ['key' => 'shares',       'label' => 'Delingen',      'api' => 'shares',      'color' => '#00b4d8', 'bg' => '#f0fafb'],
     ],
 ];
 
@@ -99,7 +98,7 @@ $selectedMetricsJson = $_POST['selected_metrics'] ?? '[]';
 $selectedMetrics = json_decode($selectedMetricsJson, true);
 if (!is_array($selectedMetrics)) $selectedMetrics = [];
 
-$selectedSection = 'posts';
+$selectedSection = 'videos';
 
 $metricsData = [];
 
@@ -111,11 +110,11 @@ if (!empty($selectedMetrics) && $token !== '') {
         $params = [
             'from'     => $fromIso,
             'to'       => $toIso,
-            'network'  => 'instagram',
+            'network'  => 'tiktokBusiness',
             'timezone' => 'Europe/Brussels',
             'userId'   => $userId,
             'blogId'   => $blogId,
-            'subject'  => $selectedSection,
+            'subject'  => 'videos',
             'metric'   => $metricInfo['api'],
         ];
 
@@ -135,7 +134,7 @@ if (!empty($selectedMetrics) && $token !== '') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram — SkyByte</title>
+    <title>TikTok — SkyByte</title>
     <link rel="stylesheet" href="../CSS/styles.css">
 </head>
 <body>
@@ -146,16 +145,15 @@ if (!empty($selectedMetrics) && $token !== '') {
     <nav class="navbar">
         <a href="config.php" class="nav-link">Inbox</a>
         <a href="facebook_dashboard.php" class="nav-link">Facebook</a>
-        <a href="instagram_dashboard.php" class="nav-link active">Instagram</a>
-        <a href="tiktok_dashboard.php" class="nav-link">TikTok</a>
+        <a href="instagram_dashboard.php" class="nav-link">Instagram</a>
+        <a href="tiktok_Dashboard.php" class="nav-link active">TikTok</a>
         <a href="../fathem/fathom-info2.php" class="nav-link">Fathom Analytics</a>
     </nav>
 
-    <p class="sb-title">Instagram</p>
+    <p class="sb-title">TikTok</p>
     <p class="sb-subtitle">Sleep metrics naar het overzicht om te analyseren</p>
 
     <form method="POST" id="dashboardForm">
-        <input type="hidden" name="selected_section" id="selectedSection" value="<?= htmlspecialchars($selectedSection) ?>">
         <input type="hidden" name="selected_metrics" id="selectedMetrics" value="">
 
         <div class="sb-toolbar">
@@ -170,7 +168,7 @@ if (!empty($selectedMetrics) && $token !== '') {
             <div class="sb-sidebar">
                 <div class="sb-sidebar-title">Metrics</div>
                 <div id="metricsList">
-                    <?php foreach ($availableMetrics[$selectedSection] as $metric): ?>
+                    <?php foreach ($availableMetrics['videos'] as $metric): ?>
                         <div class="sb-chip" draggable="true" data-metric="<?= htmlspecialchars($metric['key']) ?>"
                              style="border-left: 3px solid <?= htmlspecialchars($metric['color']) ?>;">
                             <?= htmlspecialchars($metric['label']) ?>
@@ -183,7 +181,6 @@ if (!empty($selectedMetrics) && $token !== '') {
 
                 <?php if (empty($metricsData)): ?>
                     <div class="sb-empty">
-                        
                         <p>Sleep een metric hierheen</p>
                         <p style="font-size:12px; color:#c8d0de;">Kies links wat je wilt zien</p>
                     </div>
@@ -191,10 +188,9 @@ if (!empty($selectedMetrics) && $token !== '') {
                 <?php else: ?>
                     <div class="sb-cards" id="metricsDisplay">
                         <?php foreach ($metricsData as $key => $metric):
-                            $color = htmlspecialchars($metric['info']['color'] ?? '#e1306c');
-                            $bg    = htmlspecialchars($metric['info']['bg']    ?? '#fde8f0');
-                            // Link naar de generieke detailpagina met metric + network als URL-parameters
-                            $detailUrl = 'metric_detail.php?metric=' . urlencode($key) . '&network=instagram&from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=' . urlencode($selectedSection);
+                            $color = htmlspecialchars($metric['info']['color'] ?? '#ff0050');
+                            $bg    = htmlspecialchars($metric['info']['bg']    ?? '#fff0f5');
+                            $detailUrl = 'metric_detail.php?metric=' . urlencode($key) . '&network=tiktokBusiness&from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=videos';
                         ?>
                             <a href="<?= $detailUrl ?>" class="sb-card-link" data-metric="<?= htmlspecialchars($key) ?>"
                                style="--card-color: <?= $color ?>; --card-bg: <?= $bg ?>;">
@@ -250,7 +246,6 @@ if (sessionStorage.getItem('sbMetricDropped') === '1') {
 }
 
 let selectedMetricsList = <?= json_encode(array_keys($metricsData)) ?>;
-let currentSection      = 'posts';
 
 function submitForm() {
     document.getElementById('selectedMetrics').value = JSON.stringify(selectedMetricsList);

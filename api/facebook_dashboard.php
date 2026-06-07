@@ -102,21 +102,13 @@ $toIso   = $to   . 'T23:59:59+01:00';
 
 $availableMetrics = [
     'posts' => [
-        ['key' => 'engagement',   'label' => 'Engagement',  'api' => 'engagement',            'page' => 'engagement_detail.php',   'color' => '#f59e0b', 'bg' => '#fffbeb', 'icon' => '📈'],
-        ['key' => 'interactions', 'label' => 'Interacties', 'api' => 'interactions',           'page' => 'interactions_detail.php', 'color' => '#8b5cf6', 'bg' => '#f5f3ff', 'icon' => '💬'],
-        ['key' => 'likes',        'label' => 'Likes',       'api' => 'likes',                  'page' => 'likes_detail.php',        'color' => '#ec4899', 'bg' => '#fdf2f8', 'icon' => '❤️'],
-        ['key' => 'comments',     'label' => 'Reacties',    'api' => 'comments',               'page' => 'comments_detail.php',     'color' => '#06b6d4', 'bg' => '#ecfeff', 'icon' => '💭'],
-        ['key' => 'shares',       'label' => 'Delingen',    'api' => 'shares',                 'page' => 'shares_detail.php',       'color' => '#10b981', 'bg' => '#ecfdf5', 'icon' => '🔁'],
-        ['key' => 'reach',        'label' => 'Bereik',      'api' => 'impressionsunique',      'page' => 'reach_detail.php',        'color' => '#3b82f6', 'bg' => '#eff6ff', 'icon' => '👁️'],
-    ],
-    'reels' => [
-        ['key' => 'engagement',   'label' => 'Engagement',  'api' => 'engagement',             'page' => 'engagement_detail.php',   'color' => '#f59e0b', 'bg' => '#fffbeb', 'icon' => '📈'],
-        ['key' => 'interactions', 'label' => 'Interacties', 'api' => 'interactions',           'page' => 'interactions_detail.php', 'color' => '#8b5cf6', 'bg' => '#f5f3ff', 'icon' => '💬'],
-        ['key' => 'likes',        'label' => 'Likes',       'api' => 'likes',                  'page' => 'likes_detail.php',        'color' => '#ec4899', 'bg' => '#fdf2f8', 'icon' => '❤️'],
-        ['key' => 'comments',     'label' => 'Reacties',    'api' => 'comments',               'page' => 'comments_detail.php',     'color' => '#06b6d4', 'bg' => '#ecfeff', 'icon' => '💭'],
-        ['key' => 'shares',       'label' => 'Delingen',    'api' => 'shares',                 'page' => 'shares_detail.php',       'color' => '#10b981', 'bg' => '#ecfdf5', 'icon' => '🔁'],
-        ['key' => 'video_views',  'label' => 'Video views', 'api' => 'blue_reels_play_count',  'page' => 'videoviews_detail.php',   'color' => '#f43f5e', 'bg' => '#fff1f2', 'icon' => '▶️'],
-        ['key' => 'reach',        'label' => 'Bereik',      'api' => 'impressionsunique',      'page' => 'reach_detail.php',        'color' => '#3b82f6', 'bg' => '#eff6ff', 'icon' => '👁️'],
+        ['key' => 'engagement',   'label' => 'Engagement',  'api' => 'engagement',            'color' => '#f59e0b', 'bg' => '#fffbeb'],
+        ['key' => 'interactions', 'label' => 'Interacties', 'api' => 'interactions',           'color' => '#8b5cf6', 'bg' => '#f5f3ff'],
+        ['key' => 'likes',        'label' => 'Likes',       'api' => 'likes',                  'color' => '#ec4899', 'bg' => '#fdf2f8'],
+        ['key' => 'comments',     'label' => 'Reacties',    'api' => 'comments',               'color' => '#06b6d4', 'bg' => '#ecfeff'],
+        ['key' => 'shares',       'label' => 'Delingen',    'api' => 'shares',                 'color' => '#10b981', 'bg' => '#ecfdf5'],
+        ['key' => 'video_views',  'label' => 'Video views', 'api' => 'blue_reels_play_count',  'color' => '#f43f5e', 'bg' => '#fff1f2'],
+        ['key' => 'reach',        'label' => 'Bereik',      'api' => 'impressionsunique',      'color' => '#3b82f6', 'bg' => '#eff6ff'],
     ],
 ];
 
@@ -132,7 +124,7 @@ $selectedMetricsJson = $_POST['selected_metrics'] ?? '[]';
 $selectedMetrics = json_decode($selectedMetricsJson, true);
 if (!is_array($selectedMetrics)) $selectedMetrics = [];
 
-$selectedSection = $_POST['selected_section'] ?? 'posts';
+$selectedSection = 'posts';
 if (!isset($availableMetrics[$selectedSection])) $selectedSection = 'posts';
 
 $metricsData = [];
@@ -171,416 +163,11 @@ if (!empty($selectedMetrics) && $token !== '') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Facebook — SkyByte</title>
     <link rel="stylesheet" href="../CSS/styles.css">
-    <style>
-        body {
-            background: #f0f2f7;
-        }
-
-        .sb-page {
-            max-width: 1320px;
-            margin: 0 auto;
-        }
-
-        .sb-title {
-            font-size: 22px;
-            font-weight: 700;
-            color: #1a2233;
-            letter-spacing: -0.3px;
-            margin-bottom: 4px;
-        }
-
-        .sb-subtitle {
-            font-size: 13px;
-            color: #7a8599;
-            margin-bottom: 28px;
-        }
-
-        /* ── Toolbar ── */
-        .sb-toolbar {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            background: #fff;
-            border: 1px solid #e4e8ef;
-            border-radius: 12px;
-            padding: 14px 18px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 4px rgba(0,0,0,.04);
-        }
-
-        .sb-toolbar label {
-            font-size: 11px;
-            font-weight: 700;
-            color: #9aa3b4;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            margin: 0;
-        }
-
-        .sb-toolbar input[type="date"] {
-            border: 1px solid #dde2ec;
-            border-radius: 8px;
-            padding: 7px 11px;
-            font-size: 13px;
-            color: #1a2233;
-            background: #fafbfd;
-            width: auto;
-        }
-
-        .sb-toolbar input[type="date"]:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,.12);
-        }
-
-        .sb-divider {
-            width: 1px;
-            height: 28px;
-            background: #e4e8ef;
-            margin: 0 4px;
-        }
-
-        .sb-tabs {
-            display: flex;
-            gap: 4px;
-            margin-left: auto;
-            background: #f0f2f7;
-            padding: 3px;
-            border-radius: 9px;
-        }
-
-        .sb-tab {
-            padding: 6px 18px;
-            border-radius: 7px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #7a8599;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            transition: all .15s;
-        }
-
-        .sb-tab:hover { color: #3b82f6; }
-
-        .sb-tab.active {
-            background: #fff;
-            color: #1a2233;
-            box-shadow: 0 1px 4px rgba(0,0,0,.10);
-        }
-
-        /* ── Layout ── */
-        .sb-layout {
-            display: grid;
-            grid-template-columns: 210px 1fr;
-            gap: 16px;
-            align-items: start;
-        }
-
-        /* ── Sidebar ── */
-        .sb-sidebar {
-            background: #fff;
-            border: 1px solid #e4e8ef;
-            border-radius: 12px;
-            padding: 16px;
-            position: sticky;
-            top: 20px;
-            box-shadow: 0 1px 4px rgba(0,0,0,.04);
-        }
-
-        .sb-sidebar-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: #9aa3b4;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            margin-bottom: 12px;
-        }
-
-        .sb-chip {
-            display: flex;
-            align-items: center;
-            gap: 9px;
-            padding: 9px 11px;
-            margin-bottom: 5px;
-            border-radius: 8px;
-            border: 1px solid #e8edf4;
-            background: #fafbfd;
-            cursor: grab;
-            font-size: 13px;
-            font-weight: 500;
-            color: #3a4460;
-            transition: all .15s;
-            user-select: none;
-        }
-
-        .sb-chip:hover {
-            transform: translateX(2px);
-            box-shadow: 0 2px 8px rgba(0,0,0,.08);
-        }
-
-        .sb-chip.dragging { opacity: .35; }
-
-        .sb-chip-icon {
-            font-size: 14px;
-            line-height: 1;
-        }
-
-        /* ── Canvas ── */
-        .sb-canvas {
-            background: #fff;
-            border: 2px dashed #dde2ec;
-            border-radius: 12px;
-            min-height: 480px;
-            padding: 24px;
-            transition: border-color .2s, background .2s;
-            box-shadow: 0 1px 4px rgba(0,0,0,.04);
-        }
-
-        .sb-canvas.drag-over {
-            border-color: #3b82f6;
-            background: #f0f6ff;
-        }
-
-        .sb-canvas.has-content {
-            border-style: solid;
-            border-color: #e4e8ef;
-        }
-
-        /* Empty state */
-        .sb-empty {
-            height: 100%;
-            min-height: 400px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            color: #b0bac8;
-        }
-
-        .sb-empty-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
-            background: #f0f4ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 4px;
-            font-size: 24px;
-        }
-
-        .sb-empty p {
-            font-size: 13px;
-            font-weight: 500;
-            color: #b0bac8;
-            margin: 0;
-        }
-
-        /* ── Metric cards ── */
-        .sb-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 14px;
-        }
-
-        /* Clickable card wrapper */
-        .sb-card-link {
-            display: block;
-            text-decoration: none;
-            color: inherit;
-            border-radius: 12px;
-            transition: transform .18s, box-shadow .18s;
-        }
-
-        .sb-card-link:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(0,0,0,.11);
-        }
-
-        .sb-card-link:hover .sb-card-open {
-            opacity: 1;
-            transform: translateX(0);
-        }
-
-        .sb-card {
-            border: 1px solid #e4e8ef;
-            border-radius: 12px;
-            padding: 18px;
-            position: relative;
-            background: #fafbfd;
-            overflow: hidden;
-        }
-
-        /* Colored top accent bar */
-        .sb-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: var(--card-color, #3b82f6);
-            border-radius: 12px 12px 0 0;
-        }
-
-        .sb-card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 14px;
-        }
-
-        .sb-card-label-wrap {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-        }
-
-        .sb-card-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 7px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            background: var(--card-bg, #eff6ff);
-            flex-shrink: 0;
-        }
-
-        .sb-card-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: #7a8599;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .sb-card-actions {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* "Open detail" arrow badge */
-        .sb-card-open {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--card-color, #3b82f6);
-            background: var(--card-bg, #eff6ff);
-            padding: 3px 8px;
-            border-radius: 20px;
-            opacity: 0;
-            transform: translateX(-4px);
-            transition: opacity .18s, transform .18s;
-            white-space: nowrap;
-        }
-
-        .sb-card-open svg {
-            width: 11px;
-            height: 11px;
-        }
-
-        .sb-card-remove {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-            border: 1px solid #e4e8ef;
-            background: #fff;
-            color: #b0bac8;
-            font-size: 15px;
-            line-height: 1;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all .15s;
-            padding: 0;
-            flex-shrink: 0;
-            z-index: 2;
-            position: relative;
-        }
-
-        .sb-card-remove:hover {
-            background: #fff0f0;
-            border-color: #fca5a5;
-            color: #ef4444;
-        }
-
-        .sb-card-avg {
-            font-size: 34px;
-            font-weight: 800;
-            color: var(--card-color, #1a2233);
-            letter-spacing: -1.5px;
-            margin-bottom: 14px;
-            line-height: 1;
-        }
-
-        .sb-card-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 7px;
-        }
-
-        .sb-card-stat {
-            background: #fff;
-            border: 1px solid #edf0f5;
-            border-radius: 8px;
-            padding: 8px 10px;
-        }
-
-        .sb-card-stat-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: #b0bac8;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            margin-bottom: 3px;
-        }
-
-        .sb-card-stat-value {
-            font-size: 15px;
-            font-weight: 700;
-            color: #3a4460;
-        }
-
-        /* ── Reset button ── */
-        .sb-reset {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 18px;
-            padding: 8px 14px;
-            border: 1px solid #e4e8ef;
-            border-radius: 8px;
-            background: #fff;
-            font-size: 13px;
-            font-weight: 600;
-            color: #7a8599;
-            cursor: pointer;
-            transition: all .15s;
-        }
-
-        .sb-reset:hover {
-            border-color: #ef4444;
-            color: #ef4444;
-            background: #fff8f8;
-        }
-
-        @media (max-width: 768px) {
-            .sb-layout { grid-template-columns: 1fr; }
-            .sb-sidebar { position: static; }
-            .sb-tabs { margin-left: 0; }
-        }
-    </style>
 </head>
 <body>
 
 <div class="sb-page">
+    <div id="sbToast" class="sb-toast" aria-live="polite"></div>
 
     <nav class="navbar">
         <a href="config.php" class="nav-link">Inbox</a>
@@ -603,14 +190,6 @@ if (!empty($selectedMetrics) && $token !== '') {
             <label>Tot</label>
             <input type="date" name="to"   value="<?= htmlspecialchars($to) ?>">
 
-            <div class="sb-divider"></div>
-
-            <div class="sb-tabs">
-                <button type="button" class="sb-tab <?= $selectedSection === 'posts' ? 'active' : '' ?>"
-                        onclick="selectSection('posts')">Posts</button>
-                <button type="button" class="sb-tab <?= $selectedSection === 'reels' ? 'active' : '' ?>"
-                        onclick="selectSection('reels')">Reels</button>
-            </div>
         </div>
 
         <div class="sb-layout">
@@ -624,7 +203,6 @@ if (!empty($selectedMetrics) && $token !== '') {
                              draggable="true"
                              data-metric="<?= htmlspecialchars($metric['key']) ?>"
                              style="border-left: 3px solid <?= htmlspecialchars($metric['color']) ?>;">
-                            <span class="sb-chip-icon"><?= $metric['icon'] ?></span>
                             <?= htmlspecialchars($metric['label']) ?>
                         </div>
                     <?php endforeach; ?>
@@ -636,7 +214,7 @@ if (!empty($selectedMetrics) && $token !== '') {
 
                 <?php if (empty($metricsData)): ?>
                     <div class="sb-empty">
-                        <div class="sb-empty-icon">📊</div>
+                        
                         <p>Sleep een metric hierheen</p>
                         <p style="font-size:12px; color:#c8d0de;">Kies links wat je wilt zien</p>
                     </div>
@@ -646,10 +224,8 @@ if (!empty($selectedMetrics) && $token !== '') {
                         <?php foreach ($metricsData as $key => $metric):
                             $color = htmlspecialchars($metric['info']['color'] ?? '#3b82f6');
                             $bg    = htmlspecialchars($metric['info']['bg']    ?? '#eff6ff');
-                            $page  = htmlspecialchars($metric['info']['page']  ?? '#');
-                            $icon  = $metric['info']['icon'] ?? '📊';
-                            // Pass date params to detail page
-                            $detailUrl = $page . '?from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=' . urlencode($selectedSection);
+                            // Link naar de generieke detailpagina met metric + network als URL-parameters
+                            $detailUrl = 'metric_detail.php?metric=' . urlencode($key) . '&network=facebook&from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=' . urlencode($selectedSection);
                         ?>
                             <a href="<?= $detailUrl ?>"
                                class="sb-card-link"
@@ -658,7 +234,6 @@ if (!empty($selectedMetrics) && $token !== '') {
                                 <div class="sb-card" style="--card-color: <?= $color ?>; --card-bg: <?= $bg ?>;">
                                     <div class="sb-card-header">
                                         <div class="sb-card-label-wrap">
-                                            <div class="sb-card-icon"><?= $icon ?></div>
                                             <span class="sb-card-label"><?= htmlspecialchars($metric['info']['label']) ?></span>
                                         </div>
                                         <div class="sb-card-actions">
@@ -716,16 +291,23 @@ if (!empty($selectedMetrics) && $token !== '') {
 </div>
 
 <script>
-let selectedMetricsList = <?= json_encode(array_keys($metricsData)) ?>;
-const metricsConfig     = <?= json_encode($availableMetrics) ?>;
-let currentSection      = '<?= htmlspecialchars($selectedSection) ?>';
 
-function selectSection(section) {
-    currentSection = section;
-    document.getElementById('selectedSection').value = section;
-    selectedMetricsList = [];
-    submitForm();
+function showDropNotice(title = 'Metric toegevoegd aan het kader', detail = 'De metric staat nu in het overzichtskader.') {
+    const toast = document.getElementById('sbToast');
+    if (!toast) return;
+    toast.innerHTML = `${title}<small>${detail}</small>`;
+    toast.classList.add('visible');
+    window.clearTimeout(window.__sbToastTimer);
+    window.__sbToastTimer = window.setTimeout(() => toast.classList.remove('visible'), 3200);
 }
+
+if (sessionStorage.getItem('sbMetricDropped') === '1') {
+    sessionStorage.removeItem('sbMetricDropped');
+    window.addEventListener('DOMContentLoaded', () => showDropNotice());
+}
+
+let selectedMetricsList = <?= json_encode(array_keys($metricsData)) ?>;
+let currentSection      = 'posts';
 
 function submitForm() {
     document.getElementById('selectedMetrics').value = JSON.stringify(selectedMetricsList);
@@ -768,6 +350,8 @@ dropZone.addEventListener('drop', e => {
     const metric = e.dataTransfer.getData('metric');
     if (metric && !selectedMetricsList.includes(metric)) {
         selectedMetricsList.push(metric);
+        sessionStorage.setItem('sbMetricDropped', '1');
+        showDropNotice();
         submitForm();
     }
 });

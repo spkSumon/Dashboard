@@ -1,8 +1,9 @@
 <?php
 
 $userId = 4394337;
-$blogId = 6174355;
+$blogId = 5668624;
 $token  = 'YTQGUMFFSNCTTTRMJPHRVFOHDACWTAULVIIPDJQOUIJDTONUCOIJUELBHLAZQDUB';
+
 
 $headers = [
     "Accept: application/json",
@@ -24,10 +25,19 @@ function callMetricool($endpoint, $params, $headers) {
         CURLOPT_TIMEOUT        => 30,
     ]);
     $response = curl_exec($ch);
-    if (curl_errno($ch)) { $error = curl_error($ch); curl_close($ch); return ['error' => $error]; }
-    $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    if (curl_errno($ch)) {
+        $error = curl_error($ch);
+        curl_close($ch);
+        return ['error' => $error];
+    }
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
-    return ['httpCode' => $code, 'body' => json_decode($response, true), 'raw' => $response];
+    return [
+        'httpCode' => $httpCode,
+        'body'     => json_decode($response, true),
+        'raw'      => $response,
+        'url'      => $url,
+    ];
 }
 
 function getMetricData($responseBody, $metricName) {
@@ -35,11 +45,20 @@ function getMetricData($responseBody, $metricName) {
         return ['error' => 'Geen geldige data gevonden.'];
     }
     foreach ($responseBody['data'] as $block) {
-        if (($block['metric'] ?? null) === $metricName) { $metricBlock = $block; break; }
+        if (($block['metric'] ?? null) === $metricName) {
+            $metricBlock = $block;
+            break;
+        }
     }
-    if (!isset($metricBlock)) { return ['error' => 'Metric "' . $metricName . '" niet gevonden.']; }
-    if (!isset($metricBlock['values']) || !is_array($metricBlock['values'])) { return ['error' => 'Geen values gevonden voor "' . $metricName . '".'];}
-    if (count($metricBlock['values']) === 0) { return ['empty' => true, 'metric' => $metricName, 'values' => []]; }
+    if (!isset($metricBlock)) {
+        return ['error' => 'Metric "' . $metricName . '" niet gevonden.'];
+    }
+    if (!isset($metricBlock['values']) || !is_array($metricBlock['values'])) {
+        return ['error' => 'Geen values gevonden voor "' . $metricName . '".'];
+    }
+    if (count($metricBlock['values']) === 0) {
+        return ['empty' => true, 'metric' => $metricName, 'values' => []];
+    }
     $values = $metricBlock['values'];
     usort($values, fn($a, $b) => strcmp($a['dateTime'] ?? '', $b['dateTime'] ?? ''));
     $numericValues = array_map(fn($row) => (float)($row['value'] ?? 0), $values);
@@ -49,7 +68,9 @@ function getMetricData($responseBody, $metricName) {
         if ($v > (float)($values[$maxIndex]['value'] ?? 0)) $maxIndex = $i;
         if ($v < (float)($values[$minIndex]['value'] ?? 0)) $minIndex = $i;
     }
-    $sorted = $numericValues; sort($sorted); $c = count($sorted);
+    $sorted = $numericValues;
+    sort($sorted);
+    $c = count($sorted);
     $median = $c % 2 === 0 ? ($sorted[$c/2-1] + $sorted[$c/2]) / 2 : $sorted[(int)floor($c/2)];
     return [
         'metric'         => $metricName,
@@ -68,7 +89,9 @@ function getMetricData($responseBody, $metricName) {
 }
 
 function formatValue($value, $metricKey) {
-    if ($metricKey === 'engagement') { return number_format((float)$value, 2, ',', '.') . '%'; }
+    if ($metricKey === 'engagement') {
+        return number_format((float)$value, 2, ',', '.') . '%';
+    }
     return number_format((float)$value, 0, ',', '.');
 }
 
@@ -79,15 +102,17 @@ $toIso   = $to   . 'T23:59:59+01:00';
 
 $availableMetrics = [
     'posts' => [
-        ['key' => 'engagement',   'label' => 'Engagement',  'api' => 'engagement',   'color' => '#e1306c', 'bg' => '#fde8f0'],
-        ['key' => 'interactions', 'label' => 'Interacties', 'api' => 'interactions', 'color' => '#405de6', 'bg' => '#f0f2ff'],
-        ['key' => 'likes',        'label' => 'Likes',       'api' => 'likes',        'color' => '#e1306c', 'bg' => '#fde8f0'],
-        ['key' => 'comments',     'label' => 'Reacties',    'api' => 'comments',     'color' => '#5b51d8', 'bg' => '#f3f1ff'],
-        ['key' => 'videoviews',   'label' => 'Video Views', 'api' => 'videoviews',   'color' => '#f77737', 'bg' => '#fff4e6'],
-        ['key' => 'reach',        'label' => 'Bereik',      'api' => 'reach',        'color' => '#833ab4', 'bg' => '#fef0ff'],
+        ['key' => 'engagement',   'label' => 'Engagement',  'api' => 'engagement',            'color' => '#f59e0b', 'bg' => '#fffbeb'],
+        ['key' => 'interactions', 'label' => 'Interacties', 'api' => 'interactions',           'color' => '#8b5cf6', 'bg' => '#f5f3ff'],
+        ['key' => 'likes',        'label' => 'Likes',       'api' => 'likes',                  'color' => '#ec4899', 'bg' => '#fdf2f8'],
+        ['key' => 'comments',     'label' => 'Reacties',    'api' => 'comments',               'color' => '#06b6d4', 'bg' => '#ecfeff'],
+        ['key' => 'shares',       'label' => 'Delingen',    'api' => 'shares',                 'color' => '#10b981', 'bg' => '#ecfdf5'],
+        ['key' => 'video_views',  'label' => 'Video views', 'api' => 'blue_reels_play_count',  'color' => '#f43f5e', 'bg' => '#fff1f2'],
+        ['key' => 'reach',        'label' => 'Bereik',      'api' => 'impressionsunique',      'color' => '#3b82f6', 'bg' => '#eff6ff'],
     ],
 ];
 
+// Build lookup by key for easy access
 $metricLookup = [];
 foreach ($availableMetrics as $section => $metrics) {
     foreach ($metrics as $m) {
@@ -100,6 +125,7 @@ $selectedMetrics = json_decode($selectedMetricsJson, true);
 if (!is_array($selectedMetrics)) $selectedMetrics = [];
 
 $selectedSection = 'posts';
+if (!isset($availableMetrics[$selectedSection])) $selectedSection = 'posts';
 
 $metricsData = [];
 
@@ -111,7 +137,7 @@ if (!empty($selectedMetrics) && $token !== '') {
         $params = [
             'from'     => $fromIso,
             'to'       => $toIso,
-            'network'  => 'instagram',
+            'network'  => 'facebook',
             'timezone' => 'Europe/Brussels',
             'userId'   => $userId,
             'blogId'   => $blogId,
@@ -135,8 +161,8 @@ if (!empty($selectedMetrics) && $token !== '') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram — SkyByte</title>
-    <link rel="stylesheet" href="../CSS/styles.css">
+    <title>Facebook — SkyByte</title>
+    <link rel="stylesheet" href="styles_existing_updated.css">
 </head>
 <body>
 
@@ -145,14 +171,14 @@ if (!empty($selectedMetrics) && $token !== '') {
 
     <nav class="navbar">
         <a href="config.php" class="nav-link">Inbox</a>
-        <a href="facebook_dashboard.php" class="nav-link">Facebook</a>
-        <a href="instagram_dashboard.php" class="nav-link active">Instagram</a>
+        <a href="facebook_dashboard.php" class="nav-link active">Facebook</a>
+        <a href="instagram_dashboard.php" class="nav-link">Instagram</a>
         <a href="tiktok_dashboard.php" class="nav-link">TikTok</a>
         <a href="../fathem/fathom-info2.php" class="nav-link">Fathom Analytics</a>
     </nav>
 
-    <p class="sb-title">Instagram</p>
-    <p class="sb-subtitle">Sleep metrics naar het overzicht om te analyseren</p>
+    <p class="sb-title">Facebook</p>
+    <p class="sb-subtitle">Selecteer een periode en sleep metrics naar het overzicht</p>
 
     <form method="POST" id="dashboardForm">
         <input type="hidden" name="selected_section" id="selectedSection" value="<?= htmlspecialchars($selectedSection) ?>">
@@ -162,16 +188,20 @@ if (!empty($selectedMetrics) && $token !== '') {
             <label>Van</label>
             <input type="date" name="from" value="<?= htmlspecialchars($from) ?>">
             <label>Tot</label>
-            <input type="date" name="to" value="<?= htmlspecialchars($to) ?>">
+            <input type="date" name="to"   value="<?= htmlspecialchars($to) ?>">
+
         </div>
 
         <div class="sb-layout">
 
+            <!-- Sidebar -->
             <div class="sb-sidebar">
                 <div class="sb-sidebar-title">Metrics</div>
                 <div id="metricsList">
                     <?php foreach ($availableMetrics[$selectedSection] as $metric): ?>
-                        <div class="sb-chip" draggable="true" data-metric="<?= htmlspecialchars($metric['key']) ?>"
+                        <div class="sb-chip"
+                             draggable="true"
+                             data-metric="<?= htmlspecialchars($metric['key']) ?>"
                              style="border-left: 3px solid <?= htmlspecialchars($metric['color']) ?>;">
                             <?= htmlspecialchars($metric['label']) ?>
                         </div>
@@ -179,6 +209,7 @@ if (!empty($selectedMetrics) && $token !== '') {
                 </div>
             </div>
 
+            <!-- Canvas -->
             <div class="sb-canvas <?= !empty($metricsData) ? 'has-content' : '' ?>" id="dropZone">
 
                 <?php if (empty($metricsData)): ?>
@@ -191,12 +222,14 @@ if (!empty($selectedMetrics) && $token !== '') {
                 <?php else: ?>
                     <div class="sb-cards" id="metricsDisplay">
                         <?php foreach ($metricsData as $key => $metric):
-                            $color = htmlspecialchars($metric['info']['color'] ?? '#e1306c');
-                            $bg    = htmlspecialchars($metric['info']['bg']    ?? '#fde8f0');
+                            $color = htmlspecialchars($metric['info']['color'] ?? '#3b82f6');
+                            $bg    = htmlspecialchars($metric['info']['bg']    ?? '#eff6ff');
                             // Link naar de generieke detailpagina met metric + network als URL-parameters
-                            $detailUrl = 'metric_detail.php?metric=' . urlencode($key) . '&network=instagram&from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=' . urlencode($selectedSection);
+                            $detailUrl = 'metric_detail.php?metric=' . urlencode($key) . '&network=facebook&from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=' . urlencode($selectedSection);
                         ?>
-                            <a href="<?= $detailUrl ?>" class="sb-card-link" data-metric="<?= htmlspecialchars($key) ?>"
+                            <a href="<?= $detailUrl ?>"
+                               class="sb-card-link"
+                               data-metric="<?= htmlspecialchars($key) ?>"
                                style="--card-color: <?= $color ?>; --card-bg: <?= $bg ?>;">
                                 <div class="sb-card" style="--card-color: <?= $color ?>; --card-bg: <?= $bg ?>;">
                                     <div class="sb-card-header">
@@ -204,26 +237,50 @@ if (!empty($selectedMetrics) && $token !== '') {
                                             <span class="sb-card-label"><?= htmlspecialchars($metric['info']['label']) ?></span>
                                         </div>
                                         <div class="sb-card-actions">
-                                            <span class="sb-card-open">Details <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-                                            <button type="button" class="sb-card-remove" onclick="event.preventDefault(); removeMetric('<?= htmlspecialchars($key) ?>')">×</button>
+                                            <span class="sb-card-open">
+                                                Details
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                                                </svg>
+                                            </span>
+                                            <button type="button" class="sb-card-remove"
+                                                    onclick="event.preventDefault(); removeMetric('<?= htmlspecialchars($key) ?>')">×</button>
                                         </div>
                                     </div>
-                                    <div class="sb-card-avg"><?= formatValue($metric['data']['averageValue'], $key) ?></div>
+
+                                    <div class="sb-card-avg">
+                                        <?= formatValue($metric['data']['averageValue'], $key) ?>
+                                    </div>
+
                                     <div class="sb-card-stats">
-                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Highest</div><div class="sb-card-stat-value"><?= formatValue($metric['data']['maxValue'], $key) ?></div></div>
-                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Lowest</div><div class="sb-card-stat-value"><?= formatValue($metric['data']['minValue'], $key) ?></div></div>
-                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Median</div><div class="sb-card-stat-value"><?= formatValue($metric['data']['medianValue'], $key) ?></div></div>
-                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Datapoints</div><div class="sb-card-stat-value"><?= $metric['data']['dataPointCount'] ?></div></div>
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label">Hoogste</div>
+                                            <div class="sb-card-stat-value"><?= formatValue($metric['data']['maxValue'], $key) ?></div>
+                                        </div>
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label">Laagste</div>
+                                            <div class="sb-card-stat-value"><?= formatValue($metric['data']['minValue'], $key) ?></div>
+                                        </div>
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label">Mediaan</div>
+                                            <div class="sb-card-stat-value"><?= formatValue($metric['data']['medianValue'], $key) ?></div>
+                                        </div>
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label">Datapunten</div>
+                                            <div class="sb-card-stat-value"><?= $metric['data']['dataPointCount'] ?></div>
+                                        </div>
                                     </div>
                                 </div>
                             </a>
                         <?php endforeach; ?>
                     </div>
+
                     <button type="button" class="sb-reset" onclick="clearAll()">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/>
+                            <polyline points="1 4 1 10 7 10"/>
+                            <path d="M3.51 15a9 9 0 1 0 .49-3"/>
                         </svg>
-                        Clear all
+                        Alles wissen
                     </button>
                 <?php endif; ?>
 
@@ -267,6 +324,7 @@ function clearAll() {
     submitForm();
 }
 
+// Drag & drop
 document.querySelectorAll('.sb-chip').forEach(chip => {
     chip.addEventListener('dragstart', e => {
         chip.classList.add('dragging');
@@ -277,8 +335,15 @@ document.querySelectorAll('.sb-chip').forEach(chip => {
 });
 
 const dropZone = document.getElementById('dropZone');
-dropZone.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; dropZone.classList.add('drag-over'); });
+
+dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    dropZone.classList.add('drag-over');
+});
+
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
 dropZone.addEventListener('drop', e => {
     e.preventDefault();
     dropZone.classList.remove('drag-over');
@@ -291,6 +356,7 @@ dropZone.addEventListener('drop', e => {
     }
 });
 
+// Auto-submit on date change
 document.querySelectorAll('input[type="date"]').forEach(input => {
     input.addEventListener('change', submitForm);
 });

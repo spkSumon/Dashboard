@@ -17,10 +17,9 @@
  */
 
 // ── 1. Authenticatie (zelfde token als de dashboards) ──
-// userId, blogId en token staan centraal.
-// Pas blogId hier één keer aan; alle platformen gebruiken dezelfde waarde.
+// userId en token zijn voor alle platforms hetzelfde.
+// blogId verschilt per platform — staat daarom in de networkConfigs hieronder.
 $userId = 4394337;
-$blogId = 5668624;
 $token  = 'YTQGUMFFSNCTTTRMJPHRVFOHDACWTAULVIIPDJQOUIJDTONUCOIJUELBHLAZQDUB';
 
 $headers = [
@@ -45,6 +44,7 @@ $headers = [
 $networkConfigs = [
     'facebook' => [
         'label'        => 'Facebook',
+        'blogId'       => 5668624,
         'dashboard'    => 'facebook_dashboard.php',
         'cssPath'      => 'styles.css',
         'postUrlBase'  => 'https://www.facebook.com/',
@@ -67,6 +67,7 @@ $networkConfigs = [
 
     'instagram' => [
         'label'        => 'Instagram',
+        'blogId'       => 6174355,
         'dashboard'    => 'instagram_dashboard.php',
         'cssPath'      => '../CSS/styles.css',
         'postUrlBase'  => 'https://www.instagram.com/p/',
@@ -88,7 +89,8 @@ $networkConfigs = [
 
     'tiktokBusiness' => [
         'label'        => 'TikTok',
-        'dashboard'    => 'tiktok_Dashboard.php',
+        'blogId'       => 5668624,  // Check of dit klopt — kijk bovenaan tiktok_dashboard.php
+        'dashboard'    => 'tiktok_dashboard.php',
         'cssPath'      => '../CSS/styles.css',
         'postUrlBase'  => 'https://www.tiktok.com/',
         'postEndpoints'=> [
@@ -172,7 +174,7 @@ if ($token !== '') {
         'network'  => $network,           // dynamisch i.p.v. hardcoded 'facebook'
         'timezone' => 'Europe/Brussels',
         'userId'   => $userId,
-        'blogId'   => $blogId,
+        'blogId'   => $netConfig['blogId'],  // per platform ander blogId
         'subject'  => $section,
         'metric'   => $metricInfo['api'],
     ], $headers);
@@ -200,7 +202,7 @@ if ($token !== '') {
         'to'       => $toIso,
         'timezone' => 'Europe/Brussels',
         'userId'   => $userId,
-        'blogId'   => $blogId,
+        'blogId'   => $netConfig['blogId'],  // per platform ander blogId
         'orderBy'  => $metricInfo['api'],
         'orderDir' => 'desc',
         'limit'    => 10,
@@ -259,7 +261,7 @@ $cssPath       = $netConfig['cssPath'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($label) ?> — <?= htmlspecialchars($platformLabel) ?> · SkyByte</title>
-    <link rel="stylesheet" href="../CSS/styles.css">
+    <link rel="stylesheet" href="<?= htmlspecialchars($cssPath) ?>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         body { background: #f0f2f7; }
@@ -495,14 +497,14 @@ $cssPath       = $netConfig['cssPath'];
     </style>
 </head>
 <body>
-<div class="sb-page">
+<div class="sb-page" style="--metric-color: <?= htmlspecialchars($color) ?>; --metric-bg: <?= htmlspecialchars($bg) ?>;">
 
     <!-- Navbar: het 'active' platform wordt dynamisch gezet op basis van $network -->
     <nav class="navbar">
         <a href="config.php" class="nav-link">Inbox</a>
         <a href="facebook_dashboard.php"  class="nav-link <?= $network === 'facebook'       ? 'active' : '' ?>">Facebook</a>
         <a href="instagram_dashboard.php" class="nav-link <?= $network === 'instagram'      ? 'active' : '' ?>">Instagram</a>
-        <a href="tiktok_Dashboard.php"    class="nav-link <?= $network === 'tiktokBusiness' ? 'active' : '' ?>">TikTok</a>
+        <a href="tiktok_dashboard.php"    class="nav-link <?= $network === 'tiktokBusiness' ? 'active' : '' ?>">TikTok</a>
     </nav>
 
     <!-- Breadcrumb -->
