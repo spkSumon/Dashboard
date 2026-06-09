@@ -117,10 +117,40 @@ function callFathom($url, $params, $apiKey) {
     return $data;
 }
 
+function cleanCache($dir, $maxAge = 3600) {
+    if (!is_dir($dir)) return;
+
+    foreach (glob($dir . '*.json') as $file) {
+        if (time() - filemtime($file) > $maxAge) {
+            unlink($file);
+        }
+    }
+}
+
+function limitCacheSize($dir, $maxFiles = 20) {
+    if (!is_dir($dir)) return;
+
+    $files = glob($dir . '*.json');
+
+    if (count($files) <= $maxFiles) return;
+
+    usort($files, fn($a, $b) => filemtime($a) - filemtime($b));
+
+    $filesToDelete = array_slice($files, 0, count($files) - $maxFiles);
+
+    foreach ($filesToDelete as $file) {
+        unlink($file);
+    }
+}
+
 function cachedCall($key, $callback, $ttl = 60) {
     $dir = __DIR__ . '/cache/';
     $file = $dir . md5($key) . '.json';
-
+    
+    if (rand(1, 20) === 1) {
+    cleanCache($dir, 3600);    
+    limitCacheSize($dir, 200); 
+}
     if (!is_dir($dir)) {
         mkdir($dir, 0777, true);
     }
