@@ -44,7 +44,6 @@ if (!empty($_GET['date_from']) && !empty($_GET['date_to'])) {
 }
 
 // API URLs
-$urlsite = "https://api.usefathom.com/v1/sites/$SITE_ID";
 $url = "https://api.usefathom.com/v1/current_visitors?site_id=$SITE_ID";
 $urldata = "https://api.usefathom.com/v1/aggregations";
 
@@ -91,31 +90,60 @@ function callFathom($url, $params, $apiKey) {
 
     $ch = curl_init($url);
 
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "Authorization: Bearer $apiKey",
-        "Accept: application/json"
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            "Authorization: Bearer $apiKey",
+            "Accept: application/json"
+        ],
+        CURLOPT_TIMEOUT => 5,
+        CURLOPT_CONNECTTIMEOUT => 2
     ]);
 
     $response = curl_exec($ch);
 
     if ($response === false) {
-        die('cURL error: ' . curl_error($ch));
+        return ['error' => curl_error($ch)];
     }
 
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    return json_decode($response, true);
+    $data = json_decode($response, true);
+
+    if (!is_array($data)) {
+        return ['error' => 'Invalid JSON'];
+    }
+
+    return $data;
+}
+
+function cachedCall($key, $callback, $ttl = 60) {
+    $dir = __DIR__ . '/cache/';
+    $file = $dir . md5($key) . '.json';
+
+    if (!is_dir($dir)) {
+        mkdir($dir, 0777, true);
+    }
+
+    if (file_exists($file)) {
+        if (time() - filemtime($file) < $ttl) {
+            return json_decode(file_get_contents($file), true);
+        } else {
+            unlink($file); 
+        }
+    }
+
+    $data = $callback();
+    file_put_contents($file, json_encode($data));
+
+    return $data;
 }
 
 
-
-$currentVisitors = callFathom($url, [], $API_KEY);
-$data = callFathom($urldata, $params, $API_KEY);
-$UTM = callFathom($urldata, $paramsUTM, $API_KEY);
-$graphic = callFathom($urldata, $paramsWeekDaily, $API_KEY);
-$siteData = callFathom($urlsite, [], $API_KEY);
+$currentVisitors = cachedCall('visitors_'.$dateFrom.$dateTo, fn() => callFathom($url, [], $API_KEY));
+$data = cachedCall('data_'.$dateFrom.$dateTo, fn() => callFathom($urldata, $params, $API_KEY));
+$UTM = cachedCall('utm_'.$dateFrom.$dateTo, fn() => callFathom($urldata, $paramsUTM, $API_KEY));
+$graphic = cachedCall('graphic_'.$dateFrom.$dateTo, fn() => callFathom($urldata, $paramsWeekDaily, $API_KEY));
 
 
 $graphicinfo = array_values($graphic);
@@ -235,24 +263,32 @@ $totalAvgDuration = $totalVisits > 0 ? $totalAvg_duration / $totalVisits : 0;
     <link rel="stylesheet" href="../CSS/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<!-- Geen dubbele <head> meer — nav zit correct in <body>.
-     Alle Tailwind-klassen zijn verwijderd. De styles.css bevat
-     regels via body:has(#realtimeD) die deze pagina automatisch
-     stylen op basis van de HTML-structuur. -->
-<body>
+<!--
+Styling:
+    - styles.css bevat regels die gebruik maken van body:has(#realtimeD)
+    - Hierdoor wordt deze pagina automatisch gestyled op basis van de HTML-structuur
+-->
+<body >
 
-<!-- Navigatie: styles.css target dit via body:has(#realtimeD) nav
-     en voegt automatisch het SkyByte-woordmerk toe via ::before -->
-<nav>
-    <a href="fathom-info2.php">Fathom</a>
+<!--
+Navigatie:
+    - Wordt gestyled via body:has(#realtimeD) nav in styles.css
+    - Het SkyByte-woordmerk wordt automatisch toegevoegd via ::before
+-->
+<nav class="navbar">
+    <a href="../api/config.php" class="nav-link">Inbox</a>
     <a href="../api/instagram_dashboard.php">Instagram</a>
     <a href="../api/tiktok_dashboard.php">TikTok</a>
     <a href="../api/facebook_dashboard.php">Facebook</a>
+    <a href="fathom-info2.php">Fathom Analytics</a>
 </nav>
 
-<!-- KPI-strip: styles.css target dit via section:has(> #realtimeD)
-     en maakt er automatisch een grid van + voegt de paginatitel
-     "Website analytics" toe via ::before -->
+
+<!--
+KPI-strip:
+    - Wordt automatisch als grid weergegeven
+    - Paginatitel "Website analytics" wordt toegevoegd via ::before
+-->
 <section>
 
     <div id="realtimeD">
@@ -309,7 +345,7 @@ function setupTooltip(triggerId, tooltipId) {
     trigger.addEventListener("mouseenter", () => {
         hoverTimer = setTimeout(() => {
             tooltip.classList.remove("hidden");
-        }, 1000);
+        }, 700);
     });
 
     trigger.addEventListener("mouseleave", () => {
@@ -317,13 +353,18 @@ function setupTooltip(triggerId, tooltipId) {
         tooltip.classList.add("hidden");
     });
 }
+const tooltips = [
+    ["realtimeD", "exp-realtime"],
+    ["visitsD", "exp-visits"],
+    ["pageviewsD", "exp-pageviews"],
+    ["viewsD", "exp-vpv"],
+    ["bounceD", "exp-bounce"],
+    ["durationD", "exp-duration"],
+];
 
-setupTooltip("realtimeD", "exp-realtime");
-setupTooltip("visitsD", "exp-visits");
-setupTooltip("pageviewsD", "exp-pageviews");
-setupTooltip("viewsD", "exp-vpv");
-setupTooltip("bounceD", "exp-bounce");
-setupTooltip("durationD", "exp-duration");
+tooltips.forEach(([trigger, tooltip]) => {
+    setupTooltip(trigger, tooltip);
+});
 </script>
 
 
@@ -381,7 +422,37 @@ setupTooltip("durationD", "exp-duration");
         <?php endforeach; ?>
     </ul>
 </section>
+<section>
+    <table>
+    <caption>Website analytics</caption>
 
+    <thead>
+        <tr>
+            <th scope="col">Page</th>
+            <th scope="col">Visits</th>
+            <th scope="col">Views</th>
+            <th scope="col">Views per visit</th>
+            <th scope="col">Bounce rate</th>
+            <th scope="col">Avg duration</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        
+        <?php foreach ($grouped as $site): ?>
+            <tr>
+                <th scope="row"><?= htmlspecialchars($site['name']) ?></th>
+                <td><?= $site['visits'] ?></td>
+                <td><?= $site['views'] ?></td>
+                <td><?= number_format($site['views_per_visit'], 2) ?> vpv</td>
+                <td><?= number_format($site['bounce_rate'], 2) ?>% bounce rate</td>
+                <td><?= gmdate("i:s", (int)(round($site['avg_duration']))) ?> avg duration</td>
+            </tr>
+        <?php endforeach; ?>
+    </tbody>
+
+</table>
+</section>
 <!-- UTM-data lijst -->
 <section>
     <ul>
@@ -452,7 +523,6 @@ setupTooltip("durationD", "exp-duration");
         <div id="result"></div>
         <button onclick="copyLink()">Kopieer link</button>
     </div>
-
 </section>
 
 <!-- Alle JavaScript in één blok — geen dubbele functies meer -->
