@@ -1687,3 +1687,537 @@ td { font-size: 14px; color: var(--ink); }
     font-size: 12px;
     font-weight: 500;
 }
+/* ============================================================
+   METRIC DETAIL PAGINA (metric_detail.php)
+   Zelfde redactionele taal als de rest: witruimte, dunne lijnen,
+   serif voor grote getallen, geen kaders of schaduwen.
+   ============================================================ */
+
+/* Breadcrumb — kleine grijze navigatietekst */
+.sb-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+}
+.sb-breadcrumb a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.sb-breadcrumb a:hover { color: var(--accent); }
+.sb-breadcrumb-sep { opacity: 0.4; }
+.sb-breadcrumb-current { color: var(--ink); }
+
+/* Terug-link — zelfde als .sb-quick-btn: onderstreepte tekst */
+.sb-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    margin-bottom: 40px;
+    transition: color 0.15s;
+}
+.sb-back:hover { color: var(--accent); }
+
+/* Paginatitel-blok: hergebruik .sb-title + .sb-subtitle, maar
+   zonder de grote ondermarge (de stats volgen direct). */
+.sb-detail-header {
+    margin-bottom: 40px;
+}
+.sb-detail-header .sb-title  { margin-bottom: 6px; }
+.sb-detail-header .sb-subtitle { margin-bottom: 0; }
+
+/* Stats-rij: hergebruik de bestaande .stats-grid maar met een
+   vaste 4-kolommen layout op breed scherm. */
+.sb-detail-stats {
+    grid-template-columns: repeat(4, 1fr);
+    margin-bottom: 56px;
+}
+@media (max-width: 768px) {
+    .sb-detail-stats { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+    .sb-detail-stats { grid-template-columns: 1fr; }
+}
+
+/* Secties (grafiek + tabel): dunne lijn erboven, royale witruimte */
+.sb-detail-section {
+    padding-top: 40px;
+    border-top: 1px solid var(--rule-soft);
+    margin-bottom: 56px;
+}
+
+/* Sectie-label boven grafiek en tabel */
+.sb-section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    font-weight: 600;
+    margin-bottom: 24px;
+    font-family: var(--sans);
+}
+
+/* Grafiek */
+.sb-chart-wrap {
+    position: relative;
+    height: 280px;
+    width: 100%;
+}
+
+/* Detail-tabel: bouwt op de globale table/th/td regels, voegt
+   alleen de post-specifieke kolommen en rij-interactie toe. */
+.sb-detail-table { margin-top: 0; }
+
+.sb-detail-table .col-rank  { width: 40px; }
+.sb-detail-table .col-date  { width: 120px; white-space: nowrap; }
+.sb-detail-table .col-metric { width: 110px; text-align: right; }
+.sb-detail-table th.col-metric { text-align: right; }
+
+.sb-post-row--link { cursor: pointer; }
+.sb-post-row--link:hover td { opacity: 0.7; }
+
+/* Rangnummer */
+.sb-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    font-family: var(--sans);
+}
+/* Top-3 krijgt accentkleur als tekst (geen vlak, past bij de stijl) */
+.sb-rank--top {
+    color: var(--accent);
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 400;
+}
+
+/* Thumbnail + tekst naast elkaar */
+.sb-post-thumb-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.sb-post-thumb {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border-radius: 2px;
+}
+.sb-post-thumb--empty {
+    background: var(--rule-soft);
+}
+.sb-post-text {
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    color: var(--ink);
+}
+
+/* Datum-kolom */
+.sb-post-date {
+    font-size: 13px;
+    color: var(--ink-soft);
+}
+
+/* Metric-waarde rechts uitlijnen, accentkleur */
+.sb-metric-value {
+    text-align: right;
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+}
+/* ============================================================
+   METRIC DETAIL PAGINA (metric_detail.php)
+   Zelfde redactionele taal als de rest: witruimte, dunne lijnen,
+   serif voor grote getallen, geen kaders of schaduwen.
+   ============================================================ */
+
+/* Breadcrumb — kleine grijze navigatietekst */
+.sb-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+}
+.sb-breadcrumb a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.sb-breadcrumb a:hover { color: var(--accent); }
+.sb-breadcrumb-sep { opacity: 0.4; }
+.sb-breadcrumb-current { color: var(--ink); }
+
+/* Terug-link — zelfde als .sb-quick-btn: onderstreepte tekst */
+.sb-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    margin-bottom: 40px;
+    transition: color 0.15s;
+}
+.sb-back:hover { color: var(--accent); }
+
+/* Paginatitel-blok: hergebruik .sb-title + .sb-subtitle, maar
+   zonder de grote ondermarge (de stats volgen direct). */
+.sb-detail-header {
+    margin-bottom: 40px;
+}
+.sb-detail-header .sb-title  { margin-bottom: 6px; }
+.sb-detail-header .sb-subtitle { margin-bottom: 0; }
+
+/* Stats-rij: hergebruik de bestaande .stats-grid maar met een
+   vaste 4-kolommen layout op breed scherm. */
+.sb-detail-stats {
+    grid-template-columns: repeat(4, 1fr);
+    margin-bottom: 56px;
+}
+@media (max-width: 768px) {
+    .sb-detail-stats { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+    .sb-detail-stats { grid-template-columns: 1fr; }
+}
+
+/* Secties (grafiek + tabel): dunne lijn erboven, royale witruimte */
+.sb-detail-section {
+    padding-top: 40px;
+    border-top: 1px solid var(--rule-soft);
+    margin-bottom: 56px;
+}
+
+/* Sectie-label boven grafiek en tabel */
+.sb-section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    font-weight: 600;
+    margin-bottom: 24px;
+    font-family: var(--sans);
+}
+
+/* Grafiek */
+.sb-chart-wrap {
+    position: relative;
+    height: 280px;
+    width: 100%;
+}
+
+/* Detail-tabel: bouwt op de globale table/th/td regels, voegt
+   alleen de post-specifieke kolommen en rij-interactie toe. */
+.sb-detail-table { margin-top: 0; }
+
+.sb-detail-table .col-rank  { width: 40px; }
+.sb-detail-table .col-date  { width: 120px; white-space: nowrap; }
+.sb-detail-table .col-metric { width: 110px; text-align: right; }
+.sb-detail-table th.col-metric { text-align: right; }
+
+.sb-post-row--link { cursor: pointer; }
+.sb-post-row--link:hover td { opacity: 0.7; }
+
+/* Rangnummer */
+.sb-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    font-family: var(--sans);
+}
+/* Top-3 krijgt accentkleur als tekst (geen vlak, past bij de stijl) */
+.sb-rank--top {
+    color: var(--accent);
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 400;
+}
+
+/* Thumbnail + tekst naast elkaar */
+.sb-post-thumb-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.sb-post-thumb {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border-radius: 2px;
+}
+.sb-post-thumb--empty {
+    background: var(--rule-soft);
+}
+.sb-post-text {
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    color: var(--ink);
+}
+
+/* Datum-kolom */
+.sb-post-date {
+    font-size: 13px;
+    color: var(--ink-soft);
+}
+
+/* Metric-waarde rechts uitlijnen, accentkleur */
+.sb-metric-value {
+    text-align: right;
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+}
+
+/* Totaalrij onderaan de detail-tabel */
+.sb-total-row td {
+    border-top: 1px solid var(--rule);
+    border-bottom: none;
+    padding-top: 16px;
+    padding-bottom: 4px;
+}
+.sb-total-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    font-weight: 600;
+}
+.sb-total-value {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--accent) !important;
+}
+/* ============================================================
+   METRIC DETAIL PAGINA (metric_detail.php)
+   Zelfde redactionele taal als de rest: witruimte, dunne lijnen,
+   serif voor grote getallen, geen kaders of schaduwen.
+   ============================================================ */
+
+/* Breadcrumb — kleine grijze navigatietekst */
+.sb-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+}
+.sb-breadcrumb a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.sb-breadcrumb a:hover { color: var(--accent); }
+.sb-breadcrumb-sep { opacity: 0.4; }
+.sb-breadcrumb-current { color: var(--ink); }
+
+/* Terug-link — zelfde als .sb-quick-btn: onderstreepte tekst */
+.sb-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    margin-bottom: 40px;
+    transition: color 0.15s;
+}
+.sb-back:hover { color: var(--accent); }
+
+/* Paginatitel-blok: hergebruik .sb-title + .sb-subtitle, maar
+   zonder de grote ondermarge (de stats volgen direct). */
+.sb-detail-header {
+    margin-bottom: 40px;
+}
+.sb-detail-header .sb-title  { margin-bottom: 6px; }
+.sb-detail-header .sb-subtitle { margin-bottom: 0; }
+
+/* Stats-rij: hergebruik de bestaande .stats-grid maar met een
+   vaste 4-kolommen layout op breed scherm. */
+.sb-detail-stats {
+    grid-template-columns: repeat(4, 1fr);
+    margin-bottom: 56px;
+}
+@media (max-width: 768px) {
+    .sb-detail-stats { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+    .sb-detail-stats { grid-template-columns: 1fr; }
+}
+
+/* Secties (grafiek + tabel): dunne lijn erboven, royale witruimte */
+.sb-detail-section {
+    padding-top: 40px;
+    border-top: 1px solid var(--rule-soft);
+    margin-bottom: 56px;
+}
+
+/* Sectie-label boven grafiek en tabel */
+.sb-section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    font-weight: 600;
+    margin-bottom: 24px;
+    font-family: var(--sans);
+}
+
+/* Grafiek */
+.sb-chart-wrap {
+    position: relative;
+    height: 280px;
+    width: 100%;
+}
+
+/* Detail-tabel: bouwt op de globale table/th/td regels, voegt
+   alleen de post-specifieke kolommen en rij-interactie toe. */
+.sb-detail-table { margin-top: 0; }
+
+.sb-detail-table .col-rank  { width: 40px; }
+.sb-detail-table .col-date  { width: 120px; white-space: nowrap; }
+.sb-detail-table .col-metric { width: 110px; text-align: right; }
+.sb-detail-table th.col-metric { text-align: right; }
+
+.sb-post-row--link { cursor: pointer; }
+.sb-post-row--link:hover td { opacity: 0.7; }
+
+/* Rangnummer */
+.sb-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    font-family: var(--sans);
+}
+/* Top-3 krijgt accentkleur als tekst (geen vlak, past bij de stijl) */
+.sb-rank--top {
+    color: var(--accent);
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 400;
+}
+
+/* Thumbnail + tekst naast elkaar */
+.sb-post-thumb-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.sb-post-thumb {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border-radius: 2px;
+}
+.sb-post-thumb--empty {
+    background: var(--rule-soft);
+}
+.sb-post-text {
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    color: var(--ink);
+}
+
+/* Datum-kolom */
+.sb-post-date {
+    font-size: 13px;
+    color: var(--ink-soft);
+}
+
+/* Metric-waarde rechts uitlijnen, accentkleur */
+.sb-metric-value {
+    text-align: right;
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+}
+
+/* Totaalrij onderaan de detail-tabel */
+.sb-total-row td {
+    border-top: 1px solid var(--rule);
+    border-bottom: none;
+    padding-top: 16px;
+    padding-bottom: 4px;
+}
+.sb-total-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    font-weight: 600;
+}
+.sb-total-value {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--accent) !important;
+}
+
+/* Inbox reply warning (te oud bericht) */
+.sb-reply-warning {
+    font-size: 12px;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--rule);
+    padding: 8px 0 8px 12px;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+.sb-reply-input:disabled,
+.sb-reply-send:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
