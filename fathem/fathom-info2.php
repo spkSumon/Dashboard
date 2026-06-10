@@ -1,6 +1,5 @@
 <?php
 
-ob_start(); 
 
 // Fathom Analytics dashboard
 // SITE_ID=WGXUYRJQ
@@ -13,7 +12,7 @@ $range = $_GET['range'] ?? '7days';
 
 // Custom datumkiezer — als date_from en date_to meegegeven worden via GET,
 // gebruiken we die i.p.v. de range-knoppen. Zo werkt het datumformulier ook echt.
-;
+
 if (!empty($_GET['date_from']) && !empty($_GET['date_to'])) {
     $dateFrom = $_GET['date_from'];
     $dateTo   = $_GET['date_to'];
@@ -52,7 +51,7 @@ elseif ($diffDays <= 90) {
             break;
     }
 }
-echo "Custom range: $dateFrom to $dateTo, grouping by $date_grouping";
+
 // API URLs
 $url = "https://api.usefathom.com/v1/current_visitors?site_id=$SITE_ID";
 $urldata = "https://api.usefathom.com/v1/aggregations";
@@ -170,17 +169,17 @@ function manageCache($dir, $maxAge = 3600, $maxFiles = 50) {
 
     $files = glob($dir . '*.json');
 
-    // Удаляем старые файлы
+    
     foreach ($files as $file) {
         if (time() - filemtime($file) > $maxAge) {
             unlink($file);
         }
     }
 
-    // Обновляем список
+    
     $files = glob($dir . '*.json');
 
-    // Ограничиваем количество файлов
+    
     if (count($files) > $maxFiles) {
         usort($files, fn($a, $b) => filemtime($a) - filemtime($b));
         $filesToDelete = array_slice($files, 0, count($files) - $maxFiles);
@@ -200,10 +199,12 @@ function cachedCall($key, $callback, $ttl = 300) {
         mkdir($dir, 0777, true);
     }
 
-    // 🔥 ВАЖНО: чистим кэш при каждом вызове
+    
+    if (rand(1, 50) === 1) {
     manageCache($dir, 3600, 50);
+    }
 
-    // Используем кеш если он свежий
+    
     if (file_exists($file) && (time() - filemtime($file) < $ttl)) {
         $cached = json_decode(file_get_contents($file), true);
 
@@ -212,15 +213,15 @@ function cachedCall($key, $callback, $ttl = 300) {
         }
     }
 
-    // Делаем API запрос
+    
     $data = $callback();
 
-    // Если ошибка API
+    
     if (!is_array($data) || isset($data['error'])) {
 
         error_log("API ERROR [$key]: " . json_encode($data));
 
-        // fallback → старый кеш
+        
         if (file_exists($file)) {
             return json_decode(file_get_contents($file), true);
         }
@@ -228,16 +229,16 @@ function cachedCall($key, $callback, $ttl = 300) {
         return $data;
     }
 
-    // Сохраняем в кеш
+    
     file_put_contents($file, json_encode($data));
 
     return $data;
 }
 
 $currentVisitors = callFathom($url, [], $API_KEY);
-$data = cachedCall('data_'.$dateFrom.$dateTo, fn() => callFathom($urldata, $params, $API_KEY));
-$UTM = cachedCall('utm_'.$dateFrom.$dateTo, fn() => callFathom($urldata, $paramsUTM, $API_KEY));
-$graphic = cachedCall('graphic_'.$dateFrom.$dateTo, fn() => callFathom($urldata, $paramsWeekDaily, $API_KEY));
+$data = cachedCall("data_{$dateFrom}_{$dateTo}_{$date_grouping}", fn() => callFathom($urldata, $params, $API_KEY));
+$graphic = cachedCall("graphic_{$dateFrom}_{$dateTo}_{$date_grouping}", fn() => callFathom($urldata, $paramsWeekDaily, $API_KEY));
+$UTM = cachedCall("utm_{$dateFrom}_{$dateTo}_{$date_grouping}", fn() => callFathom($urldata, $paramsUTM, $API_KEY));
 
 $graphicinfo = array_values($graphic);
 $values = [];
@@ -249,8 +250,8 @@ foreach ($graphicinfo as $element) {
     //     continue;
     // }
 
-    $values[] = $element["visits"];
-    $datums[] = $element["date"];
+    $values[] = $element["visits"] ?? 0;;
+    $datums[] = $element["date"] ?? '';
 }
 
 
@@ -349,13 +350,6 @@ foreach ($data as $loll => $site) {
         $grouped[$name]['visits'] > 0 ? $grouped[$name]['bounce_sum'] / $grouped[$name]['visits'] : 0;
 }}
 
-$grouped = array_values($grouped);
-
-$sortBy = $_GET['sort'] ?? 'visits';
-
-usort($grouped, function($a, $b) use ($sortBy) {
-    return ($b[$sortBy] ?? 0) <=> ($a[$sortBy] ?? 0);
-});
 
 $totalViewsPerVisit = $totalVisits > 0 ? $totalPageViews / $totalVisits : 0;
 $totalBounceRate = $totalVisits > 0 ? $totalBounceWeighted / $totalVisits : 0;
@@ -377,6 +371,8 @@ Styling:
     - Hierdoor wordt deze pagina automatisch gestyled op basis van de HTML-structuur
 -->
 <body >
+
+
 
 <!--
 Navigatie:
@@ -485,39 +481,23 @@ KPI-strip:
 
 <!-- Referrer-lijst: styles.css target via section > ul > li
      en maakt er automatisch een platte lijst met hairlines van -->
-<!-- <section>
 
-    <ul>
-        <?php foreach ($grouped as $site): ?>
-            <li>
-                <span><?= htmlspecialchars($site['name']) ?></span>
-                <span>
-                    <?= $site['visits'] ?> visits |
-                    <?= $site['views'] ?> views |
-                    <?= number_format($site['views_per_visit'], 0) ?> vpv |
-                    <?= number_format($site['bounce_rate'], 0) ?>% bounce rate |
-                    <?= gmdate("i:s", (int)(round($site['avg_duration']))) ?> avg duration
-                </span>
-            </li>
-        <?php endforeach; ?>
-    </ul>
-</section> -->
 <?php 
 $grouped = array_values($grouped);
-echo "<script>console.log(" . json_encode($grouped) . ");</script>";   
 $sort = $_GET['sort'] ?? 'visits';
 $order = $_GET['order'] ?? 'desc';
 
-function getArrow($column, $sort, $order) {
-    if ($column !== $sort) return '';
-    return $order === 'asc' ? ' ↑' : ' ↓';
+function sortUrl(string $col, string $currentSort, string $currentOrder): string {
+    $params = array_merge($_GET, [
+        'sort'  => $col,
+        'order' => $col === $currentSort && $currentOrder === 'asc' ? 'desc' : 'asc',
+    ]);
+    return '?' . http_build_query($params);
 }
 
-function nextOrder($column, $sort, $order) {
-    if ($column === $sort && $order === 'asc') {
-        return 'desc';
-    }
-    return 'asc';
+function getArrow(string $col, string $sort, string $order): string {
+    if ($col !== $sort) return '';
+    return $order === 'asc' ? ' ↑' : ' ↓';
 }
 usort($grouped, function($a, $b) use ($sort, $order) {
     $result = $a[$sort] <=> $b[$sort];
@@ -529,7 +509,7 @@ usort($grouped, function($a, $b) use ($sort, $order) {
         <thead>
             <tr>
                 <th scope="col" id="pagenameTable" class="">
-                    <a href="?sort=name&order=<?= nextOrder('name', $sort, $order) ?>">
+                    <a href="<?= sortUrl('name', $sort, $order) ?>">
                         Page<?= getArrow('name', $sort, $order) ?>
                     </a>
                     
@@ -538,13 +518,13 @@ usort($grouped, function($a, $b) use ($sort, $order) {
                     </div>
                 </th>
                 <th scope="col" id="visitsTable"  >
-                    <a href="?sort=visits&order=<?= nextOrder('visits', $sort, $order) ?>">Visits<?= getArrow('visits', $sort, $order) ?></a>
+                    <a href="<?= sortUrl('visits', $sort, $order) ?>">Visits<?= getArrow('visits', $sort, $order) ?></a>
                     <div id="table-visits" class="hidden">
                         Het aantal keren dat mensen de website bezoeken.
                     </div>
                 </th>
                 <th scope="col" id="pageviewsTable"  >
-                    <a href="?sort=views&order=<?= nextOrder('views', $sort, $order) ?>">
+                    <a href="<?= sortUrl('views', $sort, $order) ?>">
                         Views<?= getArrow('views', $sort, $order) ?>
                         </a>
                     <div id="table-pageviews" class="hidden">
@@ -553,7 +533,7 @@ usort($grouped, function($a, $b) use ($sort, $order) {
                 </th>
 
                 <th scope="col" id="viewsPerVisitTable" >
-                    <a href="?sort=views_per_visit&order=<?= nextOrder('views_per_visit', $sort, $order) ?>">
+                    <a href="<?= sortUrl('views_per_visit', $sort, $order) ?>">
                         Views per visit<?= getArrow('views_per_visit', $sort, $order) ?>
                         </a>
                     <div id="table-views-per-visit" class="hidden">
@@ -561,7 +541,7 @@ usort($grouped, function($a, $b) use ($sort, $order) {
                     </div>
                 </th>
                 <th scope="col" id="bounceRateTable"  >
-                    <a href="?sort=bounce_rate&order=<?= nextOrder('bounce_rate', $sort, $order) ?>">
+                    <a href="<?= sortUrl('bounce_rate', $sort, $order) ?>">
                         Bounce rate<?= getArrow('bounce_rate', $sort, $order) ?>
                     </a>
                     <div id="table-bounce-rate" class="hidden">
@@ -569,7 +549,7 @@ usort($grouped, function($a, $b) use ($sort, $order) {
                     </div>
                 </th>
                 <th scope="col" id="avgDurationTable"  >
-                    <a href="?sort=avg_duration&order=<?= nextOrder('avg_duration', $sort, $order) ?>">
+                    <a href="<?= sortUrl('avg_duration', $sort, $order) ?>">
                         Avg duration<?= getArrow('avg_duration', $sort, $order) ?>
                     </a>
                     <div id="table-avg-duration" class="hidden">
@@ -703,17 +683,7 @@ const tooltips = [
 tooltips.forEach(([trigger, tooltip]) => {
     setupTooltip(trigger, tooltip);
 });
-    // const hasError = 
-    // 
-
-    // if (hasError) {
-    //     document.getElementById("Chart").outerHTML = `
-    //         <h2 style="color:#b45309;">
-    //             Data is tijdelijk niet beschikbaar.<br>
-    //             Laatst opgeslagen gegevens worden weergegeven.
-    //         </h2>
-    //     `;
-    // }
+    
 
     const mediumSelect = document.getElementById('mediumSelect');
     const mediumCustom = document.getElementById('mediumCustom');
