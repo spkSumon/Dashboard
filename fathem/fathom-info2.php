@@ -1,5 +1,6 @@
 <?php
 
+ob_start(); 
 
 // Fathom Analytics dashboard
 // SITE_ID=WGXUYRJQ
@@ -20,7 +21,14 @@ if (!empty($_GET['date_from']) && !empty($_GET['date_to'])) {
 
     // Bereken hoeveel dagen het bereik is om te bepalen of we per uur of per dag groeperen
     $diffDays = (strtotime($dateTo) - strtotime($dateFrom)) / 86400;
-    $date_grouping = $diffDays < 2 ? 'hour' : 'day';
+    if ($diffDays <= 1) {
+    $date_grouping = 'hour';
+} 
+elseif ($diffDays <= 90) {
+    $date_grouping = 'day';} 
+    else {
+    $date_grouping = 'month';
+}
     
 } else {
     // Standaard range-knoppen
@@ -66,7 +74,7 @@ $paramsWeekDaily = [
     "entity" => "pageview",
     "entity_id" => $SITE_ID,
     "aggregates" => "visits",
-    "date_grouping" => $date_grouping,
+    "date_grouping" => "$date_grouping",
     "sort_by" => "timestamp:asc",
     "date_from" => $dateFrom . " 00:00:00",
     "date_to" => $dateTo . " 23:59:59",
@@ -102,103 +110,138 @@ function callFathom($url, $params, $apiKey) {
             "Accept: application/json",
             "Connection: keep-alive"
         ],
-        CURLOPT_TIMEOUT => 3,           
-        CURLOPT_CONNECTTIMEOUT => 1,    
+        CURLOPT_TIMEOUT => 5,
+        CURLOPT_CONNECTTIMEOUT => 2,
         CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_ENCODING => "",        
-        CURLOPT_FAILONERROR => false,
+        CURLOPT_ENCODING => "",
     ]);
 
     $response = curl_exec($ch);
 
-    // Ошибка curl
+    
     if ($response === false) {
-        $error = curl_error($ch);
-        curl_close($ch);
-        return ['error' => $error];
-    }
+    $error = curl_error($ch);
+    curl_close($ch);
+
+    error_log("cURL error: " . $error);
+
+    return [
+        'error' => true,
+        'type' => 'curl',
+        'message' => $error,
+        'url' => $url
+    ];
+}
 
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
-    // Обработка rate limit
-    if ($httpCode === 429) {
-        return ['error' => 'Too many requests'];
+   
+    if ($httpCode >= 400) {
+        error_log("HTTP error $httpCode: $response");
+
+        return [
+            'error' => true,
+            'code' => $httpCode,
+            'raw' => $response
+        ];
     }
 
-    // Проверка ответа
     $data = json_decode($response, true);
 
+    
     if (!is_array($data)) {
-        return ['error' => 'Invalid JSON', 'raw' => $response];
+        error_log("Invalid JSON: " . $response);
+
+        return [
+            'error' => true,
+            'message' => 'Invalid JSON',
+            'raw' => $response
+        ];
     }
 
     return $data;
 }
 
-// function cleanCache($dir, $maxAge = 3600) {
-//     if (!is_dir($dir)) return;
 
-//     foreach (glob($dir . '*.json') as $file) {
-//         if (time() - filemtime($file) > $maxAge) {
-//             unlink($file);
-//         }
-//     }
-// }
 
-// function limitCacheSize($dir, $maxFiles = 50) {
-//     if (!is_dir($dir)) return;
+function manageCache($dir, $maxAge = 3600, $maxFiles = 50) {
+    if (!is_dir($dir)) return;
 
-//     $files = glob($dir . '*.json');
+    $files = glob($dir . '*.json');
 
-//     if (count($files) <= $maxFiles) return;
+    // Удаляем старые файлы
+    foreach ($files as $file) {
+        if (time() - filemtime($file) > $maxAge) {
+            unlink($file);
+        }
+    }
 
-//     usort($files, fn($a, $b) => filemtime($a) - filemtime($b));
+    // Обновляем список
+    $files = glob($dir . '*.json');
 
-//     $filesToDelete = array_slice($files, 0, count($files) - $maxFiles);
+    // Ограничиваем количество файлов
+    if (count($files) > $maxFiles) {
+        usort($files, fn($a, $b) => filemtime($a) - filemtime($b));
+        $filesToDelete = array_slice($files, 0, count($files) - $maxFiles);
 
-//     foreach ($filesToDelete as $file) {
-//         unlink($file);
-//     }
-// }
+        foreach ($filesToDelete as $file) {
+            unlink($file);
+        }
+    }
+}
 
-function cachedCall($key, $callback, $ttl = 60) {
+
+function cachedCall($key, $callback, $ttl = 300) {
     $dir = __DIR__ . '/cache/';
     $file = $dir . md5($key) . '.json';
-    
-//     if (rand(1, 20) === 1) {
-//     cleanCache($dir, 3600);    
-//     limitCacheSize($dir, 200); 
-// }
+
     if (!is_dir($dir)) {
         mkdir($dir, 0777, true);
     }
 
-    if (file_exists($file)) {
-        if (time() - filemtime($file) < $ttl) {
-            return json_decode(file_get_contents($file), true);
-        } else {
-            unlink($file); 
+    // 🔥 ВАЖНО: чистим кэш при каждом вызове
+    manageCache($dir, 3600, 50);
+
+    // Используем кеш если он свежий
+    if (file_exists($file) && (time() - filemtime($file) < $ttl)) {
+        $cached = json_decode(file_get_contents($file), true);
+
+        if (is_array($cached)) {
+            return $cached;
         }
     }
 
+    // Делаем API запрос
     $data = $callback();
+
+    // Если ошибка API
+    if (!is_array($data) || isset($data['error'])) {
+
+        error_log("API ERROR [$key]: " . json_encode($data));
+
+        // fallback → старый кеш
+        if (file_exists($file)) {
+            return json_decode(file_get_contents($file), true);
+        }
+
+        return $data;
+    }
+
+    // Сохраняем в кеш
     file_put_contents($file, json_encode($data));
 
     return $data;
 }
 
-
-$currentVisitors = cachedCall('visitors_'.$dateFrom.$dateTo, fn() => callFathom($url, [], $API_KEY));
+$currentVisitors = callFathom($url, [], $API_KEY);
 $data = cachedCall('data_'.$dateFrom.$dateTo, fn() => callFathom($urldata, $params, $API_KEY));
 $UTM = cachedCall('utm_'.$dateFrom.$dateTo, fn() => callFathom($urldata, $paramsUTM, $API_KEY));
 $graphic = cachedCall('graphic_'.$dateFrom.$dateTo, fn() => callFathom($urldata, $paramsWeekDaily, $API_KEY));
 
-
 $graphicinfo = array_values($graphic);
 $values = [];
 $datums = [];
-// $hasError = false;
 
 foreach ($graphicinfo as $element) {
     // if (!is_array($element)) {
@@ -206,8 +249,8 @@ foreach ($graphicinfo as $element) {
     //     continue;
     // }
 
-    $values[] = $element["visits"] ?? 0;
-    $datums[] = $element["date"] ?? '';
+    $values[] = $element["visits"];
+    $datums[] = $element["date"];
 }
 
 
@@ -263,6 +306,7 @@ if (is_array($UTM)) {
 }
 
 // Referrer data groeperen per hoofddomein en totalen berekenen
+if (is_array($data)) {
 foreach ($data as $loll => $site) {
 
     $visits = (int)($site['visits'] ?? 0);
@@ -303,7 +347,15 @@ foreach ($data as $loll => $site) {
 
     $grouped[$name]['bounce_rate'] =
         $grouped[$name]['visits'] > 0 ? $grouped[$name]['bounce_sum'] / $grouped[$name]['visits'] : 0;
-}
+}}
+
+$grouped = array_values($grouped);
+
+$sortBy = $_GET['sort'] ?? 'visits';
+
+usort($grouped, function($a, $b) use ($sortBy) {
+    return ($b[$sortBy] ?? 0) <=> ($a[$sortBy] ?? 0);
+});
 
 $totalViewsPerVisit = $totalVisits > 0 ? $totalPageViews / $totalVisits : 0;
 $totalBounceRate = $totalVisits > 0 ? $totalBounceWeighted / $totalVisits : 0;
@@ -376,7 +428,7 @@ KPI-strip:
     </div>
 
     <div id="bounceD">
-        Bounce rate: <?= number_format($totalBounceRate, 2) ?>%
+        Bounce rate: <?= number_format($totalBounceRate, 0) ?>%
         <div id="exp-bounce" class="hidden">
             Percentage dat direct weggaat na 1 pagina.
         </div>
@@ -433,7 +485,8 @@ KPI-strip:
 
 <!-- Referrer-lijst: styles.css target via section > ul > li
      en maakt er automatisch een platte lijst met hairlines van -->
-<section>
+<!-- <section>
+
     <ul>
         <?php foreach ($grouped as $site): ?>
             <li>
@@ -441,51 +494,84 @@ KPI-strip:
                 <span>
                     <?= $site['visits'] ?> visits |
                     <?= $site['views'] ?> views |
-                    <?= number_format($site['views_per_visit'], 2) ?> vpv |
-                    <?= number_format($site['bounce_rate'], 2) ?>% bounce rate |
+                    <?= number_format($site['views_per_visit'], 0) ?> vpv |
+                    <?= number_format($site['bounce_rate'], 0) ?>% bounce rate |
                     <?= gmdate("i:s", (int)(round($site['avg_duration']))) ?> avg duration
                 </span>
             </li>
         <?php endforeach; ?>
     </ul>
-</section>
+</section> -->
+<?php 
+$grouped = array_values($grouped);
+echo "<script>console.log(" . json_encode($grouped) . ");</script>";   
+$sort = $_GET['sort'] ?? 'visits';
+$order = $_GET['order'] ?? 'desc';
+
+function getArrow($column, $sort, $order) {
+    if ($column !== $sort) return '';
+    return $order === 'asc' ? ' ↑' : ' ↓';
+}
+
+function nextOrder($column, $sort, $order) {
+    if ($column === $sort && $order === 'asc') {
+        return 'desc';
+    }
+    return 'asc';
+}
+usort($grouped, function($a, $b) use ($sort, $order) {
+    $result = $a[$sort] <=> $b[$sort];
+    return $order === 'asc' ? $result : -$result;
+});
+?>
 <section>
     <table>
         <thead>
             <tr>
                 <th scope="col" id="pagenameTable" class="">
-                    Page
+                    <a href="?sort=name&order=<?= nextOrder('name', $sort, $order) ?>">
+                        Page<?= getArrow('name', $sort, $order) ?>
+                    </a>
+                    
                     <div id="table-pagename" class="hidden">
                         Dit is de bron van de bezoekers (waar ze vandaan komen). 
                     </div>
                 </th>
                 <th scope="col" id="visitsTable"  >
-                    Visits 
+                    <a href="?sort=visits&order=<?= nextOrder('visits', $sort, $order) ?>">Visits<?= getArrow('visits', $sort, $order) ?></a>
                     <div id="table-visits" class="hidden">
                         Het aantal keren dat mensen de website bezoeken.
                     </div>
                 </th>
                 <th scope="col" id="pageviewsTable"  >
-                    Views
+                    <a href="?sort=views&order=<?= nextOrder('views', $sort, $order) ?>">
+                        Views<?= getArrow('views', $sort, $order) ?>
+                        </a>
                     <div id="table-pageviews" class="hidden">
                         Het totaal aantal pagina’s dat bekeken wordt.
                     </div>
                 </th>
 
                 <th scope="col" id="viewsPerVisitTable" >
-                    Views per visit
+                    <a href="?sort=views_per_visit&order=<?= nextOrder('views_per_visit', $sort, $order) ?>">
+                        Views per visit<?= getArrow('views_per_visit', $sort, $order) ?>
+                        </a>
                     <div id="table-views-per-visit" class="hidden">
                         Het gemiddelde aantal pagina’s dat iemand bekijkt per bezoek.
                     </div>
                 </th>
                 <th scope="col" id="bounceRateTable"  >
-                    Bounce rate
+                    <a href="?sort=bounce_rate&order=<?= nextOrder('bounce_rate', $sort, $order) ?>">
+                        Bounce rate<?= getArrow('bounce_rate', $sort, $order) ?>
+                    </a>
                     <div id="table-bounce-rate" class="hidden">
                         Het percentage bezoekers dat de website opent en meteen     weggaat zonder iets anders te bekijken.
                     </div>
                 </th>
                 <th scope="col" id="avgDurationTable"  >
-                    Avg duration
+                    <a href="?sort=avg_duration&order=<?= nextOrder('avg_duration', $sort, $order) ?>">
+                        Avg duration<?= getArrow('avg_duration', $sort, $order) ?>
+                    </a>
                     <div id="table-avg-duration" class="hidden">
                         De gemiddelde tijd dat een bezoeker op de website blijft.
                     </div>
@@ -501,7 +587,7 @@ KPI-strip:
                 <td><?= $site['visits'] ?></td>
                 <td><?= $site['views'] ?></td>
                 <td><?= number_format($site['views_per_visit'], 2) ?> </td>
-                <td><?= number_format($site['bounce_rate'], 2) ?>% </td>
+                <td><?= number_format($site['bounce_rate'], 0) ?>% </td>
                 <td><?= gmdate("i:s", (int)(round($site['avg_duration']))) ?> </td>
             </tr>
         <?php endforeach; ?>
