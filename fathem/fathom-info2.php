@@ -12,6 +12,7 @@ $range = $_GET['range'] ?? '7days';
 
 // Custom datumkiezer — als date_from en date_to meegegeven worden via GET,
 // gebruiken we die i.p.v. de range-knoppen. Zo werkt het datumformulier ook echt.
+;
 if (!empty($_GET['date_from']) && !empty($_GET['date_to'])) {
     $dateFrom = $_GET['date_from'];
     $dateTo   = $_GET['date_to'];
@@ -20,6 +21,7 @@ if (!empty($_GET['date_from']) && !empty($_GET['date_to'])) {
     // Bereken hoeveel dagen het bereik is om te bepalen of we per uur of per dag groeperen
     $diffDays = (strtotime($dateTo) - strtotime($dateFrom)) / 86400;
     $date_grouping = $diffDays < 2 ? 'hour' : 'day';
+    
 } else {
     // Standaard range-knoppen
     switch ($range) {
@@ -42,7 +44,7 @@ if (!empty($_GET['date_from']) && !empty($_GET['date_to'])) {
             break;
     }
 }
-
+echo "Custom range: $dateFrom to $dateTo, grouping by $date_grouping";
 // API URLs
 $url = "https://api.usefathom.com/v1/current_visitors?site_id=$SITE_ID";
 $urldata = "https://api.usefathom.com/v1/aggregations";
@@ -52,6 +54,7 @@ $params = [
     "entity" => "pageview",
     "entity_id" => $SITE_ID,
     "aggregates" => "visits,pageviews,bounce_rate,avg_duration",
+    "date_grouping" => $date_grouping,
     "field_grouping" => "referrer_hostname",
     "sort_by" => "visits:desc",
     "date_from" => $dateFrom . " 00:00:00",
@@ -74,6 +77,7 @@ $paramsWeekDaily = [
 $paramsUTM = [
     "entity" => "pageview",
     "entity_id" => $SITE_ID,
+    "date_grouping" => $date_grouping,
     "aggregates" => "visits,pageviews,bounce_rate,avg_duration",
     "field_grouping" => "utm_source,utm_medium,utm_campaign",
     "sort_by" => "visits:desc",
@@ -88,69 +92,84 @@ function callFathom($url, $params, $apiKey) {
         $url .= '?' . http_build_query($params);
     }
 
-    $ch = curl_init($url);
+    $ch = curl_init();
 
     curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_HTTPHEADER => [
             "Authorization: Bearer $apiKey",
-            "Accept: application/json"
+            "Accept: application/json",
+            "Connection: keep-alive"
         ],
-        CURLOPT_TIMEOUT => 5,
-        CURLOPT_CONNECTTIMEOUT => 2
+        CURLOPT_TIMEOUT => 3,           
+        CURLOPT_CONNECTTIMEOUT => 1,    
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_ENCODING => "",        
+        CURLOPT_FAILONERROR => false,
     ]);
 
     $response = curl_exec($ch);
 
+    // Ошибка curl
     if ($response === false) {
-        return ['error' => curl_error($ch)];
+        $error = curl_error($ch);
+        curl_close($ch);
+        return ['error' => $error];
     }
 
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
 
+    // Обработка rate limit
+    if ($httpCode === 429) {
+        return ['error' => 'Too many requests'];
+    }
+
+    // Проверка ответа
     $data = json_decode($response, true);
 
     if (!is_array($data)) {
-        return ['error' => 'Invalid JSON'];
+        return ['error' => 'Invalid JSON', 'raw' => $response];
     }
 
     return $data;
 }
 
-function cleanCache($dir, $maxAge = 3600) {
-    if (!is_dir($dir)) return;
+// function cleanCache($dir, $maxAge = 3600) {
+//     if (!is_dir($dir)) return;
 
-    foreach (glob($dir . '*.json') as $file) {
-        if (time() - filemtime($file) > $maxAge) {
-            unlink($file);
-        }
-    }
-}
+//     foreach (glob($dir . '*.json') as $file) {
+//         if (time() - filemtime($file) > $maxAge) {
+//             unlink($file);
+//         }
+//     }
+// }
 
-function limitCacheSize($dir, $maxFiles = 20) {
-    if (!is_dir($dir)) return;
+// function limitCacheSize($dir, $maxFiles = 50) {
+//     if (!is_dir($dir)) return;
 
-    $files = glob($dir . '*.json');
+//     $files = glob($dir . '*.json');
 
-    if (count($files) <= $maxFiles) return;
+//     if (count($files) <= $maxFiles) return;
 
-    usort($files, fn($a, $b) => filemtime($a) - filemtime($b));
+//     usort($files, fn($a, $b) => filemtime($a) - filemtime($b));
 
-    $filesToDelete = array_slice($files, 0, count($files) - $maxFiles);
+//     $filesToDelete = array_slice($files, 0, count($files) - $maxFiles);
 
-    foreach ($filesToDelete as $file) {
-        unlink($file);
-    }
-}
+//     foreach ($filesToDelete as $file) {
+//         unlink($file);
+//     }
+// }
 
 function cachedCall($key, $callback, $ttl = 60) {
     $dir = __DIR__ . '/cache/';
     $file = $dir . md5($key) . '.json';
     
-    if (rand(1, 20) === 1) {
-    cleanCache($dir, 3600);    
-    limitCacheSize($dir, 200); 
-}
+//     if (rand(1, 20) === 1) {
+//     cleanCache($dir, 3600);    
+//     limitCacheSize($dir, 200); 
+// }
     if (!is_dir($dir)) {
         mkdir($dir, 0777, true);
     }
@@ -179,9 +198,16 @@ $graphic = cachedCall('graphic_'.$dateFrom.$dateTo, fn() => callFathom($urldata,
 $graphicinfo = array_values($graphic);
 $values = [];
 $datums = [];
-foreach ($graphicinfo as $element){
-    $values[] = $element["visits"];
-    $datums[] = $element["date"];
+// $hasError = false;
+
+foreach ($graphicinfo as $element) {
+    // if (!is_array($element)) {
+    //     $hasError = true;
+    //     continue;
+    // }
+
+    $values[] = $element["visits"] ?? 0;
+    $datums[] = $element["date"] ?? '';
 }
 
 
@@ -366,36 +392,7 @@ KPI-strip:
 </section>
 
 <!-- Tooltip JS: toont uitleg na 1 seconde hoveren -->
-<script>
-function setupTooltip(triggerId, tooltipId) {
-    const trigger = document.getElementById(triggerId);
-    const tooltip = document.getElementById(tooltipId);
-    let hoverTimer;
 
-    trigger.addEventListener("mouseenter", () => {
-        hoverTimer = setTimeout(() => {
-            tooltip.classList.remove("hidden");
-        }, 700);
-    });
-
-    trigger.addEventListener("mouseleave", () => {
-        clearTimeout(hoverTimer);
-        tooltip.classList.add("hidden");
-    });
-}
-const tooltips = [
-    ["realtimeD", "exp-realtime"],
-    ["visitsD", "exp-visits"],
-    ["pageviewsD", "exp-pageviews"],
-    ["viewsD", "exp-vpv"],
-    ["bounceD", "exp-bounce"],
-    ["durationD", "exp-duration"],
-];
-
-tooltips.forEach(([trigger, tooltip]) => {
-    setupTooltip(trigger, tooltip);
-});
-</script>
 
 
 <!-- Grafiek: styles.css target dit via section:has(#Chart)
@@ -454,19 +451,48 @@ tooltips.forEach(([trigger, tooltip]) => {
 </section>
 <section>
     <table>
-    <caption>Website analytics</caption>
+        <thead>
+            <tr>
+                <th scope="col" id="pagenameTable" class="">
+                    Page
+                    <div id="table-pagename" class="hidden">
+                        Dit is de bron van de bezoekers (waar ze vandaan komen). 
+                    </div>
+                </th>
+                <th scope="col" id="visitsTable"  >
+                    Visits 
+                    <div id="table-visits" class="hidden">
+                        Het aantal keren dat mensen de website bezoeken.
+                    </div>
+                </th>
+                <th scope="col" id="pageviewsTable"  >
+                    Views
+                    <div id="table-pageviews" class="hidden">
+                        Het totaal aantal pagina’s dat bekeken wordt.
+                    </div>
+                </th>
 
-    <thead>
-        <tr>
-            <th scope="col">Page</th>
-            <th scope="col">Visits</th>
-            <th scope="col">Views</th>
-            <th scope="col">Views per visit</th>
-            <th scope="col">Bounce rate</th>
-            <th scope="col">Avg duration</th>
-        </tr>
-    </thead>
-
+                <th scope="col" id="viewsPerVisitTable" >
+                    Views per visit
+                    <div id="table-views-per-visit" class="hidden">
+                        Het gemiddelde aantal pagina’s dat iemand bekijkt per bezoek.
+                    </div>
+                </th>
+                <th scope="col" id="bounceRateTable"  >
+                    Bounce rate
+                    <div id="table-bounce-rate" class="hidden">
+                        Het percentage bezoekers dat de website opent en meteen     weggaat zonder iets anders te bekijken.
+                    </div>
+                </th>
+                <th scope="col" id="avgDurationTable"  >
+                    Avg duration
+                    <div id="table-avg-duration" class="hidden">
+                        De gemiddelde tijd dat een bezoeker op de website blijft.
+                    </div>
+                </th>
+            </tr>
+        </thead>
+    
     <tbody>
         
         <?php foreach ($grouped as $site): ?>
@@ -474,9 +500,9 @@ tooltips.forEach(([trigger, tooltip]) => {
                 <th scope="row"><?= htmlspecialchars($site['name']) ?></th>
                 <td><?= $site['visits'] ?></td>
                 <td><?= $site['views'] ?></td>
-                <td><?= number_format($site['views_per_visit'], 2) ?> vpv</td>
-                <td><?= number_format($site['bounce_rate'], 2) ?>% bounce rate</td>
-                <td><?= gmdate("i:s", (int)(round($site['avg_duration']))) ?> avg duration</td>
+                <td><?= number_format($site['views_per_visit'], 2) ?> </td>
+                <td><?= number_format($site['bounce_rate'], 2) ?>% </td>
+                <td><?= gmdate("i:s", (int)(round($site['avg_duration']))) ?> </td>
             </tr>
         <?php endforeach; ?>
     </tbody>
@@ -557,6 +583,52 @@ tooltips.forEach(([trigger, tooltip]) => {
 
 <!-- Alle JavaScript in één blok — geen dubbele functies meer -->
 <script defer>
+    function setupTooltip(triggerId, tooltipId) {
+    const trigger = document.getElementById(triggerId);
+    const tooltip = document.getElementById(tooltipId);
+    let hoverTimer;
+
+    trigger.addEventListener("mouseenter", () => {
+        hoverTimer = setTimeout(() => {
+            tooltip.classList.remove("hidden");
+        }, 700);
+    });
+
+    trigger.addEventListener("mouseleave", () => {
+        clearTimeout(hoverTimer);
+        tooltip.classList.add("hidden");
+    });
+}
+const tooltips = [
+    ["realtimeD", "exp-realtime"],
+    ["visitsD", "exp-visits"],
+    ["pageviewsD", "exp-pageviews"],
+    ["viewsD", "exp-vpv"],
+    ["bounceD", "exp-bounce"],
+    ["durationD", "exp-duration"],
+    ["pagenameTable", "table-pagename"],
+    ["visitsTable", "table-visits"],
+    ["pageviewsTable", "table-pageviews"],
+    ["viewsPerVisitTable", "table-views-per-visit"],
+    ["bounceRateTable", "table-bounce-rate"],
+    ["avgDurationTable", "table-avg-duration"],
+];
+
+tooltips.forEach(([trigger, tooltip]) => {
+    setupTooltip(trigger, tooltip);
+});
+    // const hasError = 
+    // 
+
+    // if (hasError) {
+    //     document.getElementById("Chart").outerHTML = `
+    //         <h2 style="color:#b45309;">
+    //             Data is tijdelijk niet beschikbaar.<br>
+    //             Laatst opgeslagen gegevens worden weergegeven.
+    //         </h2>
+    //     `;
+    // }
+
     const mediumSelect = document.getElementById('mediumSelect');
     const mediumCustom = document.getElementById('mediumCustom');
     const sourceSelect = document.getElementById('sourceSelect');
