@@ -203,7 +203,7 @@ function getInitials($name) {
 }
 
 function normalizeMessage($msg, $provider, $endpointType) {
-    $ownAccountNames = ['giudittaleuven'];
+    $ownAccountNames = ['giudittalevuven'];
 
     $id = (string)($msg['id'] ?? uniqid($provider . '_', true));
     $name = 'Onbekend';

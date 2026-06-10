@@ -181,7 +181,7 @@ $fromIso = $from . 'T00:00:00+01:00';
 $toIso   = $to   . 'T23:59:59+01:00';
 
 $availableMetrics = [
-    'videos' => [
+    'video' => [
         [
             'key' => 'videoviews',
             'label' => 'Video Views',
@@ -243,7 +243,7 @@ $selectedMetrics = array_values(array_unique(array_filter($selectedMetrics, func
     return is_string($metricKey) && trim($metricKey) !== '';
 })));
 
-$selectedSection = 'videos';
+$selectedSection = 'video';
 $networkCandidates = ['tiktok'];
 
 $metricsData = [];
@@ -277,7 +277,7 @@ if (!empty($selectedMetrics)) {
                     'timezone' => 'Europe/Brussels',
                     'userId'   => $userId,
                     'blogId'   => $blogId,
-                    'subject'  => 'videos',
+                    'subject'  => 'video',
                     'metric'   => $apiMetricName,
                 ];
 
@@ -372,7 +372,7 @@ if (!empty($selectedMetrics)) {
             <div class="sb-sidebar">
                 <div class="sb-sidebar-title">Metrics</div>
                 <div id="metricsList">
-                    <?php foreach ($availableMetrics['videos'] as $metric): ?>
+                    <?php foreach ($availableMetrics['video'] as $metric): ?>
                         <div class="sb-chip" draggable="true" data-metric="<?= htmlspecialchars($metric['key']) ?>"
                              style="border-left: 3px solid <?= htmlspecialchars($metric['color']) ?>;">
                             <?= htmlspecialchars($metric['label']) ?>
@@ -409,7 +409,7 @@ if (!empty($selectedMetrics)) {
                             $color = htmlspecialchars($metric['info']['color'] ?? '#ff0050');
                             $bg    = htmlspecialchars($metric['info']['bg']    ?? '#fff0f5');
                             $detailNetwork = $metric['info']['network'] ?? 'tiktok';
-                            $detailUrl = 'metric_detail.php?metric=' . urlencode($key) . '&network=' . urlencode($detailNetwork) . '&from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=videos';
+                            $detailUrl = 'metric_detail.php?metric=' . urlencode($key) . '&network=' . urlencode($detailNetwork) . '&from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=video';
                         ?>
                             <a href="<?= $detailUrl ?>" class="sb-card-link" data-metric="<?= htmlspecialchars($key) ?>"
                                style="--card-color: <?= $color ?>; --card-bg: <?= $bg ?>;">
