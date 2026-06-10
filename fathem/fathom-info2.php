@@ -376,108 +376,94 @@ Styling:
     - styles.css bevat regels die gebruik maken van body:has(#realtimeD)
     - Hierdoor wordt deze pagina automatisch gestyled op basis van de HTML-structuur
 -->
-<body >
+<body class="fathom-page">
 
-<!--
-Navigatie:
-    - Wordt gestyled via body:has(#realtimeD) nav in styles.css
-    - Het SkyByte-woordmerk wordt automatisch toegevoegd via ::before
--->
+<!-- Navigatie: standaard .navbar + .nav-link uit styles.css -->
 <nav class="navbar">
     <a href="../api/config.php" class="nav-link">Inbox</a>
-    <a href="../api/instagram_dashboard.php">Instagram</a>
-    <a href="../api/tiktok_dashboard.php">TikTok</a>
-    <a href="../api/facebook_dashboard.php">Facebook</a>
-    <a href="fathom-info2.php">Fathom Analytics</a>
+    <a href="../api/instagram_dashboard.php" class="nav-link">Instagram</a>
+    <a href="../api/tiktok_dashboard.php" class="nav-link">TikTok</a>
+    <a href="../api/facebook_dashboard.php" class="nav-link">Facebook</a>
+    <a href="fathom-info2.php" class="nav-link active">Fathom Analytics</a>
 </nav>
 
 
-<!--
-KPI-strip:
-    - Wordt automatisch als grid weergegeven
-    - Paginatitel "Website analytics" wordt toegevoegd via ::before
--->
-<section>
+<!-- KPI-strip — class .sb-kpi-strip styled de grid; data-title voor de
+     paginatitel via ::before -->
+<section class="sb-kpi-strip" data-title="Website analytics">
 
-    <div id="realtimeD">
+    <div id="realtimeD" class="sb-kpi">
         Totaal realtime visitors: <?= $currentVisitors ?>
-        <div id="exp-realtime" class="hidden">
+        <div id="exp-realtime" class="sb-tooltip is-hidden">
             Het aantal mensen dat nu op je website zit.
         </div>
     </div>
 
-    <div id="visitsD">
+    <div id="visitsD" class="sb-kpi">
         Totaal visits: <?= $totalVisits ?>
-        <div id="exp-visits" class="hidden">
+        <div id="exp-visits" class="sb-tooltip is-hidden">
             Het aantal bezoeken aan je website. Als iemand 3 pagina's bekijkt, telt dat als 1 visit.
         </div>
     </div>
 
-    <div id="pageviewsD">
+    <div id="pageviewsD" class="sb-kpi">
         Totaal pageviews: <?= $totalPageViews ?>
-        <div id="exp-pageviews" class="hidden">
+        <div id="exp-pageviews" class="sb-tooltip is-hidden">
             Hoeveel pagina's in totaal bekeken zijn.
         </div>
     </div>
 
-    <div id="viewsD">
+    <div id="viewsD" class="sb-kpi">
         Views per visit: <?= number_format($totalViewsPerVisit, 2) ?>
-        <div id="exp-vpv" class="hidden">
+        <div id="exp-vpv" class="sb-tooltip is-hidden">
             Gemiddeld aantal pagina's per bezoek.
         </div>
     </div>
 
-    <div id="bounceD">
+    <div id="bounceD" class="sb-kpi">
         Bounce rate: <?= number_format($totalBounceRate, 0) ?>%
-        <div id="exp-bounce" class="hidden">
+        <div id="exp-bounce" class="sb-tooltip is-hidden">
             Percentage dat direct weggaat na 1 pagina.
         </div>
     </div>
 
-    <div id="durationD">
+    <div id="durationD" class="sb-kpi">
         Gemiddelde sessieduur: <?= gmdate("i:s", (int)round($totalAvgDuration)) ?>
-        <div id="exp-duration" class="hidden">
+        <div id="exp-duration" class="sb-tooltip is-hidden">
             Gemiddelde tijd dat iemand op je site blijft.
         </div>
     </div>
 
 </section>
 
-<!-- Tooltip JS: toont uitleg na 1 seconde hoveren -->
 
-
-
-<!-- Grafiek: styles.css target dit via section:has(#Chart)
-     en geeft de container een vaste hoogte van 360px -->
-<section>
+<!-- Grafiek -->
+<section class="sb-chart-section">
     <div>
-        <canvas id="Chart"></canvas>
+        <canvas id="Chart" class="sb-chart-canvas"></canvas>
     </div>
 </section>
 
-<!-- Datumkiezer: styles.css target het formulier via
-     form:has(> input[type="date"][name="date_from"]) -->
+<!-- Datumkiezer -->
 <section>
-    <form method="GET">
-        <input type="date" name="date_from" value="<?= htmlspecialchars($dateFrom) ?>">
+    <form method="GET" class="sb-date-form">
+        <input type="date" name="date_from" class="sb-field sb-field--inline" value="<?= htmlspecialchars($dateFrom) ?>">
         <span>—</span>
-        <input type="date" name="date_to" value="<?= htmlspecialchars($dateTo) ?>">
-        <button type="submit">Apply</button>
+        <input type="date" name="date_to" class="sb-field sb-field--inline" value="<?= htmlspecialchars($dateTo) ?>">
+        <button type="submit" class="sb-btn-dark">Apply</button>
     </form>
 </section>
 
-<!-- Range-knoppen: styles.css target via form:has(> button[name="range"])
-     De actieve knop krijgt class="bg-black" die de CSS gebruikt
-     om een accentkleur-onderlijning te tonen -->
+<!-- Range-knoppen — active variant via .is-active -->
 <section>
-    <form method="GET">
-        <button name="range" value="today" class="<?= $range === 'today' ? 'bg-black' : '' ?>">
+    <form method="GET" class="sb-range-form">
+        <button name="range" value="today" class="sb-range-btn <?= $range === 'today' ? 'is-active' : '' ?>">
             Vandaag
         </button>
-        <button name="range" value="7days" class="<?= $range === '7days' ? 'bg-black' : '' ?>">
+        <button name="range" value="7days" class="sb-range-btn <?= $range === '7days' ? 'is-active' : '' ?>">
             7 dagen
         </button>
-        <button name="range" value="30days" class="<?= $range === '30days' ? 'bg-black' : '' ?>">
+        <button name="range" value="30days" class="sb-range-btn <?= $range === '30days' ? 'is-active' : '' ?>">
             30 dagen
         </button>
     </form>
@@ -528,51 +514,50 @@ usort($grouped, function($a, $b) use ($sort, $order) {
     <table>
         <thead>
             <tr>
-                <th scope="col" id="pagenameTable" class="">
+                <th scope="col" id="pagenameTable" class="sb-th-tooltip">
                     <a href="?sort=name&order=<?= nextOrder('name', $sort, $order) ?>">
                         Page<?= getArrow('name', $sort, $order) ?>
                     </a>
-                    
-                    <div id="table-pagename" class="hidden">
-                        Dit is de bron van de bezoekers (waar ze vandaan komen). 
+                    <div id="table-pagename" class="sb-tooltip is-hidden">
+                        Dit is de bron van de bezoekers (waar ze vandaan komen).
                     </div>
                 </th>
-                <th scope="col" id="visitsTable"  >
+                <th scope="col" id="visitsTable" class="sb-th-tooltip">
                     <a href="?sort=visits&order=<?= nextOrder('visits', $sort, $order) ?>">Visits<?= getArrow('visits', $sort, $order) ?></a>
-                    <div id="table-visits" class="hidden">
+                    <div id="table-visits" class="sb-tooltip is-hidden">
                         Het aantal keren dat mensen de website bezoeken.
                     </div>
                 </th>
-                <th scope="col" id="pageviewsTable"  >
+                <th scope="col" id="pageviewsTable" class="sb-th-tooltip">
                     <a href="?sort=views&order=<?= nextOrder('views', $sort, $order) ?>">
                         Views<?= getArrow('views', $sort, $order) ?>
-                        </a>
-                    <div id="table-pageviews" class="hidden">
+                    </a>
+                    <div id="table-pageviews" class="sb-tooltip is-hidden">
                         Het totaal aantal pagina’s dat bekeken wordt.
                     </div>
                 </th>
 
-                <th scope="col" id="viewsPerVisitTable" >
+                <th scope="col" id="viewsPerVisitTable" class="sb-th-tooltip">
                     <a href="?sort=views_per_visit&order=<?= nextOrder('views_per_visit', $sort, $order) ?>">
                         Views per visit<?= getArrow('views_per_visit', $sort, $order) ?>
-                        </a>
-                    <div id="table-views-per-visit" class="hidden">
+                    </a>
+                    <div id="table-views-per-visit" class="sb-tooltip is-hidden">
                         Het gemiddelde aantal pagina’s dat iemand bekijkt per bezoek.
                     </div>
                 </th>
-                <th scope="col" id="bounceRateTable"  >
+                <th scope="col" id="bounceRateTable" class="sb-th-tooltip">
                     <a href="?sort=bounce_rate&order=<?= nextOrder('bounce_rate', $sort, $order) ?>">
                         Bounce rate<?= getArrow('bounce_rate', $sort, $order) ?>
                     </a>
-                    <div id="table-bounce-rate" class="hidden">
-                        Het percentage bezoekers dat de website opent en meteen     weggaat zonder iets anders te bekijken.
+                    <div id="table-bounce-rate" class="sb-tooltip is-hidden">
+                        Het percentage bezoekers dat de website opent en meteen weggaat zonder iets anders te bekijken.
                     </div>
                 </th>
-                <th scope="col" id="avgDurationTable"  >
+                <th scope="col" id="avgDurationTable" class="sb-th-tooltip">
                     <a href="?sort=avg_duration&order=<?= nextOrder('avg_duration', $sort, $order) ?>">
                         Avg duration<?= getArrow('avg_duration', $sort, $order) ?>
                     </a>
-                    <div id="table-avg-duration" class="hidden">
+                    <div id="table-avg-duration" class="sb-tooltip is-hidden">
                         De gemiddelde tijd dat een bezoeker op de website blijft.
                     </div>
                 </th>
@@ -597,7 +582,7 @@ usort($grouped, function($a, $b) use ($sort, $order) {
 </section>
 <!-- UTM-data lijst -->
 <section>
-    <ul>
+    <ul class="sb-data-list">
     <?php foreach ($utmGrouped as $item): ?>
         <li>
             <?php if (!empty($item['utm_source'])): ?>
@@ -623,47 +608,47 @@ usort($grouped, function($a, $b) use ($sort, $order) {
     </ul>
 </section>
 
-<!-- UTM-generator: styles.css target via section:has(#sourceSelect) -->
-<section>
+<!-- UTM-generator -->
+<section class="sb-utm-section">
 
     <div>
         <label>Bron (van welke site komt het verkeer)</label>
-        <select id="sourceSelect">
+        <select id="sourceSelect" class="sb-field">
             <option value="tiktok">TikTok</option>
             <option value="instagram">Instagram</option>
             <option value="facebook">Facebook</option>
             <option value="youtube">YouTube</option>
             <option value="custom">Anders</option>
         </select>
-        <input type="text" id="sourceCustom" placeholder="Eigen source" class="hidden">
+        <input type="text" id="sourceCustom" class="sb-field is-hidden" placeholder="Eigen source">
     </div>
 
     <div>
         <label>Type verkeer</label>
-        <select id="mediumSelect">
+        <select id="mediumSelect" class="sb-field">
             <option value="social">Social</option>
             <option value="custom">Anders</option>
         </select>
-        <input type="text" id="mediumCustom" placeholder="Eigen type" class="hidden">
+        <input type="text" id="mediumCustom" class="sb-field is-hidden" placeholder="Eigen type">
     </div>
 
     <div>
         <label>Campagnenaam</label>
-        <input type="text" id="campaignInput">
+        <input type="text" id="campaignInput" class="sb-field">
     </div>
 
     <div>
         <label>Content / video</label>
-        <input type="text" id="contentInput">
+        <input type="text" id="contentInput" class="sb-field">
     </div>
 
     <div>
-        <button onclick="generateUTM()">Genereer UTM link</button>
+        <button type="button" class="sb-btn-dark" onclick="generateUTM()">Genereer UTM link</button>
     </div>
 
     <div>
-        <div id="result"></div>
-        <button onclick="copyLink()">Kopieer link</button>
+        <div id="result" class="sb-utm-result"></div>
+        <button type="button" class="sb-btn-outline" onclick="copyLink()">Kopieer link</button>
     </div>
 </section>
 
@@ -676,13 +661,13 @@ usort($grouped, function($a, $b) use ($sort, $order) {
 
     trigger.addEventListener("mouseenter", () => {
         hoverTimer = setTimeout(() => {
-            tooltip.classList.remove("hidden");
+            tooltip.classList.remove("is-hidden");
         }, 700);
     });
 
     trigger.addEventListener("mouseleave", () => {
         clearTimeout(hoverTimer);
-        tooltip.classList.add("hidden");
+        tooltip.classList.add("is-hidden");
     });
 }
 const tooltips = [
@@ -725,16 +710,16 @@ tooltips.forEach(([trigger, tooltip]) => {
     // Toon het custom-veld als "Anders" geselecteerd is
     sourceSelect.addEventListener('change', () => {
         if (sourceSelect.value === 'custom') {
-            sourceCustom.classList.remove('hidden');
+            sourceCustom.classList.remove('is-hidden');
         } else {
-            sourceCustom.classList.add('hidden');
+            sourceCustom.classList.add('is-hidden');
         }
     });
     mediumSelect.addEventListener('change', () => {
         if (mediumSelect.value === 'custom') {
-            mediumCustom.classList.remove('hidden');
+            mediumCustom.classList.remove('is-hidden');
         } else {
-            mediumCustom.classList.add('hidden');
+            mediumCustom.classList.add('is-hidden');
         }
     });
 

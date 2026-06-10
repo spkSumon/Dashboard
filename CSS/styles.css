@@ -4,45 +4,48 @@
    Opzet: één rustige, redactionele pagina (zoals een artikel
    in een krant of magazine), niet opgedeeld in kaartjes.
 
-   Hoofdregels die ik aanhoud:
-   1. Geen omkaderde "cards" (geen rand + schaduw + ronde hoeken
-      rond elk blok). Structuur komt van witruimte en typografie.
-   2. Hooguit dunne horizontale of verticale lijntjes als
-      scheiding waar het echt nodig is.
-   3. Eén warm-grijze achtergrond voor de hele pagina, geen
-      witte vakjes bovenop een grijze body.
-   4. Eén kleurenpalet, en per platform één accentkleur.
-      Die accentkleur wordt per pagina ingesteld via --accent.
-   5. Typografie: een klassiek serif lettertype (Georgia) voor
-      titels en grote getallen, een gewoon sans-serif voor de
-      rest. Georgia staat standaard op elk besturingssysteem,
-      dus geen externe lettertypen nodig.
+   Hoofdregels:
+   1. Geen omkaderde "cards" — structuur uit witruimte en typografie.
+   2. Hooguit dunne horizontale of verticale lijntjes als scheiding.
+   3. Eén warm-grijze achtergrond voor de hele pagina.
+   4. Eén kleurenpalet, en per platform één accentkleur (--accent).
+   5. Georgia voor titels en grote getallen, sans-serif voor de rest.
+
+   Conventies in dit bestand:
+   - We stylen NIETS op basis van een #id of [attribute] meer.
+     Alle styling gaat via classes.
+   - Patronen die op meerdere plekken voorkomen zijn naar boven
+     getrokken als utility-class (.sb-eyebrow, .sb-field,
+     .sb-btn-dark, .sb-btn-outline, .sb-link-underline).
+     Componenten verwijzen er gewoon naar in de HTML.
    ============================================================ */
 
 
 /* ─────────── 1. CSS-variabelen (het palet) ─────────── */
 :root {
-    /* ── SkyByte-merkkleuren (de "officiële" kleuren uit ons palet) ──
-       Deze veranderen nooit — ze zijn de identiteit van het merk. */
-    --brand-white:      #FFFFFA;   /* lichtachtergrond */
-    --brand-ink:        #30332E;   /* tekst — kracht, tijdloosheid */
-    --brand-purple:     #5603AD;   /* hoofdkleur — creativiteit, luxe */
-    --brand-blue-deep:  #1446A0;   /* secundair blauw — vertrouwen */
-    --brand-blue-soft:  #7798AB;   /* secundair blauw — vertrouwen */
+    /* Merkkleuren */
+    --brand-white:      #FFFFFA;
+    --brand-ink:        #30332E;
+    --brand-purple:     #5603AD;
+    --brand-blue-deep:  #1446A0;
+    --brand-blue-soft:  #7798AB;
 
-    /* ── Werkkleuren die we overal in de CSS gebruiken ── */
-    --bg:         var(--brand-white);   /* paginakleur */
-    --ink:        var(--brand-ink);     /* hoofdtekst */
-    --ink-soft:   #6e6c73;              /* zachtere tekst (labels) */
-    --ink-faint:  #a6a3ab;              /* nog zachter (placeholders) */
+    /* Werkkleuren */
+    --bg:         var(--brand-white);
+    --ink:        var(--brand-ink);
+    --ink-soft:   #6e6c73;
+    --ink-faint:  #a6a3ab;
 
-    /* Lijntjes — koele lichtgrijzen met een flintertje paars
-       zodat ze visueel bij het merk passen. */
+    /* Lijntjes */
     --rule:       #d8d4de;
     --rule-soft:  #ece9f0;
 
-    /* Accentkleur — standaard het merkpaars, maar wordt per pagina
-       overschreven (bv. Facebook = blauw, Instagram = roze, …) */
+    /* Status */
+    --ok:   #2e7d32;
+    --err:  #c62828;
+    --warn: #b06800;
+
+    /* Accentkleur — wordt per pagina overschreven via een themaklasse */
     --accent:     var(--brand-purple);
 
     /* Lettertypen */
@@ -65,14 +68,12 @@ body {
     font-family: var(--sans);
     font-size: 15px;
     line-height: 1.6;
-    /* Royale padding zodat de pagina ademt */
     padding: 40px clamp(20px, 5vw, 64px) 96px;
     -webkit-font-smoothing: antialiased;
     position: relative;
 }
 
-/* SkyByte-knipoog: een dun gradient-streepje bovenaan elke pagina,
-   in de twee merkkleuren paars → blauw (zoals in het logo). */
+/* Dun gradient-streepje bovenaan elke pagina */
 body::before {
     content: '';
     position: fixed;
@@ -96,6 +97,10 @@ button {
     cursor: pointer;
 }
 
+/* Generieke helper — JS toggelt deze class voor verborgen elementen */
+.hidden,
+.is-hidden { display: none !important; }
+
 
 /* ─────────── 3. Pagina-container ─────────── */
 .sb-page {
@@ -104,12 +109,94 @@ button {
 }
 
 
-/* ─────────── 4. Navigatie ───────────
-   Geen kader, geen achtergrondvlak. Gewoon een rij tekstlinks
-   met een hairline eronder die de bovenkant van de pagina markeert.
-   Bovendien: een "SkyByte"-woordmerk links via ::before, in de
-   merkkleur paars-blauw, als zachte branding zonder een logo in
-   te moeten laden. */
+/* ─────────── 4. Utility classes ───────────
+   Patronen die overal terugkomen, één keer gedefinieerd.
+   ============================================================ */
+
+/* .sb-eyebrow — kleine grijze caps-tekst boven een sectie of veld.
+   Gebruikt voor labels, sidebar-titels, sectie-koppen, breadcrumbs, … */
+.sb-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    font-family: var(--sans);
+}
+
+.sb-eyebrow--sm { font-size: 10px; letter-spacing: 0.08em; }
+.sb-eyebrow--md { letter-spacing: 0.06em; }
+
+/* .sb-field — borderless input/select met een dunne lijn eronder.
+   Gebruikt voor toolbar-datums, inbox-filters, UTM-velden, … */
+.sb-field {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 8px 0;
+    border-radius: 0;
+}
+.sb-field::placeholder { color: var(--ink-faint); }
+.sb-field:focus {
+    outline: none;
+    border-bottom-color: var(--accent);
+    box-shadow: none;
+}
+.sb-field--inline { width: auto; padding: 4px 0; }
+
+/* .sb-btn-dark — zwarte knop met witte tekst. Primaire actie. */
+.sb-btn-dark {
+    background: var(--ink);
+    color: var(--bg);
+    border: none;
+    border-radius: 0;
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    box-shadow: none;
+    transition: background 0.15s;
+}
+.sb-btn-dark:hover { background: var(--accent); }
+.sb-btn-dark:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* .sb-btn-outline — secundaire knop, alleen rand */
+.sb-btn-outline {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: background 0.15s, color 0.15s;
+}
+.sb-btn-outline:hover {
+    background: var(--ink);
+    color: var(--bg);
+}
+
+/* .sb-link-underline — onderlijnde tekstknop/-link.
+   Gebruikt voor quick-replies, debug-toggle, reset, terug, … */
+.sb-link-underline {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    padding: 0;
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.15s;
+}
+.sb-link-underline:hover { color: var(--accent); }
+.sb-link-underline--sm { font-size: 12px; }
+
+
+/* ─────────── 5. Navigatie ─────────── */
 .navbar {
     display: flex;
     flex-wrap: wrap;
@@ -126,9 +213,6 @@ button {
     font-weight: 600;
     font-size: 19px;
     letter-spacing: -0.01em;
-    /* Tekst-gradient: de letters zelf krijgen het merkverloop.
-       background-clip: text zorgt dat alleen de letters gekleurd
-       worden, de rest blijft transparant. */
     background: linear-gradient(
         135deg,
         var(--brand-purple) 0%,
@@ -138,7 +222,6 @@ button {
             background-clip: text;
     -webkit-text-fill-color: transparent;
             color: transparent;
-    /* Duwt alle nav-links naar rechts */
     margin-right: auto;
 }
 
@@ -159,8 +242,7 @@ button {
 }
 
 
-/* ─────────── 5. Paginatitel ───────────
-   Grote serif kop, geen kader eromheen. Dit geeft direct karakter. */
+/* ─────────── 6. Paginatitel ─────────── */
 .sb-title {
     font-family: var(--serif);
     font-weight: 400;
@@ -179,9 +261,7 @@ button {
 }
 
 
-/* ─────────── 6. Toolbar (datumvelden + tabs) ───────────
-   Géén borders boven/onder. De toolbar drijft gewoon in de pagina,
-   gescheiden door witruimte. */
+/* ─────────── 7. Toolbar (datumvelden + tabs) ─────────── */
 .sb-toolbar {
     display: flex;
     align-items: center;
@@ -192,6 +272,8 @@ button {
 }
 
 .sb-toolbar label {
+    /* Gedraagt zich als .sb-eyebrow, maar zonder dat we 'm overal
+       opnieuw moeten zetten — labels in .sb-toolbar krijgen het automatisch. */
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -200,21 +282,7 @@ button {
     font-weight: 600;
 }
 
-.sb-toolbar input[type="date"] {
-    border: none;
-    background: transparent;
-    color: var(--ink);
-    font-size: 14px;
-    font-family: var(--sans);
-    padding: 4px 0;
-    border-bottom: 1px solid var(--rule);
-    border-radius: 0;
-}
-
-.sb-toolbar input[type="date"]:focus {
-    outline: none;
-    border-bottom-color: var(--accent);
-}
+.sb-toolbar .sb-field { width: auto; padding: 4px 0; }
 
 .sb-divider {
     width: 1px;
@@ -222,7 +290,7 @@ button {
     background: var(--rule);
 }
 
-/* Tabs: gewoon tekst, actief = onderlijntje in accentkleur. */
+/* Tabs */
 .sb-tabs {
     display: flex;
     gap: 24px;
@@ -248,10 +316,7 @@ button {
 }
 
 
-/* ─────────── 7. Layout: sidebar + canvas ───────────
-   Twee kolommen, gescheiden door alléén witruimte (géén verticale
-   lijn). De pagina leest als één geheel: links staat de menu-tekst,
-   rechts de inhoud. */
+/* ─────────── 8. Layout: sidebar + canvas ─────────── */
 .sb-layout {
     display: grid;
     grid-template-columns: 180px 1fr;
@@ -266,6 +331,7 @@ button {
 }
 
 .sb-sidebar-title {
+    /* Zelfde stijl als .sb-eyebrow */
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -274,8 +340,6 @@ button {
     font-weight: 600;
 }
 
-/* Elke metric in de sidebar is een rij tekst met een dunne lijn
-   eronder — hetzelfde lijst-ritme als de hoofdpagina. */
 .sb-chip {
     display: flex;
     align-items: center;
@@ -300,21 +364,36 @@ button {
 .sb-chip-icon { font-size: 14px; line-height: 1; }
 
 
-/* ─────────── 8. Canvas (de drop-zone) ───────────
-   Geen gestippelde rand of doosje. Wanneer je iets sleept, lichten
-   we alleen de achtergrond een tikje op zodat duidelijk is waar je
-   het kan loslaten. */
+/* ─────────── 9. Canvas (drop-zone) ─────────── */
 .sb-canvas {
+    position: relative;
     min-height: 400px;
     padding: 0;
     transition: background 0.15s;
 }
 
 .sb-canvas.drag-over {
-    background: rgba(0, 0, 0, 0.03);
+    background: rgba(86, 3, 173, 0.06);
 }
 
-/* Lege staat: italic tekst gecentreerd, geen icon-vakje. */
+.sb-canvas.drag-over::after {
+    content: "Laat los in dit kader";
+    position: absolute;
+    inset: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--accent);
+    background: rgba(255, 255, 250, 0.88);
+    color: var(--accent);
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    z-index: 20;
+    pointer-events: none;
+}
+
 .sb-empty {
     padding: 80px 20px;
     text-align: center;
@@ -330,24 +409,20 @@ button {
     font-size: 28px;
     opacity: 0.4;
     margin-bottom: 14px;
-    /* niet meer als een gekleurd vierkant */
     background: transparent;
     width: auto;
     height: auto;
 }
 
 
-/* ─────────── 9. Metric "cards" ───────────
-   We tonen de metrics als één doorlopende lijst, hetzelfde patroon
-   als de Fathom-pagina: één rij per metric, met een dunne lijn
-   ertussen. Geen aparte blokjes meer in een grid — alles is letterlijk
-   één lijst van boven naar onder. */
+/* ─────────── 10. Metric "cards" ─────────── */
 .sb-cards {
     display: block;
     border-top: 1px solid var(--rule-soft);
 }
 
 .sb-card-link {
+    position: relative;
     display: block;
     text-decoration: none;
     color: inherit;
@@ -356,33 +431,23 @@ button {
     transition: opacity 0.15s;
 }
 
-.sb-card-link:hover .sb-card-avg { color: var(--accent); }
+.sb-card-link:hover .sb-card-avg  { color: var(--accent); }
 .sb-card-link:hover .sb-card-open { opacity: 1; }
 
-/* De .sb-card div binnenin krijgt geen eigen styling — het PHP
-   zet daar inline een background/border op, die overschrijven we
-   hier zodat alles "plat" blijft. */
 .sb-card {
     background: transparent !important;
     border: none !important;
     border-radius: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
-    /* Alle drie de kind-elementen (header, avg, stats) leggen we
-       in één horizontale rij naast elkaar, met grid. */
     display: grid;
     grid-template-columns: 200px minmax(140px, 1fr) 2fr;
     gap: 32px;
     align-items: center;
 }
 
-.sb-card::before {
-    /* Het inline ::before-streepje uit de oude stijl uitzetten. */
-    display: none !important;
-}
+.sb-card::before { display: none !important; }
 
-/* Header: icon + label aan de linkerkant, actie-knoppen heel rechts.
-   In de rij-layout staat de header in kolom 1. */
 .sb-card-header {
     display: flex;
     justify-content: space-between;
@@ -413,9 +478,6 @@ button {
     letter-spacing: -0.01em;
 }
 
-/* De actieknoppen (Details + ×) staan absoluut rechtsboven elke
-   rij, los van de grid-kolommen. Zo blijven ze op een vaste plek
-   en versmallen ze de tekstkolommen niet. */
 .sb-card-actions {
     position: absolute;
     top: 24px;
@@ -424,8 +486,6 @@ button {
     align-items: center;
     gap: 16px;
 }
-
-.sb-card-link { position: relative; }
 
 .sb-card-open {
     font-size: 11px;
@@ -458,7 +518,6 @@ button {
     background: transparent !important;
 }
 
-/* Het grote getal: middelgroot zodat de hele rij compact blijft. */
 .sb-card-avg {
     font-family: var(--serif);
     font-weight: 400;
@@ -470,9 +529,6 @@ button {
     transition: color 0.15s;
 }
 
-/* De 4 detailstats: gewoon in één regel naast elkaar, zoals de
-   "80 visits | 120 views | …" tekst op de Fathom-pagina.
-   Elke stat ziet eruit als "Label Waarde", gescheiden door witruimte. */
 .sb-card-stats {
     display: flex;
     flex-wrap: wrap;
@@ -506,8 +562,7 @@ button {
 }
 
 
-/* ─────────── 10. Reset-knop ("Alles wissen") ───────────
-   Onderaan, gewoon een onderstreepte tekstlink. */
+/* ─────────── 11. Reset-knop ─────────── */
 .sb-reset {
     background: none !important;
     border: none !important;
@@ -525,9 +580,7 @@ button {
 
 
 /* ============================================================
-   INBOX (config.php)
-   Zelfde idee: twee kolommen, gescheiden door één verticale lijn.
-   Geen panelen, geen ronde hoeken, geen schaduwen.
+   12. INBOX (config.php)
    ============================================================ */
 
 .sb-stats-pills {
@@ -592,27 +645,8 @@ button {
 
 .sb-filters { display: grid; gap: 10px; }
 
-/* Filters: dezelfde minimale stijl als de toolbar-inputs */
-.sb-search-input,
-.sb-filter-select {
-    width: 100%;
-    border: none;
-    border-bottom: 1px solid var(--rule);
-    background: transparent;
-    color: var(--ink);
-    font-family: var(--sans);
-    font-size: 14px;
-    padding: 8px 0;
-    border-radius: 0;
-}
-
-.sb-search-input:focus,
-.sb-filter-select:focus {
-    outline: none;
-    border-bottom-color: var(--accent);
-}
-
-.sb-search-input::placeholder { color: var(--ink-faint); }
+/* De inbox-filters delen alle styling met .sb-field. We laten ze
+   gewoon ook die class hebben en regelen hier niets extra. */
 
 .sb-date-row { display: flex; gap: 20px; }
 .sb-date-field { flex: 1; }
@@ -625,17 +659,11 @@ button {
     margin-bottom: 4px;
     font-weight: 600;
 }
-.sb-date-field input[type="date"] {
-    padding: 6px 0;
-    font-size: 13px;
-    border: none;
-    border-bottom: 1px solid var(--rule);
-    background: transparent;
-    width: 100%;
-}
+.sb-date-field .sb-field { padding: 6px 0; font-size: 13px; }
 
 /* Sterrenknoppen voor reviews */
 .sb-stars-filter { margin-top: 8px; }
+.sb-stars-filter.is-hidden { display: none; }
 .sb-stars-label {
     font-size: 10px;
     text-transform: uppercase;
@@ -663,7 +691,7 @@ button {
     border-color: var(--ink);
 }
 
-/* Berichtenlijst: gewoon een lijst met dunne scheidingslijntjes. */
+/* Berichtenlijst */
 .sb-message-list {
     flex: 1;
     overflow-y: auto;
@@ -692,12 +720,10 @@ button {
 
 .sb-message-item.active {
     background: transparent !important;
-    /* Markering van actief item: kleine accent-streep links */
     box-shadow: inset 3px 0 0 var(--accent);
     padding-left: 12px;
 }
 
-/* Avatar: gewoon een cirkel met initialen, één neutrale kleur. */
 .sb-avatar {
     width: 38px;
     height: 38px;
@@ -734,8 +760,6 @@ button {
 }
 .sb-message-time { font-size: 11px; color: var(--ink-faint); flex-shrink: 0; }
 
-/* Badges: gewoon kleine tekst, geen pilletjes met kleurvlakken.
-   Het platform staat als één klein woord, in lichtgrijs. */
 .sb-badge-row {
     display: flex;
     flex-wrap: wrap;
@@ -756,12 +780,10 @@ button {
     border-radius: 0 !important;
     font-weight: 600;
 }
-/* Behalve de provider-badge: die krijgt z'n eigen merkkleur als
-   subtiel accent, alléén in de tekst. */
-.sb-provider-badge.facebook  { color: #1877f2 !important; }
-.sb-provider-badge.instagram { color: #e1306c !important; }
-.sb-provider-badge.gmb       { color: #4285f4 !important; }
-.sb-provider-badge.tiktokBusiness { color: #ff0050 !important; }
+.sb-provider-badge.facebook        { color: #1877f2 !important; }
+.sb-provider-badge.instagram       { color: #e1306c !important; }
+.sb-provider-badge.gmb             { color: #4285f4 !important; }
+.sb-provider-badge.tiktokBusiness  { color: #ff0050 !important; }
 
 .sb-message-preview {
     font-size: 13px;
@@ -772,7 +794,7 @@ button {
     overflow: hidden;
 }
 
-/* Rechterkolom: bericht-weergave. Geen panel-styling. */
+/* Rechterkolom */
 .sb-content {
     padding-left: 40px;
     display: flex;
@@ -834,7 +856,7 @@ button {
 }
 .sb-view-btn:hover { color: var(--ink); }
 
-/* Antwoordblok onderaan */
+/* Antwoordblok */
 .sb-reply-box {
     padding: 32px 0 0 0;
     background: transparent !important;
@@ -854,6 +876,7 @@ button {
     gap: 16px;
     margin-bottom: 14px;
 }
+/* .sb-quick-btn is een variant van .sb-link-underline (font-size 12) */
 .sb-quick-btn {
     background: transparent;
     border: none;
@@ -883,6 +906,7 @@ button {
     outline: none;
     border-color: var(--accent);
 }
+.sb-reply-input:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .sb-reply-actions {
     display: flex;
@@ -892,23 +916,12 @@ button {
     gap: 10px;
 }
 .sb-reply-status { font-size: 12px; color: var(--ink-soft); }
-.sb-reply-status.ok  { color: #2e7d32; }
-.sb-reply-status.err { color: #c62828; }
+.sb-reply-status.ok  { color: var(--ok); }
+.sb-reply-status.err { color: var(--err); }
 
-.sb-reply-send {
-    background: var(--ink);
-    color: var(--bg);
-    border: none;
-    padding: 10px 22px;
-    border-radius: 0;
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    transition: background 0.15s;
-}
-.sb-reply-send:hover { background: var(--accent); }
+/* .sb-reply-send gebruikt .sb-btn-dark — geen aparte regels meer nodig. */
 
-/* Lege staten in de inbox */
+/* Lege staten */
 .sb-empty-state {
     display: flex;
     flex-direction: column;
@@ -931,7 +944,17 @@ button {
     font-size: 14px;
 }
 
-/* Debug-blokje onderaan de inbox */
+/* Reply-warning (te oud bericht) */
+.sb-reply-warning {
+    font-size: 12px;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--rule);
+    padding: 8px 0 8px 12px;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+/* Debug-blokje */
 .sb-debug-section { margin-top: 64px; padding-top: 0; }
 .sb-debug-toggle {
     background: none;
@@ -983,102 +1006,33 @@ button {
     letter-spacing: 0.06em;
 }
 .sb-debug-card div { margin-bottom: 3px; color: var(--ink-soft); }
-.sb-debug-card .ok  { color: #2e7d32; }
-.sb-debug-card .err { color: #c62828; }
+.sb-debug-card .ok  { color: var(--ok); }
+.sb-debug-card .err { color: var(--err); }
 
 
 /* ============================================================
-   FATHOM dashboard
-   De HTML van fathom-info2.php gebruikt rechtstreeks Tailwind-
-   klassen op de elementen. We laten die HTML ongemoeid en mikken
-   met :has() en ID-selectors op de bestaande structuur.
-
-   Belangrijk: de Fathom-pagina gebruikt GEEN .navbar of .sb-title
-   class — alleen een gewoon <nav>-element en geen titel-tag. We
-   stylen het hieronder dus apart, maar met dezelfde regels als de
-   andere pagina's, zodat het visueel hetzelfde voelt.
+   13. FATHOM dashboard (fathom-info2.php)
+   ------------------------------------------------------------
+   Vroeger werd dit gestyled via :has(#realtimeD), [name="range"]
+   en andere ID/attribute-selectors. Nu via gewone classes die
+   in de PHP zelf op de elementen staan.
    ============================================================ */
 
-/* Voor Fathom willen we paars als accent. */
-body:has(#realtimeD) {
-    --accent: #5603AD;
+/* KPI-strip: één doorlopende rij getallen met een hairline eronder. */
+.sb-kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 32px 40px;
+    width: 100%;
+    padding: 0 0 22px 0;
+    margin-bottom: 32px;
+    background: transparent;
+    border-bottom: 1px solid var(--rule-soft);
 }
 
-/* JS-toggle helper voor tooltips */
-.hidden { display: none !important; }
-
-/* ── Fathom-navbar gelijkschakelen met de andere pagina's ──
-   De Fathom-PHP gebruikt een <nav class="bg-[#5603AD] ..."> met
-   Tailwind-klassen. Tailwind is niet geladen, dus die klassen zelf
-   doen niets — maar het nav-element heeft ook geen .navbar class,
-   dus onze gewone navbar-regels grijpen er niet op aan. We
-   selecteren hem hier daarom apart via body:has(#realtimeD) nav. */
-body:has(#realtimeD) nav {
-    display: flex !important;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 28px !important;
-    padding: 0 0 18px 0 !important;
-    margin: 0 0 56px 0 !important;
-    background: transparent !important;
-    color: var(--ink) !important;
-    border: none !important;
-    border-bottom: 1px solid var(--rule) !important;
-    border-radius: 0 !important;
-}
-
-/* Het SkyByte-woordmerk linksboven (zelfde gradient-tekst als
-   op de andere pagina's). */
-body:has(#realtimeD) nav::before {
-    content: "SkyByte";
-    font-family: var(--serif);
-    font-weight: 600;
-    font-size: 19px;
-    letter-spacing: -0.01em;
-    background: linear-gradient(
-        135deg,
-        var(--brand-purple) 0%,
-        var(--brand-blue-deep) 100%
-    );
-    -webkit-background-clip: text;
-            background-clip: text;
-    -webkit-text-fill-color: transparent;
-            color: transparent;
-    margin-right: auto;
-}
-
-/* De links binnen de Fathom-navbar krijgen dezelfde stijl als
-   .nav-link op de andere pagina's. */
-body:has(#realtimeD) nav a {
-    text-decoration: none;
-    color: var(--ink-soft) !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    letter-spacing: 0.01em;
-    background: transparent !important;
-    padding: 0 !important;
-    transition: color 0.15s;
-}
-
-body:has(#realtimeD) nav a:hover {
-    color: var(--ink) !important;
-}
-
-/* "Fathom" is de huidige pagina — geven we het accent in paars
-   zodat duidelijk is welk tabblad actief is, net als de actieve
-   nav-link op de andere pagina's. */
-body:has(#realtimeD) nav a[href*="fathom"] {
-    color: var(--accent) !important;
-    font-weight: 600 !important;
-}
-
-/* ── Paginatitel "Website analytics" ──
-   De Fathom-pagina heeft geen <h1> of .sb-title, dus we voegen er
-   één toe via ::before op de KPI-strip. Zelfde lettertype/grootte
-   als .sb-title op de andere pagina's. grid-column: 1 / -1 zorgt
-   dat de titel de volle breedte van de grid pakt (boven de KPI's). */
-section:has(> #realtimeD)::before {
-    content: "Website analytics";
+/* Paginatitel boven de KPI-strip (Fathom heeft geen <h1>) */
+.sb-kpi-strip::before {
+    content: attr(data-title);
     grid-column: 1 / -1;
     font-family: var(--serif);
     font-weight: 400;
@@ -1090,26 +1044,11 @@ section:has(> #realtimeD)::before {
     margin-bottom: 24px;
 }
 
-/* KPI-strip bovenaan Fathom: was eerst een paars vierkant met
-   witte tekst in vakjes, en daarna een "bordered box". Nu: gewoon
-   een horizontale rij getallen met een hairline eronder, hetzelfde
-   ritme als de social-dashboard rijen. */
-section:has(> #realtimeD) {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 32px 40px;
-    width: 100%;
-    padding: 0 0 22px 0;
-    margin-bottom: 0;
-    background: transparent !important;
-    border: none;
-    border-bottom: 1px solid var(--rule-soft);
-}
-
-section:has(> #realtimeD) > div {
+/* Eén KPI in de strip */
+.sb-kpi {
     position: relative;
-    padding: 0 !important;
-    background: transparent !important;
+    padding: 0;
+    background: transparent;
     text-align: left;
     cursor: help;
     font-family: var(--serif);
@@ -1117,89 +1056,64 @@ section:has(> #realtimeD) > div {
     font-weight: 400;
     text-transform: none;
     letter-spacing: -0.01em;
-    color: var(--ink) !important;
+    color: var(--ink);
     line-height: 1.35;
 }
 
-tr:has(> th#pagenameTable) > th {
-    position: relative;
-    padding: 0 !important;
-    background: transparent !important;
-    text-align: left;
-    cursor: help;
-    font-family: var(--serif);
-    font-size: 18px;
-    font-weight: 400;
-    text-transform: none;
-    letter-spacing: -0.01em;
-    color: var(--ink) !important;
-    line-height: 1.35;
-}
-
-
-
-
-section:has(> #pagenameTable) > div:hover {
-    background: transparent !important;
-    color: var(--accent) !important;
-}
-
-
-
-/* Tooltips bij KPI's: een rustig zwart blokje */
-#exp-realtime,
-#exp-visits,
-#exp-pageviews,
-#exp-vpv,
-#exp-bounce,
-#exp-duration,
-#table-pagename,
-#table-pageviews,
-#table-visits,
-#table-views-per-visit,
-#table-bounce-rate,
-#table-avg-duration {
+/* Tooltip-popover bij KPI's en tabel-headers */
+.sb-tooltip {
     position: absolute;
     top: 100%;
     left: 0;
-    transform: none !important;
     margin-top: 8px;
     width: max-content;
     max-width: 240px;
     padding: 10px 14px;
     background: var(--ink);
     color: var(--bg);
-    border: none !important;
+    border: none;
     border-radius: 0;
     font-family: var(--sans);
     font-size: 12px;
     font-weight: 400;
     line-height: 1.45;
-    letter-spacing: 0;
     z-index: 10;
 }
 
+/* Tabel-header die ook een tooltip toont (gebruikt op Fathom) */
+.sb-th-tooltip {
+    position: relative;
+    padding: 0;
+    background: transparent;
+    text-align: left;
+    cursor: help;
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    line-height: 1.35;
+}
+.sb-th-tooltip:hover { color: var(--accent); }
+
 /* Grafiek-wrapper */
-section:has(#Chart) {
-    background: transparent !important;
+.sb-chart-section {
+    background: transparent;
     padding: 24px 0 32px 0;
-    border-radius: 0;
     margin-bottom: 32px;
     box-shadow: none;
 }
-
-section:has(#Chart) > div {
-    width: 100% !important;
-    max-width: 100% !important;
+.sb-chart-section > div {
+    width: 100%;
+    max-width: 100%;
     height: 360px;
-    margin: 0 !important;
+    margin: 0;
 }
+.sb-chart-canvas { width: 100% !important; height: 100% !important; }
 
-#Chart { width: 100% !important; height: 100% !important; }
-
-/* Range-knoppen (vandaag / 7 dagen / 30 dagen).
-   De PHP zet op de actieve knop een `bg-black` class. */
-form:has(> button[name="range"]) {
+/* Range-knoppen (vandaag / 7 dagen / 30 dagen) */
+.sb-range-form {
     display: flex;
     justify-content: flex-start;
     gap: 24px;
@@ -1210,74 +1124,45 @@ form:has(> button[name="range"]) {
     flex-wrap: wrap;
 }
 
-form > button[name="range"] {
-    padding: 4px 0 !important;
-    background: transparent !important;
-    color: var(--ink-soft) !important;
-    border: none !important;
-    border-bottom: 2px solid transparent !important;
-    border-radius: 0 !important;
+.sb-range-btn {
+    padding: 4px 0;
+    background: transparent;
+    color: var(--ink-soft);
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
     font-size: 13px;
     font-weight: 500;
     transition: color 0.15s, border-color 0.15s;
 }
 
-form > button[name="range"]:hover {
-    background: transparent !important;
-    color: var(--ink) !important;
-    transform: none !important;
-    box-shadow: none !important;
+.sb-range-btn:hover {
+    background: transparent;
+    color: var(--ink);
 }
 
-form > button[name="range"].bg-black,
-form > button[name="range"].bg-black:hover {
-    background: transparent !important;
-    color: var(--ink) !important;
-    border-bottom-color: var(--accent) !important;
+.sb-range-btn.is-active,
+.sb-range-btn.is-active:hover {
+    background: transparent;
+    color: var(--ink);
+    border-bottom-color: var(--accent);
     font-weight: 600;
 }
 
-/* Datumfilter-formulier van Fathom */
-form:has(> input[type="date"][name="date_from"]) {
-    background: transparent !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-    margin: 32px 0 !important;
+/* Custom datumkiezer */
+.sb-date-form {
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    margin: 32px 0;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
-form > input[type="date"][name="date_from"],
-form > input[type="date"][name="date_to"] {
-    border: none !important;
-    border-bottom: 1px solid var(--rule) !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    padding: 4px 0 !important;
-}
-
-form > button[type="submit"] {
-    width: auto;
-    background: var(--ink) !important;
-    color: var(--bg) !important;
-    padding: 8px 20px !important;
-    border-radius: 0 !important;
-    text-transform: none;
-    letter-spacing: normal;
-    font-weight: 600;
-    box-shadow: none !important;
-}
-
-form > button[type="submit"]:hover {
-    background: var(--accent) !important;
-    transform: none !important;
-}
-
-/* Referrer- en UTM-lijsten: gewoon een opsomming, geen paarse balken. */
-section:has(> ul) {
-    display: block;
-    margin-bottom: 40px;
-}
-
-section > ul {
+/* Referrer- en UTM-lijsten */
+.sb-data-list {
     list-style: none;
     width: 100%;
     max-width: 100%;
@@ -1286,24 +1171,18 @@ section > ul {
     border-top: 1px solid var(--rule-soft);
 }
 
-section > ul > li {
-    background: transparent !important;
-    color: var(--ink) !important;
-    padding: 16px 0 !important;
-    border: none !important;
-    border-bottom: 1px solid var(--rule-soft) !important;
-    border-radius: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
+.sb-data-list > li {
+    background: transparent;
+    color: var(--ink);
+    padding: 16px 0;
+    border: none;
+    border-bottom: 1px solid var(--rule-soft);
+    border-radius: 0;
+    margin: 0;
+    box-shadow: none;
 }
 
-section > ul > li:hover {
-    background: transparent !important;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-section > ul > li:has(> span) {
+.sb-data-list > li:has(> span) {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
@@ -1311,7 +1190,7 @@ section > ul > li:has(> span) {
     gap: 16px;
 }
 
-section > ul > li > span:first-child {
+.sb-data-list > li > span:first-child {
     font-family: var(--serif);
     font-weight: 400;
     font-size: 20px;
@@ -1319,127 +1198,58 @@ section > ul > li > span:first-child {
     letter-spacing: -0.01em;
 }
 
-section > ul > li > span:last-child {
+.sb-data-list > li > span:last-child {
     color: var(--ink-soft);
     font-size: 13px;
 }
 
-section > ul > li > div {
+.sb-data-list > li > div {
     color: var(--ink);
     font-size: 13px;
     padding: 2px 0;
 }
 
-section > ul > li > div:last-child {
+.sb-data-list > li > div:last-child {
     color: var(--ink-soft);
     padding-top: 8px;
     margin-top: 8px;
-    border-top: none !important;
 }
 
 /* UTM-generator */
-section:has(#sourceSelect) {
+.sb-utm-section {
     display: block;
-    background: transparent !important;
-    padding: 32px 0 !important;
+    background: transparent;
+    padding: 32px 0;
     border-top: 1px solid var(--rule-soft);
-    box-shadow: none !important;
+    box-shadow: none;
     max-width: 100%;
-    margin: 32px 0 !important;
+    margin: 32px 0;
 }
 
-section:has(#sourceSelect) > div { margin-bottom: 18px; }
+.sb-utm-section > div { margin-bottom: 18px; }
 
-#sourceSelect,
-#mediumSelect,
-#sourceCustom,
-#mediumCustom,
-#campaignInput,
-#contentInput {
-    width: 100%;
-    padding: 8px 0 !important;
-    font-size: 14px;
-    border: none !important;
-    border-bottom: 1px solid var(--rule) !important;
-    border-radius: 0 !important;
-    background: transparent !important;
-    color: var(--ink) !important;
-    font-family: var(--sans);
-}
+/* UTM-velden delen alle styling met .sb-field — geen extra regels nodig. */
+.sb-utm-section .sb-field + .sb-field { margin-top: 8px; }
 
-#sourceSelect:focus,
-#mediumSelect:focus,
-#sourceCustom:focus,
-#mediumCustom:focus,
-#campaignInput:focus,
-#contentInput:focus {
-    outline: none;
-    border-bottom-color: var(--accent) !important;
-    box-shadow: none !important;
-}
-
-#sourceCustom,
-#mediumCustom { margin-top: 8px; }
-
-section:has(#sourceSelect) button[onclick="generateUTM()"] {
-    width: auto;
-    padding: 10px 22px !important;
-    background: var(--ink) !important;
-    color: var(--bg) !important;
-    border: none !important;
-    border-radius: 0 !important;
-    font-weight: 600;
-    text-transform: none;
-    letter-spacing: normal;
-    margin-top: 8px;
-}
-
-section:has(#sourceSelect) button[onclick="generateUTM()"]:hover {
-    background: var(--accent) !important;
-    transform: none !important;
-    box-shadow: none !important;
-}
-
-#result {
+/* UTM result-output */
+.sb-utm-result {
     min-height: 60px;
-    padding: 12px 0 !important;
-    background: transparent !important;
-    border: none !important;
-    border-top: 1px solid var(--rule-soft) !important;
-    border-bottom: 1px solid var(--rule-soft) !important;
-    border-radius: 0 !important;
+    padding: 12px 0;
+    background: transparent;
+    border: none;
+    border-top: 1px solid var(--rule-soft);
+    border-bottom: 1px solid var(--rule-soft);
+    border-radius: 0;
     font-family: var(--mono);
     font-size: 13px;
     color: var(--ink-soft);
     word-break: break-all;
-    margin: 16px 0 12px !important;
-}
-
-section:has(#sourceSelect) button[onclick="copyLink()"] {
-    width: auto;
-    padding: 8px 18px !important;
-    background: transparent !important;
-    color: var(--ink) !important;
-    border: 1px solid var(--ink) !important;
-    border-radius: 0 !important;
-    font-weight: 600;
-    text-transform: none;
-    margin-top: 0;
-}
-
-section:has(#sourceSelect) button[onclick="copyLink()"]:hover {
-    background: var(--ink) !important;
-    color: var(--bg) !important;
-    transform: none !important;
-    box-shadow: none !important;
+    margin: 16px 0 12px;
 }
 
 
 /* ============================================================
-   Algemene PHP-gegenereerde elementen
-   (de oude .card, .stats-grid, etc. die mogelijk in detail-
-   pagina's nog gebruikt worden — we drukken ze plat zonder
-   dat ze lelijk worden)
+   14. Generieke PHP-componenten (legacy detail-pagina's)
    ============================================================ */
 
 .card,
@@ -1532,11 +1342,12 @@ section:has(#sourceSelect) button[onclick="copyLink()"]:hover {
 
 .stat-subtext { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
 
-.positive { color: #2e7d32; }
-.negative { color: #c62828; }
-.neutral  { color: #b06800; }
+.positive { color: var(--ok); }
+.negative { color: var(--err); }
+.neutral  { color: var(--warn); }
 
-/* Tabellen */
+
+/* ─────────── Tabellen ─────────── */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -1561,11 +1372,11 @@ th {
     border-bottom: 1px solid var(--rule);
 }
 td { font-size: 14px; color: var(--ink); }
-.row-best { background: rgba(46, 125, 50, 0.06); }
+.row-best  { background: rgba(46, 125, 50, 0.06); }
 .row-worst { background: rgba(198, 40, 40, 0.06); }
-/* tr:hover { background: rgba(0, 0, 0, 0.02); } */
 
-/* Berichten / alerts */
+
+/* ─────────── Alerts ─────────── */
 .error, .info, .warning, .success {
     padding: 14px 0 14px 16px;
     border-left: 2px solid;
@@ -1574,85 +1385,169 @@ td { font-size: 14px; color: var(--ink); }
     margin-bottom: 24px;
     font-size: 14px;
 }
-.error   { border-left-color: #c62828; color: #c62828; }
+.error   { border-left-color: var(--err);    color: var(--err); }
 .info    { border-left-color: var(--accent); color: var(--ink); }
-.warning { border-left-color: #b06800; color: #b06800; }
-.success { border-left-color: #2e7d32; color: #2e7d32; }
+.warning { border-left-color: var(--warn);   color: var(--warn); }
+.success { border-left-color: var(--ok);     color: var(--ok); }
 
 
-/* ─────────── 11. Responsive ─────────── */
-@media (max-width: 900px) {
-    body { padding: 24px 20px 64px; }
-    .sb-layout { grid-template-columns: 1fr; gap: 48px; }
-    .sb-sidebar {
-        position: static;
-        padding-right: 0;
-        padding-bottom: 8px;
-    }
-    .sb-inbox-layout { grid-template-columns: 1fr; }
-    .sb-sidebar-inbox {
-        height: auto;
-        max-height: 500px;
-        padding-right: 0;
-        padding-bottom: 24px;
-        margin-bottom: 48px;
-    }
-    .sb-content { padding-left: 0; min-height: auto; }
-    .sb-tabs { margin-left: 0; }
-
-    /* Op smal scherm wordt de rij-layout van een metric te krap, dus
-       stacken we hem terug verticaal: label boven, getal eronder,
-       stats onderaan. */
-    .sb-card {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    .sb-card-actions {
-        position: static;
-        justify-content: flex-end;
-    }
-}
-
-@media (max-width: 600px) {
-    .sb-title { font-size: 32px; }
-    .sb-card-avg { font-size: 32px; }
-}
-
-/* Print */
-@media print {
-    .navbar, .sb-toolbar, .sb-sidebar, .sb-debug-section, button { display: none; }
-    body { padding: 0; background: white; }
-}
 /* ============================================================
-   Extra: dropzone-popup + toast-feedback
-   Voeg dit onderaan je bestaande styles.css toe.
+   15. METRIC DETAIL pagina (metric_detail.php) — ÉÉN keer.
    ============================================================ */
 
-.sb-canvas {
-    position: relative;
-}
-
-.sb-canvas.drag-over {
-    background: rgba(86, 3, 173, 0.06);
-}
-
-.sb-canvas.drag-over::after {
-    content: "Laat los in dit kader";
-    position: absolute;
-    inset: 16px;
+/* Breadcrumb */
+.sb-breadcrumb {
     display: flex;
     align-items: center;
-    justify-content: center;
-    border: 2px dashed var(--accent);
-    background: rgba(255, 255, 250, 0.88);
-    color: var(--accent);
-    font-family: var(--sans);
-    font-size: 15px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
-    z-index: 20;
-    pointer-events: none;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
 }
+.sb-breadcrumb a {
+    color: var(--ink-soft);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+.sb-breadcrumb a:hover { color: var(--accent); }
+.sb-breadcrumb-sep { opacity: 0.4; }
+.sb-breadcrumb-current { color: var(--ink); }
+
+/* Terug-link */
+.sb-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    margin-bottom: 40px;
+    transition: color 0.15s;
+}
+.sb-back:hover { color: var(--accent); }
+
+.sb-detail-header { margin-bottom: 40px; }
+.sb-detail-header .sb-title    { margin-bottom: 6px; }
+.sb-detail-header .sb-subtitle { margin-bottom: 0; }
+
+.sb-detail-stats {
+    grid-template-columns: repeat(4, 1fr);
+    margin-bottom: 56px;
+}
+
+.sb-detail-section {
+    padding-top: 40px;
+    border-top: 1px solid var(--rule-soft);
+    margin-bottom: 56px;
+}
+
+.sb-section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+    font-weight: 600;
+    margin-bottom: 24px;
+    font-family: var(--sans);
+}
+
+.sb-chart-wrap {
+    position: relative;
+    height: 280px;
+    width: 100%;
+}
+
+.sb-detail-table { margin-top: 0; }
+.sb-detail-table .col-rank   { width: 40px; }
+.sb-detail-table .col-date   { width: 120px; white-space: nowrap; }
+.sb-detail-table .col-metric { width: 110px; text-align: right; }
+.sb-detail-table th.col-metric { text-align: right; }
+
+.sb-post-row--link { cursor: pointer; }
+.sb-post-row--link:hover td { opacity: 0.7; }
+
+.sb-rank {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    font-family: var(--sans);
+}
+.sb-rank--top {
+    color: var(--accent);
+    font-family: var(--serif);
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.sb-post-thumb-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.sb-post-thumb {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    flex-shrink: 0;
+    border-radius: 2px;
+}
+.sb-post-thumb--empty { background: var(--rule-soft); }
+.sb-post-text {
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    color: var(--ink);
+}
+
+.sb-post-date {
+    font-size: 13px;
+    color: var(--ink-soft);
+}
+
+.sb-metric-value {
+    text-align: right;
+    font-family: var(--serif);
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+}
+
+.sb-total-row td {
+    border-top: 1px solid var(--rule);
+    border-bottom: none;
+    padding-top: 16px;
+    padding-bottom: 4px;
+}
+.sb-total-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    font-weight: 600;
+}
+.sb-total-value {
+    font-family: var(--serif);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--accent) !important;
+}
+
+
+/* ============================================================
+   16. Toast (drop-feedback)
+   ============================================================ */
 
 .sb-toast {
     position: fixed;
@@ -1687,537 +1582,56 @@ td { font-size: 14px; color: var(--ink); }
     font-size: 12px;
     font-weight: 500;
 }
+
+
 /* ============================================================
-   METRIC DETAIL PAGINA (metric_detail.php)
-   Zelfde redactionele taal als de rest: witruimte, dunne lijnen,
-   serif voor grote getallen, geen kaders of schaduwen.
+   17. Responsive
    ============================================================ */
+@media (max-width: 900px) {
+    body { padding: 24px 20px 64px; }
+    .sb-layout { grid-template-columns: 1fr; gap: 48px; }
+    .sb-sidebar {
+        position: static;
+        padding-right: 0;
+        padding-bottom: 8px;
+    }
+    .sb-inbox-layout { grid-template-columns: 1fr; }
+    .sb-sidebar-inbox {
+        height: auto;
+        max-height: 500px;
+        padding-right: 0;
+        padding-bottom: 24px;
+        margin-bottom: 48px;
+    }
+    .sb-content { padding-left: 0; min-height: auto; }
+    .sb-tabs { margin-left: 0; }
 
-/* Breadcrumb — kleine grijze navigatietekst */
-.sb-breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--ink-soft);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 600;
+    .sb-card {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    .sb-card-actions {
+        position: static;
+        justify-content: flex-end;
+    }
 }
-.sb-breadcrumb a {
-    color: var(--ink-soft);
-    text-decoration: none;
-    transition: color 0.15s;
-}
-.sb-breadcrumb a:hover { color: var(--accent); }
-.sb-breadcrumb-sep { opacity: 0.4; }
-.sb-breadcrumb-current { color: var(--ink); }
 
-/* Terug-link — zelfde als .sb-quick-btn: onderstreepte tekst */
-.sb-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: var(--ink-soft);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    margin-bottom: 40px;
-    transition: color 0.15s;
-}
-.sb-back:hover { color: var(--accent); }
-
-/* Paginatitel-blok: hergebruik .sb-title + .sb-subtitle, maar
-   zonder de grote ondermarge (de stats volgen direct). */
-.sb-detail-header {
-    margin-bottom: 40px;
-}
-.sb-detail-header .sb-title  { margin-bottom: 6px; }
-.sb-detail-header .sb-subtitle { margin-bottom: 0; }
-
-/* Stats-rij: hergebruik de bestaande .stats-grid maar met een
-   vaste 4-kolommen layout op breed scherm. */
-.sb-detail-stats {
-    grid-template-columns: repeat(4, 1fr);
-    margin-bottom: 56px;
-}
 @media (max-width: 768px) {
     .sb-detail-stats { grid-template-columns: 1fr 1fr; }
 }
+
+@media (max-width: 600px) {
+    .sb-title { font-size: 32px; }
+    .sb-card-avg { font-size: 32px; }
+}
+
 @media (max-width: 480px) {
     .sb-detail-stats { grid-template-columns: 1fr; }
 }
 
-/* Secties (grafiek + tabel): dunne lijn erboven, royale witruimte */
-.sb-detail-section {
-    padding-top: 40px;
-    border-top: 1px solid var(--rule-soft);
-    margin-bottom: 56px;
-}
 
-/* Sectie-label boven grafiek en tabel */
-.sb-section-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    font-weight: 600;
-    margin-bottom: 24px;
-    font-family: var(--sans);
-}
-
-/* Grafiek */
-.sb-chart-wrap {
-    position: relative;
-    height: 280px;
-    width: 100%;
-}
-
-/* Detail-tabel: bouwt op de globale table/th/td regels, voegt
-   alleen de post-specifieke kolommen en rij-interactie toe. */
-.sb-detail-table { margin-top: 0; }
-
-.sb-detail-table .col-rank  { width: 40px; }
-.sb-detail-table .col-date  { width: 120px; white-space: nowrap; }
-.sb-detail-table .col-metric { width: 110px; text-align: right; }
-.sb-detail-table th.col-metric { text-align: right; }
-
-.sb-post-row--link { cursor: pointer; }
-.sb-post-row--link:hover td { opacity: 0.7; }
-
-/* Rangnummer */
-.sb-rank {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--ink-soft);
-    font-family: var(--sans);
-}
-/* Top-3 krijgt accentkleur als tekst (geen vlak, past bij de stijl) */
-.sb-rank--top {
-    color: var(--accent);
-    font-family: var(--serif);
-    font-size: 16px;
-    font-weight: 400;
-}
-
-/* Thumbnail + tekst naast elkaar */
-.sb-post-thumb-wrap {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.sb-post-thumb {
-    width: 36px;
-    height: 36px;
-    object-fit: cover;
-    flex-shrink: 0;
-    border-radius: 2px;
-}
-.sb-post-thumb--empty {
-    background: var(--rule-soft);
-}
-.sb-post-text {
-    max-width: 400px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 14px;
-    color: var(--ink);
-}
-
-/* Datum-kolom */
-.sb-post-date {
-    font-size: 13px;
-    color: var(--ink-soft);
-}
-
-/* Metric-waarde rechts uitlijnen, accentkleur */
-.sb-metric-value {
-    text-align: right;
-    font-family: var(--serif);
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--accent);
-    letter-spacing: -0.01em;
-}
-/* ============================================================
-   METRIC DETAIL PAGINA (metric_detail.php)
-   Zelfde redactionele taal als de rest: witruimte, dunne lijnen,
-   serif voor grote getallen, geen kaders of schaduwen.
-   ============================================================ */
-
-/* Breadcrumb — kleine grijze navigatietekst */
-.sb-breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--ink-soft);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 600;
-}
-.sb-breadcrumb a {
-    color: var(--ink-soft);
-    text-decoration: none;
-    transition: color 0.15s;
-}
-.sb-breadcrumb a:hover { color: var(--accent); }
-.sb-breadcrumb-sep { opacity: 0.4; }
-.sb-breadcrumb-current { color: var(--ink); }
-
-/* Terug-link — zelfde als .sb-quick-btn: onderstreepte tekst */
-.sb-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: var(--ink-soft);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    margin-bottom: 40px;
-    transition: color 0.15s;
-}
-.sb-back:hover { color: var(--accent); }
-
-/* Paginatitel-blok: hergebruik .sb-title + .sb-subtitle, maar
-   zonder de grote ondermarge (de stats volgen direct). */
-.sb-detail-header {
-    margin-bottom: 40px;
-}
-.sb-detail-header .sb-title  { margin-bottom: 6px; }
-.sb-detail-header .sb-subtitle { margin-bottom: 0; }
-
-/* Stats-rij: hergebruik de bestaande .stats-grid maar met een
-   vaste 4-kolommen layout op breed scherm. */
-.sb-detail-stats {
-    grid-template-columns: repeat(4, 1fr);
-    margin-bottom: 56px;
-}
-@media (max-width: 768px) {
-    .sb-detail-stats { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 480px) {
-    .sb-detail-stats { grid-template-columns: 1fr; }
-}
-
-/* Secties (grafiek + tabel): dunne lijn erboven, royale witruimte */
-.sb-detail-section {
-    padding-top: 40px;
-    border-top: 1px solid var(--rule-soft);
-    margin-bottom: 56px;
-}
-
-/* Sectie-label boven grafiek en tabel */
-.sb-section-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    font-weight: 600;
-    margin-bottom: 24px;
-    font-family: var(--sans);
-}
-
-/* Grafiek */
-.sb-chart-wrap {
-    position: relative;
-    height: 280px;
-    width: 100%;
-}
-
-/* Detail-tabel: bouwt op de globale table/th/td regels, voegt
-   alleen de post-specifieke kolommen en rij-interactie toe. */
-.sb-detail-table { margin-top: 0; }
-
-.sb-detail-table .col-rank  { width: 40px; }
-.sb-detail-table .col-date  { width: 120px; white-space: nowrap; }
-.sb-detail-table .col-metric { width: 110px; text-align: right; }
-.sb-detail-table th.col-metric { text-align: right; }
-
-.sb-post-row--link { cursor: pointer; }
-.sb-post-row--link:hover td { opacity: 0.7; }
-
-/* Rangnummer */
-.sb-rank {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--ink-soft);
-    font-family: var(--sans);
-}
-/* Top-3 krijgt accentkleur als tekst (geen vlak, past bij de stijl) */
-.sb-rank--top {
-    color: var(--accent);
-    font-family: var(--serif);
-    font-size: 16px;
-    font-weight: 400;
-}
-
-/* Thumbnail + tekst naast elkaar */
-.sb-post-thumb-wrap {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.sb-post-thumb {
-    width: 36px;
-    height: 36px;
-    object-fit: cover;
-    flex-shrink: 0;
-    border-radius: 2px;
-}
-.sb-post-thumb--empty {
-    background: var(--rule-soft);
-}
-.sb-post-text {
-    max-width: 400px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 14px;
-    color: var(--ink);
-}
-
-/* Datum-kolom */
-.sb-post-date {
-    font-size: 13px;
-    color: var(--ink-soft);
-}
-
-/* Metric-waarde rechts uitlijnen, accentkleur */
-.sb-metric-value {
-    text-align: right;
-    font-family: var(--serif);
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--accent);
-    letter-spacing: -0.01em;
-}
-
-/* Totaalrij onderaan de detail-tabel */
-.sb-total-row td {
-    border-top: 1px solid var(--rule);
-    border-bottom: none;
-    padding-top: 16px;
-    padding-bottom: 4px;
-}
-.sb-total-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-soft);
-    font-weight: 600;
-}
-.sb-total-value {
-    font-family: var(--serif);
-    font-size: 22px;
-    font-weight: 400;
-    color: var(--accent) !important;
-}
-/* ============================================================
-   METRIC DETAIL PAGINA (metric_detail.php)
-   Zelfde redactionele taal als de rest: witruimte, dunne lijnen,
-   serif voor grote getallen, geen kaders of schaduwen.
-   ============================================================ */
-
-/* Breadcrumb — kleine grijze navigatietekst */
-.sb-breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--ink-soft);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 600;
-}
-.sb-breadcrumb a {
-    color: var(--ink-soft);
-    text-decoration: none;
-    transition: color 0.15s;
-}
-.sb-breadcrumb a:hover { color: var(--accent); }
-.sb-breadcrumb-sep { opacity: 0.4; }
-.sb-breadcrumb-current { color: var(--ink); }
-
-/* Terug-link — zelfde als .sb-quick-btn: onderstreepte tekst */
-.sb-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: var(--ink-soft);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    margin-bottom: 40px;
-    transition: color 0.15s;
-}
-.sb-back:hover { color: var(--accent); }
-
-/* Paginatitel-blok: hergebruik .sb-title + .sb-subtitle, maar
-   zonder de grote ondermarge (de stats volgen direct). */
-.sb-detail-header {
-    margin-bottom: 40px;
-}
-.sb-detail-header .sb-title  { margin-bottom: 6px; }
-.sb-detail-header .sb-subtitle { margin-bottom: 0; }
-
-/* Stats-rij: hergebruik de bestaande .stats-grid maar met een
-   vaste 4-kolommen layout op breed scherm. */
-.sb-detail-stats {
-    grid-template-columns: repeat(4, 1fr);
-    margin-bottom: 56px;
-}
-@media (max-width: 768px) {
-    .sb-detail-stats { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 480px) {
-    .sb-detail-stats { grid-template-columns: 1fr; }
-}
-
-/* Secties (grafiek + tabel): dunne lijn erboven, royale witruimte */
-.sb-detail-section {
-    padding-top: 40px;
-    border-top: 1px solid var(--rule-soft);
-    margin-bottom: 56px;
-}
-
-/* Sectie-label boven grafiek en tabel */
-.sb-section-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    font-weight: 600;
-    margin-bottom: 24px;
-    font-family: var(--sans);
-}
-
-/* Grafiek */
-.sb-chart-wrap {
-    position: relative;
-    height: 280px;
-    width: 100%;
-}
-
-/* Detail-tabel: bouwt op de globale table/th/td regels, voegt
-   alleen de post-specifieke kolommen en rij-interactie toe. */
-.sb-detail-table { margin-top: 0; }
-
-.sb-detail-table .col-rank  { width: 40px; }
-.sb-detail-table .col-date  { width: 120px; white-space: nowrap; }
-.sb-detail-table .col-metric { width: 110px; text-align: right; }
-.sb-detail-table th.col-metric { text-align: right; }
-
-.sb-post-row--link { cursor: pointer; }
-.sb-post-row--link:hover td { opacity: 0.7; }
-
-/* Rangnummer */
-.sb-rank {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--ink-soft);
-    font-family: var(--sans);
-}
-/* Top-3 krijgt accentkleur als tekst (geen vlak, past bij de stijl) */
-.sb-rank--top {
-    color: var(--accent);
-    font-family: var(--serif);
-    font-size: 16px;
-    font-weight: 400;
-}
-
-/* Thumbnail + tekst naast elkaar */
-.sb-post-thumb-wrap {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.sb-post-thumb {
-    width: 36px;
-    height: 36px;
-    object-fit: cover;
-    flex-shrink: 0;
-    border-radius: 2px;
-}
-.sb-post-thumb--empty {
-    background: var(--rule-soft);
-}
-.sb-post-text {
-    max-width: 400px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 14px;
-    color: var(--ink);
-}
-
-/* Datum-kolom */
-.sb-post-date {
-    font-size: 13px;
-    color: var(--ink-soft);
-}
-
-/* Metric-waarde rechts uitlijnen, accentkleur */
-.sb-metric-value {
-    text-align: right;
-    font-family: var(--serif);
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--accent);
-    letter-spacing: -0.01em;
-}
-
-/* Totaalrij onderaan de detail-tabel */
-.sb-total-row td {
-    border-top: 1px solid var(--rule);
-    border-bottom: none;
-    padding-top: 16px;
-    padding-bottom: 4px;
-}
-.sb-total-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-soft);
-    font-weight: 600;
-}
-.sb-total-value {
-    font-family: var(--serif);
-    font-size: 22px;
-    font-weight: 400;
-    color: var(--accent) !important;
-}
-
-/* Inbox reply warning (te oud bericht) */
-.sb-reply-warning {
-    font-size: 12px;
-    color: var(--ink-soft);
-    border-left: 2px solid var(--rule);
-    padding: 8px 0 8px 12px;
-    margin-bottom: 10px;
-    font-style: italic;
-}
-.sb-reply-input:disabled,
-.sb-reply-send:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+/* ─────────── Print ─────────── */
+@media print {
+    .navbar, .sb-toolbar, .sb-sidebar, .sb-debug-section, button { display: none; }
+    body { padding: 0; background: white; }
 }
