@@ -67,6 +67,29 @@ function getMetricData($responseBody, $metricName) {
     ];
 }
 
+// Tel twee sets timeline-waarden op per datum (voor FOLLOWER + NON_FOLLOWER)
+function mergeTimelineValues($valuesA, $valuesB) {
+    $lookupB = [];
+    foreach ($valuesB as $row) { $lookupB[$row['dateTime'] ?? ''] = (float)($row['value'] ?? 0); }
+    $merged = [];
+    foreach ($valuesA as $row) {
+        $dt = $row['dateTime'] ?? '';
+        $merged[] = ['dateTime' => $dt, 'value' => (float)($row['value'] ?? 0) + ($lookupB[$dt] ?? 0)];
+        unset($lookupB[$dt]);
+    }
+    foreach ($lookupB as $dt => $val) { $merged[] = ['dateTime' => $dt, 'value' => $val]; }
+    usort($merged, fn($a, $b) => strcmp($a['dateTime'] ?? '', $b['dateTime'] ?? ''));
+    return $merged;
+}
+
+// Haal de ruwe values-array op uit een timeline API response
+function extractTimelineValues($responseBody, $metricName) {
+    foreach (($responseBody['data'] ?? []) as $block) {
+        if (($block['metric'] ?? '') === $metricName) { return $block['values'] ?? []; }
+    }
+    return [];
+}
+
 function formatValue($value, $metricKey) {
     if ($metricKey === 'engagement') { return number_format((float)$value, 2, ',', '.') . '%'; }
     return number_format((float)$value, 0, ',', '.');
@@ -77,60 +100,76 @@ $to   = $_POST['to']   ?? date('Y-m-d');
 $fromIso = $from . 'T00:00:00+01:00';
 $toIso   = $to   . 'T23:59:59+01:00';
 
-// Per metric kan een optioneel 'subject' veld staan.
-// Als dat er is, gebruiken we dat i.p.v. de globale $selectedSection.
-// Dit is nodig omdat Metricool voor sommige metrics (bv. video views)
-// een ander subject verwacht dan voor gewone posts/reels.
+// Video Views heeft een andere blogId, subject en scopes nodig dan de rest.
+// De overige metrics gebruiken gewoon de globale $blogId en subject 'posts'.
 $availableMetrics = [
     'posts' => [
         ['key' => 'engagement',   'label' => 'Engagement',  'api' => 'engagement',   'color' => '#e1306c', 'bg' => '#fde8f0'],
         ['key' => 'interactions', 'label' => 'Interacties', 'api' => 'interactions', 'color' => '#405de6', 'bg' => '#f0f2ff'],
         ['key' => 'likes',        'label' => 'Likes',       'api' => 'likes',        'color' => '#e1306c', 'bg' => '#fde8f0'],
         ['key' => 'comments',     'label' => 'Reacties',    'api' => 'comments',     'color' => '#5b51d8', 'bg' => '#f3f1ff'],
-        ['key' => 'videoviews',   'label' => 'Video Views', 'api' => 'views',        'color' => '#f77737', 'bg' => '#fff4e6', 'subject' => 'account'],
+        ['key' => 'videoviews',   'label' => 'Video Views', 'api' => 'views',        'color' => '#f77737', 'bg' => '#fff4e6',
+         'subject' => 'follow_type', 'scopes' => ['FOLLOWER', 'NON_FOLLOWER']],
         ['key' => 'reach',        'label' => 'Bereik',      'api' => 'reach',        'color' => '#833ab4', 'bg' => '#fef0ff'],
     ],
 ];
 
 $metricLookup = [];
 foreach ($availableMetrics as $section => $metrics) {
-    foreach ($metrics as $m) {
-        $metricLookup[$section][$m['key']] = $m;
-    }
+    foreach ($metrics as $m) { $metricLookup[$section][$m['key']] = $m; }
 }
 
 $selectedMetricsJson = $_POST['selected_metrics'] ?? '[]';
 $selectedMetrics = json_decode($selectedMetricsJson, true);
 if (!is_array($selectedMetrics)) $selectedMetrics = [];
 
-// Sectie ophalen uit POST (posts of reels), standaard posts
-$selectedSection = $_POST['selected_section'] ?? 'posts';
+$selectedSection = 'posts';
 
 $metricsData = [];
 
 if (!empty($selectedMetrics) && $token !== '') {
     foreach ($selectedMetrics as $metricKey) {
-        $metricInfo = $metricLookup[$selectedSection][$metricKey] ?? $metricLookup['posts'][$metricKey] ?? null;
+        $metricInfo = $metricLookup[$selectedSection][$metricKey] ?? null;
         if (!$metricInfo) continue;
 
-        $params = [
+        $baseParams = [
             'from'     => $fromIso,
             'to'       => $toIso,
             'network'  => 'instagram',
             'timezone' => 'Europe/Brussels',
             'userId'   => $userId,
             'blogId'   => $blogId,
-            // Sommige metrics hebben een eigen subject nodig (bv. videoviews → 'account').
-            // Als de metric geen eigen subject heeft, gebruiken we de globale sectie (posts/reels).
             'subject'  => $metricInfo['subject'] ?? $selectedSection,
             'metric'   => $metricInfo['api'],
         ];
 
-        $result = callMetricool('/api/v2/analytics/timelines', $params, $headers);
-        if (($result['httpCode'] ?? 0) === 200) {
-            $parsed = getMetricData($result['body'], $metricInfo['api']);
-            if (!isset($parsed['error']) && empty($parsed['empty'])) {
-                $metricsData[$metricKey] = ['info' => $metricInfo, 'data' => $parsed];
+        // Metrics met meerdere scopes (bv. videoviews: FOLLOWER + NON_FOLLOWER)
+        if (!empty($metricInfo['scopes'])) {
+            $allScopeValues = [];
+            foreach ($metricInfo['scopes'] as $scope) {
+                $scopeParams = $baseParams;
+                $scopeParams['scope'] = $scope;
+                $result = callMetricool('/api/v2/analytics/timelines', $scopeParams, $headers);
+                if (($result['httpCode'] ?? 0) === 200) {
+                    $scopeValues = extractTimelineValues($result['body'], $metricInfo['api']);
+                    $allScopeValues = empty($allScopeValues) ? $scopeValues : mergeTimelineValues($allScopeValues, $scopeValues);
+                }
+            }
+            if (!empty($allScopeValues)) {
+                $fakeResponse = ['data' => [['metric' => $metricInfo['api'], 'values' => $allScopeValues]]];
+                $parsed = getMetricData($fakeResponse, $metricInfo['api']);
+                if (!isset($parsed['error']) && empty($parsed['empty'])) {
+                    $metricsData[$metricKey] = ['info' => $metricInfo, 'data' => $parsed];
+                }
+            }
+        } else {
+            // Normale metrics: één API call
+            $result = callMetricool('/api/v2/analytics/timelines', $baseParams, $headers);
+            if (($result['httpCode'] ?? 0) === 200) {
+                $parsed = getMetricData($result['body'], $metricInfo['api']);
+                if (!isset($parsed['error']) && empty($parsed['empty'])) {
+                    $metricsData[$metricKey] = ['info' => $metricInfo, 'data' => $parsed];
+                }
             }
         }
     }
@@ -161,7 +200,6 @@ if (!empty($selectedMetrics) && $token !== '') {
     <p class="sb-subtitle">Sleep metrics naar het overzicht om te analyseren</p>
 
     <form method="POST" id="dashboardForm">
-        <input type="hidden" name="selected_section" id="selectedSection" value="<?= htmlspecialchars($selectedSection) ?>">
         <input type="hidden" name="selected_metrics" id="selectedMetrics" value="">
 
         <div class="sb-toolbar">
@@ -169,11 +207,6 @@ if (!empty($selectedMetrics) && $token !== '') {
             <input type="date" name="from" value="<?= htmlspecialchars($from) ?>">
             <label>Tot</label>
             <input type="date" name="to" value="<?= htmlspecialchars($to) ?>">
-            <label>Type</label>
-            <select name="selected_section" id="sectionSelect">
-                <option value="posts" <?= $selectedSection === 'posts' ? 'selected' : '' ?>>Posts</option>
-                <option value="reels" <?= $selectedSection === 'reels' ? 'selected' : '' ?>>Reels</option>
-            </select>
         </div>
 
         <div class="sb-layout">
@@ -181,7 +214,7 @@ if (!empty($selectedMetrics) && $token !== '') {
             <div class="sb-sidebar">
                 <div class="sb-sidebar-title">Metrics</div>
                 <div id="metricsList">
-                    <?php foreach ($availableMetrics[$selectedSection] ?? $availableMetrics['posts'] as $metric): ?>
+                    <?php foreach ($availableMetrics[$selectedSection] as $metric): ?>
                         <div class="sb-chip" draggable="true" data-metric="<?= htmlspecialchars($metric['key']) ?>"
                              style="border-left: 3px solid <?= htmlspecialchars($metric['color']) ?>;">
                             <?= htmlspecialchars($metric['label']) ?>
@@ -194,7 +227,6 @@ if (!empty($selectedMetrics) && $token !== '') {
 
                 <?php if (empty($metricsData)): ?>
                     <div class="sb-empty">
-                        
                         <p>Sleep een metric hierheen</p>
                         <p style="font-size:12px; color:#c8d0de;">Kies links wat je wilt zien</p>
                     </div>
@@ -204,7 +236,7 @@ if (!empty($selectedMetrics) && $token !== '') {
                         <?php foreach ($metricsData as $key => $metric):
                             $color = htmlspecialchars($metric['info']['color'] ?? '#e1306c');
                             $bg    = htmlspecialchars($metric['info']['bg']    ?? '#fde8f0');
-                            $detailUrl = 'metric_detail.php?metric=' . urlencode($key) . '&network=instagram&from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=' . urlencode($selectedSection);
+                            $detailUrl = 'metric_detail.php?metric=' . urlencode($key) . '&network=instagram&from=' . urlencode($from) . '&to=' . urlencode($to) . '&section=posts';
                         ?>
                             <a href="<?= $detailUrl ?>" class="sb-card-link" data-metric="<?= htmlspecialchars($key) ?>"
                                style="--card-color: <?= $color ?>; --card-bg: <?= $bg ?>;">
@@ -260,7 +292,6 @@ if (sessionStorage.getItem('sbMetricDropped') === '1') {
 }
 
 let selectedMetricsList = <?= json_encode(array_keys($metricsData)) ?>;
-let currentSection      = '<?= $selectedSection ?>';
 
 function submitForm() {
     document.getElementById('selectedMetrics').value = JSON.stringify(selectedMetricsList);
@@ -303,12 +334,6 @@ dropZone.addEventListener('drop', e => {
 
 document.querySelectorAll('input[type="date"]').forEach(input => {
     input.addEventListener('change', submitForm);
-});
-
-document.getElementById('sectionSelect').addEventListener('change', function() {
-    document.getElementById('selectedSection').value = this.value;
-    selectedMetricsList = [];
-    submitForm();
 });
 </script>
 
