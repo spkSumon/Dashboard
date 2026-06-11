@@ -396,6 +396,7 @@ Styling:
     </nav>
 </header>
 
+<main class="sb-main-content">
 <!-- KPI-strip — class .sb-kpi-strip styled de grid; data-title voor de
      paginatitel via ::before -->
 <section class="sb-kpi-strip" data-title="Website analytics">
@@ -642,7 +643,7 @@ usort($grouped, function($a, $b) use ($sort, $order) {
         <button type="button" class="sb-btn-outline" onclick="copyLink()">Kopieer link</button>
     </div>
 </section>
-
+</main>
 <!-- Alle JavaScript in één blok — geen dubbele functies meer -->
 <script defer>
     function setupTooltip(triggerId, tooltipId) {
