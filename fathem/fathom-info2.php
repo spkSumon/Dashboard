@@ -384,8 +384,7 @@ Styling:
 
 
 <header class="sb-header">
-    <h1>Fathom Analytics</h1>
-    <p>Overzicht van je websiteverkeer</p>
+    
 
     <nav class="navbar">
         <a href="../api/config.php" class="nav-link">Inbox</a>
@@ -397,49 +396,51 @@ Styling:
 </header>
 
 <main class="sb-main-content">
+    <h1>Fathom Analytics</h1>
+    <p>Overzicht van je websiteverkeer</p>
 <!-- KPI-strip — class .sb-kpi-strip styled de grid; data-title voor de
      paginatitel via ::before -->
-<section class="sb-kpi-strip" data-title="Website analytics">
+<section class="sb-kpi-strip" >
 
     <div id="realtimeD" class="sb-kpi">
-        Totaal realtime visitors: <?= $currentVisitors ?>
+        <span>Totaal realtime visitors: <?= $currentVisitors ?></span>
         <div id="exp-realtime" class="sb-tooltip is-hidden">
-            Het aantal mensen dat nu op je website zit.
+            <span>Het aantal mensen dat nu op je website zit.</span> 
         </div>
     </div>
 
     <div id="visitsD" class="sb-kpi">
-        Totaal visits: <?= $totalVisits ?>
+        <span>Totaal visits: <?= $totalVisits ?></span>
         <div id="exp-visits" class="sb-tooltip is-hidden">
-            Het aantal bezoeken aan je website. Als iemand 3 pagina's bekijkt, telt dat als 1 visit.
+            <span>Het aantal bezoeken aan je website. Als iemand 3 pagina's bekijkt, telt dat als 1 visit.</span>
         </div>
     </div>
 
     <div id="pageviewsD" class="sb-kpi">
-        Totaal pageviews: <?= $totalPageViews ?>
+        <span>Totaal pageviews: <?= $totalPageViews ?></span>
         <div id="exp-pageviews" class="sb-tooltip is-hidden">
-            Hoeveel pagina's in totaal bekeken zijn.
+            <span>Hoeveel pagina's in totaal bekeken zijn.</span>
         </div>
     </div>
 
     <div id="viewsD" class="sb-kpi">
-        Views per visit: <?= number_format($totalViewsPerVisit, 2) ?>
+        <span>Views per visit: <?= number_format($totalViewsPerVisit, 2) ?></span>
         <div id="exp-vpv" class="sb-tooltip is-hidden">
-            Gemiddeld aantal pagina's per bezoek.
+            <span>Gemiddeld aantal pagina's per bezoek.</span>
         </div>
     </div>
 
     <div id="bounceD" class="sb-kpi">
-        Bounce rate: <?= number_format($totalBounceRate, 0) ?>%
+        <span>Bounce rate: <?= number_format($totalBounceRate, 0) ?>%</span>
         <div id="exp-bounce" class="sb-tooltip is-hidden">
-            Percentage dat direct weggaat na 1 pagina.
+            <span>Percentage dat direct weggaat na 1 pagina.</span>
         </div>
     </div>
 
     <div id="durationD" class="sb-kpi">
-        Gemiddelde sessieduur: <?= gmdate("i:s", (int)round($totalAvgDuration)) ?>
+        <span> Gemiddelde sessieduur: <?= gmdate("i:s", (int)round($totalAvgDuration)) ?></span>
         <div id="exp-duration" class="sb-tooltip is-hidden">
-            Gemiddelde tijd dat iemand op je site blijft.
+            <span>Gemiddelde tijd dat iemand op je site blijft.</span>
         </div>
     </div>
 
@@ -511,13 +512,14 @@ usort($grouped, function($a, $b) use ($sort, $order) {
                         Page<?= getArrow('name', $sort, $order) ?>
                     </a>
                     <div id="table-pagename" class="sb-tooltip is-hidden">
-                        Dit is de bron van de bezoekers (waar ze vandaan komen).
+                        <span>Dit is de bron van de bezoekers (waar ze vandaan komen).</span>
+                        
                     </div>
                 </th>
                 <th scope="col" id="visitsTable" class="sb-kpi"  >
                     <a class="link" href="<?= sortUrl('visits', $sort, $order) ?>">Visits<?= getArrow('visits', $sort, $order) ?></a>
                     <div id="table-visits" class="sb-tooltip is-hidden">
-                        Het aantal keren dat mensen de website bezoeken.
+                        <span>Het aantal keren dat mensen de website bezoeken.</span>
                     </div>
                 </th>
                 <th scope="col" id="pageviewsTable" class="sb-kpi"  >
@@ -525,7 +527,7 @@ usort($grouped, function($a, $b) use ($sort, $order) {
                         Views<?= getArrow('views', $sort, $order) ?>
                     </a>
                     <div id="table-pageviews" class="sb-tooltip is-hidden">
-                        Het totaal aantal pagina’s dat bekeken wordt.
+                        <span>Het totaal aantal pagina’s dat bekeken wordt.</span>
                     </div>
                 </th>
 
@@ -534,7 +536,7 @@ usort($grouped, function($a, $b) use ($sort, $order) {
                         Views per visit<?= getArrow('views_per_visit', $sort, $order) ?>
                     </a>
                     <div id="table-views-per-visit" class="sb-tooltip is-hidden">
-                        Het gemiddelde aantal pagina’s dat iemand bekijkt per bezoek.
+                        <span>Het gemiddelde aantal pagina’s dat iemand bekijkt per bezoek.</span>
                     </div>
                 </th>
                 <th scope="col" id="bounceRateTable" class="sb-kpi"  >
@@ -542,7 +544,7 @@ usort($grouped, function($a, $b) use ($sort, $order) {
                         Bounce rate<?= getArrow('bounce_rate', $sort, $order) ?>
                     </a>
                     <div id="table-bounce-rate" class="sb-tooltip is-hidden">
-                        Het percentage bezoekers dat de website opent en meteen weggaat zonder iets anders te bekijken.
+                        <span>Het percentage bezoekers dat de website opent en meteen weggaat zonder iets anders te bekijken.</span>
                     </div>
                 </th>
                 <th scope="col" id="avgDurationTable" class="sb-kpi"  >
@@ -550,7 +552,7 @@ usort($grouped, function($a, $b) use ($sort, $order) {
                         Avg duration<?= getArrow('avg_duration', $sort, $order) ?>
                     </a>
                     <div id="table-avg-duration" class="sb-tooltip is-hidden">
-                        De gemiddelde tijd dat een bezoeker op de website blijft.
+                        <span>De gemiddelde tijd dat een bezoeker op de website blijft.</span>
                     </div>
                 </th>
             </tr>
@@ -578,22 +580,23 @@ usort($grouped, function($a, $b) use ($sort, $order) {
     <?php foreach ($utmGrouped as $item): ?>
         <li>
             <?php if (!empty($item['utm_source'])): ?>
-                <div>Source: <?= htmlspecialchars($item['utm_source']) ?></div>
+                <div><span>Source: <?= htmlspecialchars($item['utm_source']) ?></span></div>
             <?php endif; ?>
 
             <?php if (!empty($item['utm_medium'])): ?>
-                <div>Medium: <?= htmlspecialchars($item['utm_medium']) ?></div>
+                <div><span>Medium: <?= htmlspecialchars($item['utm_medium']) ?></span></div>
             <?php endif; ?>
 
             <?php if (!empty($item['utm_campaign'])): ?>
-                <div>Campaign: <?= htmlspecialchars($item['utm_campaign']) ?></div>
+                <div><span>Campaign: <?= htmlspecialchars($item['utm_campaign']) ?></span></div>
             <?php endif; ?>
 
-            <div>
+            <div><span>
                 <?= $item['visits'] ?> visits |
                 <?= $item['pageviews'] ?> views |
                 <?= number_format($item['bounce_rate'], 2) ?>% bounce rate |
                 <?= gmdate("i:s", (int)$item['avg_duration']) ?> avg duration
+                </span>
             </div>
         </li>
     <?php endforeach; ?>

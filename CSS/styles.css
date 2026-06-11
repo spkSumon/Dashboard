@@ -12,7 +12,7 @@
 
 
 /* ═══════════ 1. VARIABELEN ═══════════ */
-
+@import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,100..700;1,100..700&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 :root {
     --brand-white:     #FFFFFA;
     --brand-ink:       #30332E;
@@ -38,13 +38,16 @@
     --mono:  "SF Mono", Menlo, Consolas, monospace;
 }
 
-
+h1, h2, h3, h4, h5, h6 { 
+    font-family: "Josefin Sans", sans-serif; 
+}
 /* ═══════════ 2. RESET & BASIS ═══════════ */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
     background: var(--bg);
+    font-family: "Montserrat", sans-serif;
     color: var(--ink);
     font: 15px/1.6 var(--sans);
     padding: 40px clamp(20px, 5vw, 64px) 96px;
