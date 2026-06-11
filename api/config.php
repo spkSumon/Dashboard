@@ -415,15 +415,15 @@ usort($allMessages, fn($a, $b) => strcmp((string)($b['time'] ?? ''), (string)($a
             <div class="sb-sidebar-header">
                 <h2>Berichten</h2>
                 <div class="sb-filters">
-                    <input type="text" id="searchInput" class="sb-search-input" placeholder="Zoeken...">
-                    <select id="providerFilter" class="sb-filter-select">
+                    <input type="text" id="searchInput" class="sb-field" placeholder="Zoeken...">
+                    <select id="providerFilter" class="sb-field">
                         <option value="">Alle platforms</option>
                         <option value="facebook">Facebook</option>
                         <option value="instagram">Instagram</option>
                         <option value="gmb">Google Business</option>
                         <option value="tiktokBusiness">TikTok</option>
                     </select>
-                    <select id="typeFilter" class="sb-filter-select">
+                    <select id="typeFilter" class="sb-field">
                         <option value="">Alle types</option>
                         <option value="conversations">Conversaties</option>
                         <option value="post-comments">Reacties</option>
@@ -432,14 +432,14 @@ usort($allMessages, fn($a, $b) => strcmp((string)($b['time'] ?? ''), (string)($a
                     <div class="sb-date-row">
                         <div class="sb-date-field">
                             <label for="dateFrom">Van</label>
-                            <input type="date" id="dateFrom" class="sb-filter-select">
+                            <input type="date" id="dateFrom" class="sb-field">
                         </div>
                         <div class="sb-date-field">
                             <label for="dateTo">Tot</label>
-                            <input type="date" id="dateTo" class="sb-filter-select">
+                            <input type="date" id="dateTo" class="sb-field">
                         </div>
                     </div>
-                    <div class="sb-stars-filter" id="starsFilter" style="display:none;">
+                    <div class="sb-stars-filter is-hidden" id="starsFilter">
                         <div class="sb-stars-label">Sterren (reviews)</div>
                         <div class="sb-stars-buttons">
                             <button type="button" class="sb-star-btn active" data-stars="0" onclick="setStarFilter(0, this)">Alle</button>
@@ -524,9 +524,9 @@ function ratingStars(n) {
 function updateStarFilterVisibility() {
     const sf = document.getElementById('starsFilter');
     if (providerFilter.value === 'gmb') {
-        sf.style.display = 'block';
+        sf.classList.remove('is-hidden');
     } else {
-        sf.style.display = 'none';
+        sf.classList.add('is-hidden');
         activeStarFilter = 0;
         document.querySelectorAll('.sb-star-btn').forEach(b => b.classList.remove('active'));
         document.querySelector('.sb-star-btn[data-stars="0"]').classList.add('active');
@@ -634,7 +634,7 @@ function renderContent(message) {
             <textarea id="replyText" class="sb-reply-input" placeholder="${replyPlaceholder}" rows="3" ${replyDisabled}></textarea>
             <div class="sb-reply-actions">
                 <span class="sb-reply-status" id="replyStatus"></span>
-                <button type="button" id="replyBtn" class="sb-reply-send" ${replyDisabled}
+                <button type="button" id="replyBtn" class="sb-reply-send sb-btn-dark" ${replyDisabled}
                     onclick="sendReply('${escapeHtml(message.id)}', '${escapeHtml(message.provider)}', '${escapeHtml(message.endpointType)}')">
                     Verstuur
                 </button>
