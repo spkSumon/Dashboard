@@ -112,28 +112,28 @@ foreach ($selectedMetrics as $metricKey) {
         <a href="../fathem/fathom-info2.php" class="nav-link">Fathom Analytics</a>
     </nav>
 
-    <p class="sb-title">Instagram</p>
-    <p class="sb-subtitle">Sleep metrics naar het overzicht om te analyseren</p>
+    <p class="sb-title"><span>Instagram</span></p>
+    <p class="sb-subtitle"><span>Sleep metrics naar het overzicht om te analyseren</span></p>
 
     <form method="POST" id="dashboardForm">
         <input type="hidden" name="selected_metrics" id="selectedMetrics" value="">
 
         <div class="sb-toolbar">
-            <label>Van</label>
-            <input type="date" name="from" value="<?= htmlspecialchars($from) ?>">
-            <label>Tot</label>
-            <input type="date" name="to" value="<?= htmlspecialchars($to) ?>">
+            <label for="dateFrom">Van</label>
+            <input type="date" id="dateFrom" name="from" value="<?= htmlspecialchars($from) ?>">
+            <label for="dateTo">Tot</label>
+            <input type="date" id="dateTo" name="to" value="<?= htmlspecialchars($to) ?>">
         </div>
 
         <div class="sb-layout">
             <div class="sb-sidebar">
-                <div class="sb-sidebar-title">Metrics</div>
+                <div class="sb-sidebar-title"><span>Metrics</span></div>
                 <div id="metricsList">
                     <?php foreach ($availableMetrics as $metric): ?>
                         <div class="sb-chip" draggable="true"
                              data-metric="<?= htmlspecialchars($metric['key']) ?>"
                              style="border-left: 3px solid <?= htmlspecialchars($metric['color']) ?>;">
-                            <?= htmlspecialchars($metric['label']) ?>
+                            <span><?= htmlspecialchars($metric['label']) ?></span>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -142,8 +142,8 @@ foreach ($selectedMetrics as $metricKey) {
             <div class="sb-canvas <?= !empty($metricsData) ? 'has-content' : '' ?>" id="dropZone">
                 <?php if (empty($metricsData)): ?>
                     <div class="sb-empty">
-                        <p>Sleep een metric hierheen</p>
-                        <p style="font-size:12px; color:#c8d0de;">Kies links wat je wilt zien</p>
+                        <p><span>Sleep een metric hierheen</span></p>
+                        <p><span style="font-size:12px; color:#c8d0de;">Kies links wat je wilt zien</span></p>
                     </div>
                 <?php else: ?>
                     <div class="sb-cards" id="metricsDisplay">
@@ -160,16 +160,33 @@ foreach ($selectedMetrics as $metricKey) {
                                             <span class="sb-card-label"><?= htmlspecialchars($metric['info']['label']) ?></span>
                                         </div>
                                         <div class="sb-card-actions">
-                                            <span class="sb-card-open">Details <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-                                            <button type="button" class="sb-card-remove" onclick="event.preventDefault(); removeMetric('<?= htmlspecialchars($key) ?>')">×</button>
+                                            <span class="sb-card-open">
+                                                <span>Details</span>
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                            </span>
+                                            <button type="button" class="sb-card-remove" onclick="event.preventDefault(); removeMetric('<?= htmlspecialchars($key) ?>')">
+                                                <span>×</span>
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="sb-card-avg"><?= formatValue($metric['data']['averageValue'], $key) ?></div>
+                                    <div class="sb-card-avg"><span><?= formatValue($metric['data']['averageValue'], $key) ?></span></div>
                                     <div class="sb-card-stats">
-                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Hoogste</div><div class="sb-card-stat-value"><?= formatValue($metric['data']['maxValue'], $key) ?></div></div>
-                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Laagste</div><div class="sb-card-stat-value"><?= formatValue($metric['data']['minValue'], $key) ?></div></div>
-                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Mediaan</div><div class="sb-card-stat-value"><?= formatValue($metric['data']['medianValue'], $key) ?></div></div>
-                                        <div class="sb-card-stat"><div class="sb-card-stat-label">Datapunten</div><div class="sb-card-stat-value"><?= $metric['data']['dataPointCount'] ?></div></div>
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label"><span>Hoogste</span></div>
+                                            <div class="sb-card-stat-value"><span><?= formatValue($metric['data']['maxValue'], $key) ?></span></div>
+                                        </div>
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label"><span>Laagste</span></div>
+                                            <div class="sb-card-stat-value"><span><?= formatValue($metric['data']['minValue'], $key) ?></span></div>
+                                        </div>
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label"><span>Mediaan</span></div>
+                                            <div class="sb-card-stat-value"><span><?= formatValue($metric['data']['medianValue'], $key) ?></span></div>
+                                        </div>
+                                        <div class="sb-card-stat">
+                                            <div class="sb-card-stat-label"><span>Datapunten</span></div>
+                                            <div class="sb-card-stat-value"><span><?= $metric['data']['dataPointCount'] ?></span></div>
+                                        </div>
                                     </div>
                                 </div>
                             </a>
@@ -179,7 +196,7 @@ foreach ($selectedMetrics as $metricKey) {
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3"/>
                         </svg>
-                        Alles wissen
+                        <span>Alles wissen</span>
                     </button>
                 <?php endif; ?>
             </div>

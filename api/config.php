@@ -368,12 +368,12 @@ usort($allMessages, fn($a, $b) => strcmp((string)($b['time'] ?? ''), (string)($a
         <a href="../fathem/fathom-info2.php" class="nav-link">Fathom Analytics</a>
     </nav>
 
-    <p class="sb-title">Inbox</p>
-    <p class="sb-subtitle">Al je berichten, reacties en reviews op één plek</p>
+    <p class="sb-title"><span>Inbox</span></p>
+    <p class="sb-subtitle"><span>Al je berichten, reacties en reviews op één plek</span></p>
 
     <div class="sb-stats-pills">
-        <div class="sb-stat-pill"><strong><?= count($allMessages) ?></strong> berichten</div>
-        <div class="sb-stat-pill"><strong><?= count(array_unique(array_column($allMessages, 'provider'))) ?></strong> platforms</div>
+        <div class="sb-stat-pill"><strong><?= count($allMessages) ?></strong> <span>berichten</span></div>
+        <div class="sb-stat-pill"><strong><?= count(array_unique(array_column($allMessages, 'provider'))) ?></strong> <span>platforms</span></div>
     </div>
 
     <div class="sb-inbox-layout">
@@ -408,14 +408,14 @@ usort($allMessages, fn($a, $b) => strcmp((string)($b['time'] ?? ''), (string)($a
                         </div>
                     </div>
                     <div class="sb-stars-filter is-hidden" id="starsFilter">
-                        <div class="sb-stars-label">Sterren (reviews)</div>
+                        <div class="sb-stars-label"><span>Sterren (reviews)</span></div>
                         <div class="sb-stars-buttons">
-                            <button type="button" class="sb-star-btn active" data-stars="0" onclick="setStarFilter(0, this)">Alle</button>
-                            <button type="button" class="sb-star-btn" data-stars="5" onclick="setStarFilter(5, this)">5★</button>
-                            <button type="button" class="sb-star-btn" data-stars="4" onclick="setStarFilter(4, this)">4★</button>
-                            <button type="button" class="sb-star-btn" data-stars="3" onclick="setStarFilter(3, this)">3★</button>
-                            <button type="button" class="sb-star-btn" data-stars="2" onclick="setStarFilter(2, this)">2★</button>
-                            <button type="button" class="sb-star-btn" data-stars="1" onclick="setStarFilter(1, this)">1★</button>
+                            <button type="button" class="sb-star-btn active" data-stars="0" onclick="setStarFilter(0, this)"><span>Alle</span></button>
+                            <button type="button" class="sb-star-btn" data-stars="5" onclick="setStarFilter(5, this)"><span>5★</span></button>
+                            <button type="button" class="sb-star-btn" data-stars="4" onclick="setStarFilter(4, this)"><span>4★</span></button>
+                            <button type="button" class="sb-star-btn" data-stars="3" onclick="setStarFilter(3, this)"><span>3★</span></button>
+                            <button type="button" class="sb-star-btn" data-stars="2" onclick="setStarFilter(2, this)"><span>2★</span></button>
+                            <button type="button" class="sb-star-btn" data-stars="1" onclick="setStarFilter(1, this)"><span>1★</span></button>
                         </div>
                     </div>
                 </div>
@@ -426,8 +426,8 @@ usort($allMessages, fn($a, $b) => strcmp((string)($b['time'] ?? ''), (string)($a
         <!-- Berichtinhoud + reply -->
         <div class="sb-panel sb-content" id="contentPanel">
             <div class="sb-empty-state">
-                <div class="sb-empty-state-icon">💬</div>
-                <div class="sb-empty-state-text">Selecteer een bericht om te lezen</div>
+                <div class="sb-empty-state-icon"><span>💬</span></div>
+                <div class="sb-empty-state-text"><span>Selecteer een bericht om te lezen</span></div>
             </div>
         </div>
 
@@ -534,7 +534,7 @@ async function sendReply(messageId, provider, endpointType) {
 function renderContent(message) {
     const stars   = message.endpointType === 'reviews' ? ratingStars(message.extraMeta) : '';
     const viewBtn = message.postLink
-        ? `<a href="${escapeHtml(message.postLink)}" target="_blank" rel="noopener" class="sb-view-btn">↗ Bekijk origineel</a>` : '';
+        ? `<a href="${escapeHtml(message.postLink)}" target="_blank" rel="noopener" class="sb-view-btn"><span>↗ Bekijk origineel</span></a>` : '';
 
     const quickReplies = [
         'Bedankt voor je bericht! 🙏',
@@ -543,17 +543,17 @@ function renderContent(message) {
         'Sorry voor het ongemak, we nemen contact op.',
     ];
     const quickBtns = quickReplies.map(t =>
-        `<button type="button" class="sb-quick-btn" onclick="fillReply(this.dataset.txt)" data-txt="${escapeHtml(t)}">${escapeHtml(t)}</button>`
+        `<button type="button" class="sb-quick-btn" onclick="fillReply(this.dataset.txt)" data-txt="${escapeHtml(t)}"><span>${escapeHtml(t)}</span></button>`
     ).join('');
 
     const replyWarning = !message.canReply
-        ? `<div class="sb-reply-warning">⚠ Dit bericht is te oud om te beantwoorden via de API (Meta-beperking: reacties max 24u, DMs max 7 dagen).</div>` : '';
+        ? `<div class="sb-reply-warning"><span>⚠ Dit bericht is te oud om te beantwoorden via de API (Meta-beperking: reacties max 24u, DMs max 7 dagen).</span></div>` : '';
     const replyDisabled    = !message.canReply ? 'disabled' : '';
     const replyPlaceholder = !message.canReply ? 'Te oud om te beantwoorden via API…' : 'Schrijf je antwoord…';
 
     contentPanel.innerHTML = `
         <div class="sb-content-header">
-            <h2 class="sb-content-subject">${escapeHtml(message.subject || 'Bericht')} ${stars}</h2>
+            <h2 class="sb-content-subject"><span>${escapeHtml(message.subject || 'Bericht')} ${stars}</span></h2>
             <div class="sb-content-meta">
                 <span><strong>Van:</strong> ${escapeHtml(message.name || 'Onbekend')}</span>
                 <span><strong>Platform:</strong> ${escapeHtml(providerLabel(message.provider || ''))}</span>
@@ -565,7 +565,7 @@ function renderContent(message) {
         </div>
         <div class="sb-content-body">${nl2br(message.fullMessage || 'Geen inhoud beschikbaar.')}</div>
         <div class="sb-reply-box">
-            <div class="sb-reply-label">Antwoorden</div>
+            <div class="sb-reply-label"><span>Antwoorden</span></div>
             ${replyWarning}
             <div class="sb-quick-replies">${quickBtns}</div>
             <textarea id="replyText" class="sb-reply-input" placeholder="${replyPlaceholder}" rows="3" ${replyDisabled}></textarea>
@@ -573,7 +573,7 @@ function renderContent(message) {
                 <span class="sb-reply-status" id="replyStatus"></span>
                 <button type="button" id="replyBtn" class="sb-reply-send sb-btn-dark" ${replyDisabled}
                     onclick="sendReply('${escapeHtml(message.id)}', '${escapeHtml(message.provider)}', '${escapeHtml(message.endpointType)}')">
-                    Verstuur
+                    <span>Verstuur</span>
                 </button>
             </div>
         </div>`;
@@ -604,15 +604,15 @@ function renderList() {
     const filtered = getFilteredMessages();
 
     if (filtered.length === 0) {
-        messageList.innerHTML  = `<div class="sb-empty-list">Geen berichten gevonden.</div>`;
-        contentPanel.innerHTML = `<div class="sb-empty-state"><div class="sb-empty-state-icon">🔍</div><div class="sb-empty-state-text">Geen resultaat voor de huidige filters</div></div>`;
+        messageList.innerHTML  = `<div class="sb-empty-list"><span>Geen berichten gevonden.</span></div>`;
+        contentPanel.innerHTML = `<div class="sb-empty-state"><div class="sb-empty-state-icon"><span>🔍</span></div><div class="sb-empty-state-text"><span>Geen resultaat voor de huidige filters</span></div></div>`;
         return;
     }
 
     messageList.innerHTML = filtered.map((msg, i) => {
         const avatarHtml = msg.avatar
             ? `<div class="sb-avatar"><img src="${escapeHtml(msg.avatar)}" alt=""></div>`
-            : `<div class="sb-avatar">${escapeHtml(msg.initials || 'O')}</div>`;
+            : `<div class="sb-avatar"><span>${escapeHtml(msg.initials || 'O')}</span></div>`;
         const statusHtml = msg.status ? `<span class="sb-status-badge">${escapeHtml(msg.status)}</span>` : '';
         let previewHtml  = escapeHtml(msg.preview || '');
         if (msg.endpointType === 'reviews') {
@@ -631,10 +631,10 @@ function renderList() {
                         ${statusHtml}
                     </div>
                     <div class="sb-message-row-top">
-                        <div class="sb-message-name">${escapeHtml(msg.name || 'Onbekend')}${oldIndicator}</div>
-                        <div class="sb-message-time">${escapeHtml(formatTime(msg.time || ''))}</div>
+                        <div class="sb-message-name"><span>${escapeHtml(msg.name || 'Onbekend')}${oldIndicator}</span></div>
+                        <div class="sb-message-time"><span>${escapeHtml(formatTime(msg.time || ''))}</span></div>
                     </div>
-                    <div class="sb-message-preview">${previewHtml}</div>
+                    <div class="sb-message-preview"><span>${previewHtml}</span></div>
                 </div>
             </div>`;
     }).join('');

@@ -224,35 +224,46 @@ $sectionLabel  = ucfirst($section);
     </nav>
 
     <div class="sb-breadcrumb">
-        <a href="<?= htmlspecialchars($dashboardLink) ?>"><?= htmlspecialchars($platformLabel) ?></a>
+        <a href="<?= htmlspecialchars($dashboardLink) ?>"><span><?= htmlspecialchars($platformLabel) ?></span></a>
         <span class="sb-breadcrumb-sep">›</span>
-        <span class="sb-breadcrumb-current"><?= htmlspecialchars($sectionLabel) ?> · <?= htmlspecialchars($label) ?></span>
+        <span class="sb-breadcrumb-current"><span><?= htmlspecialchars($sectionLabel) ?> · <?= htmlspecialchars($label) ?></span></span>
     </div>
 
     <a href="<?= htmlspecialchars($dashboardLink) ?>?from=<?= urlencode($from) ?>&to=<?= urlencode($to) ?>" class="sb-back">
-        ← Terug naar dashboard
+        <span>← Terug naar dashboard</span>
     </a>
 
     <div class="sb-detail-header">
-        <p class="sb-title"><?= htmlspecialchars($label) ?></p>
+        <p class="sb-title"><span><?= htmlspecialchars($label) ?></span></p>
         <p class="sb-subtitle">
-            <?= htmlspecialchars($platformLabel) ?> · <?= htmlspecialchars($sectionLabel) ?> ·
-            <?= date('d M Y', strtotime($from)) ?> – <?= date('d M Y', strtotime($to)) ?>
+            <span><?= htmlspecialchars($platformLabel) ?> · <?= htmlspecialchars($sectionLabel) ?> · <?= date('d M Y', strtotime($from)) ?> – <?= date('d M Y', strtotime($to)) ?></span>
         </p>
     </div>
 
     <div class="stats-grid sb-detail-stats">
-        <div class="stat-item"><div class="stat-label">Gemiddelde</div><div class="stat-value"><?= fmt($avg, $isPct) ?></div></div>
-        <div class="stat-item"><div class="stat-label">Hoogste</div><div class="stat-value"><?= fmt($maxVal, $isPct) ?></div></div>
-        <div class="stat-item"><div class="stat-label">Laagste</div><div class="stat-value"><?= fmt($minVal, $isPct) ?></div></div>
-        <div class="stat-item"><div class="stat-label">Mediaan</div><div class="stat-value"><?= fmt($median, $isPct) ?></div></div>
+        <div class="stat-item">
+            <div class="stat-label"><span>Gemiddelde</span></div>
+            <div class="stat-value"><span><?= fmt($avg, $isPct) ?></span></div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label"><span>Hoogste</span></div>
+            <div class="stat-value"><span><?= fmt($maxVal, $isPct) ?></span></div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label"><span>Laagste</span></div>
+            <div class="stat-value"><span><?= fmt($minVal, $isPct) ?></span></div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label"><span>Mediaan</span></div>
+            <div class="stat-value"><span><?= fmt($median, $isPct) ?></span></div>
+        </div>
     </div>
 
     <!-- Grafiek -->
     <div class="sb-detail-section">
-        <h2 class="sb-section-label">Evolutie over tijd</h2>
+        <h2 class="sb-section-label"><span>Evolutie over tijd</span></h2>
         <?php if (empty($timelineData)): ?>
-            <p class="sb-empty-list"><?= htmlspecialchars($timelineError ?? 'Geen data beschikbaar voor deze periode.') ?></p>
+            <p class="sb-empty-list"><span><?= htmlspecialchars($timelineError ?? 'Geen data beschikbaar voor deze periode.') ?></span></p>
         <?php else: ?>
             <div class="sb-chart-wrap"><canvas id="timelineChart"></canvas></div>
         <?php endif; ?>
@@ -260,17 +271,17 @@ $sectionLabel  = ucfirst($section);
 
     <!-- Posts ranking -->
     <div class="sb-detail-section">
-        <h2 class="sb-section-label">Beste <?= htmlspecialchars($sectionLabel) ?> op <?= htmlspecialchars($label) ?></h2>
+        <h2 class="sb-section-label"><span>Beste <?= htmlspecialchars($sectionLabel) ?> op <?= htmlspecialchars($label) ?></span></h2>
         <?php if (empty($postsData)): ?>
-            <p class="sb-empty-list">Geen <?= htmlspecialchars($section) ?> gevonden in deze periode.</p>
+            <p class="sb-empty-list"><span>Geen <?= htmlspecialchars($section) ?> gevonden in deze periode.</span></p>
         <?php else: ?>
             <table class="sb-detail-table">
                 <thead>
                     <tr>
-                        <th class="col-rank">#</th>
-                        <th><?= htmlspecialchars($sectionLabel) ?></th>
-                        <th class="col-date">Datum</th>
-                        <th class="col-metric"><?= htmlspecialchars($label) ?></th>
+                        <th class="col-rank"><span>#</span></th>
+                        <th><span><?= htmlspecialchars($sectionLabel) ?></span></th>
+                        <th class="col-date"><span>Datum</span></th>
+                        <th class="col-metric"><span><?= htmlspecialchars($label) ?></span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -350,15 +361,15 @@ $sectionLabel  = ucfirst($section);
                                 <span class="sb-post-text" title="<?= htmlspecialchars($text) ?>"><?= htmlspecialchars($text) ?></span>
                             </div>
                         </td>
-                        <td class="sb-post-date"><?= $dateStr ?></td>
-                        <td class="sb-metric-value"><?= $metricVal !== null ? fmt($metricVal, $isPct) : '—' ?></td>
+                        <td class="sb-post-date"><span><?= $dateStr ?></span></td>
+                        <td class="sb-metric-value"><span><?= $metricVal !== null ? fmt($metricVal, $isPct) : '—' ?></span></td>
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
                 <tfoot>
                     <tr class="sb-total-row">
-                        <td colspan="3" class="sb-total-label">Totaal (top <?= count($postsData) ?>)</td>
-                        <td class="sb-metric-value sb-total-value"><?= fmt($shownTotal, $isPct) ?></td>
+                        <td colspan="3" class="sb-total-label"><span>Totaal (top <?= count($postsData) ?>)</span></td>
+                        <td class="sb-metric-value sb-total-value"><span><?= fmt($shownTotal, $isPct) ?></span></td>
                     </tr>
                 </tfoot>
             </table>
