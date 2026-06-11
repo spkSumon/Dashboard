@@ -1,153 +1,154 @@
 /* ============================================================
-   SkyByte — gemeenschappelijke stylesheet
-   ------------------------------------------------------------
-   Opzet: één rustige, redactionele pagina (zoals een artikel
-   in een krant of magazine), niet opgedeeld in kaartjes.
+   SkyByte — styles.css
+   ============================================================
+   Opzet: één rustige, redactionele pagina. Structuur uit
+   witruimte en typografie, geen omkaderde kaartjes.
 
-   Hoofdregels:
-   1. Geen omkaderde "cards" — structuur uit witruimte en typografie.
-   2. Hooguit dunne horizontale of verticale lijntjes als scheiding.
-   3. Eén warm-grijze achtergrond voor de hele pagina.
-   4. Eén kleurenpalet, en per platform één accentkleur (--accent).
-   5. Georgia voor titels en grote getallen, sans-serif voor de rest.
-
-   Conventies in dit bestand:
-    Alle styling gaat via classes.
-   - Patronen die op meerdere plekken voorkomen zijn naar boven
-     getrokken als utility-class (.sb-eyebrow, .sb-field,
-     .sb-btn-dark, .sb-btn-outline, .sb-link-underline).
-     Componenten verwijzen er gewoon naar in de HTML.
+   Conventies:
+   - Herbruikbare patronen bovenaan als gedeelde selectors.
+   - Per-component regels daaronder, zo kort mogelijk.
+   - Geen !important tenzij het echt moet (utility-toggle).
    ============================================================ */
 
 
-/* ─────────── 1. CSS-variabelen (het palet) ─────────── */
+/* ═══════════ 1. VARIABELEN ═══════════ */
+
 :root {
-    /* Merkkleuren */
-    --brand-white:      #FFFFFA;
-    --brand-ink:        #30332E;
-    --brand-purple:     #5603AD;
-    --brand-blue-deep:  #1446A0;
-    --brand-blue-soft:  #7798AB;
+    --brand-white:     #FFFFFA;
+    --brand-ink:       #30332E;
+    --brand-purple:    #5603AD;
+    --brand-blue-deep: #1446A0;
+    --brand-blue-soft: #7798AB;
 
-    /* Werkkleuren */
-    --bg:         var(--brand-white);
-    --ink:        var(--brand-ink);
-    --ink-soft:   #6e6c73;
-    --ink-faint:  #a6a3ab;
+    --bg:        var(--brand-white);
+    --ink:       var(--brand-ink);
+    --ink-soft:  #6e6c73;
+    --ink-faint: #a6a3ab;
+    --rule:      #d8d4de;
+    --rule-soft: #ece9f0;
 
-    /* Lijntjes */
-    --rule:       #d8d4de;
-    --rule-soft:  #ece9f0;
-
-    /* Status */
     --ok:   #2e7d32;
     --err:  #c62828;
     --warn: #b06800;
 
-    /* Accentkleur — wordt per pagina overschreven via een themaklasse */
-    --accent:     var(--brand-purple);
+    --accent: var(--brand-purple);
 
-    /* Lettertypen */
     --serif: Georgia, "Times New Roman", serif;
     --sans:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     --mono:  "SF Mono", Menlo, Consolas, monospace;
 }
 
 
-/* ─────────── 2. Basis ─────────── */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+/* ═══════════ 2. RESET & BASIS ═══════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
     background: var(--bg);
     color: var(--ink);
-    font-family: var(--sans);
-    font-size: 15px;
-    line-height: 1.6;
+    font: 15px/1.6 var(--sans);
     padding: 40px clamp(20px, 5vw, 64px) 96px;
     -webkit-font-smoothing: antialiased;
-    position: relative;
 }
 
-/* Dun gradient-streepje bovenaan elke pagina */
 body::before {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    inset: 0 0 auto 0;
     height: 3px;
-    background: linear-gradient(
-        90deg,
-        var(--brand-purple) 0%,
-        var(--brand-blue-deep) 60%,
-        var(--brand-blue-soft) 100%
-    );
+    background: linear-gradient(90deg, var(--brand-purple), var(--brand-blue-deep) 60%, var(--brand-blue-soft));
     z-index: 1000;
 }
 
 a { color: inherit; }
+button { font-family: inherit; cursor: pointer; }
 
-button {
-    font-family: inherit;
-    cursor: pointer;
-}
-
-/* Generieke helper — JS toggelt deze class voor verborgen elementen */
 .hidden,
 .is-hidden { display: none !important; }
 
-
-/* ─────────── 3. Pagina-container ─────────── */
-.sb-page {
-    max-width: 1280px;
-    margin: 0 auto;
-}
+.sb-page { max-width: 1280px; margin: 0 auto; }
 
 
-/* ─────────── 4. Utility classes ───────────
-   Patronen die overal terugkomen, één keer gedefinieerd.
+/* ═══════════ 3. GEDEELDE PATRONEN ═══════════
+   Eén keer gedefinieerd, overal hergebruikt via meerdere selectors.
    ============================================================ */
 
-/* .sb-eyebrow — kleine grijze caps-tekst boven een sectie of veld.
-   Gebruikt voor labels, sidebar-titels, sectie-koppen, breadcrumbs, … */
-.sb-eyebrow {
+/* ── Eyebrow: klein, grijs, uppercase ── */
+.sb-eyebrow,
+.sb-sidebar-title,
+.sb-sidebar-header h2,
+.sb-reply-label,
+.sb-section-label,
+.sb-stars-label,
+.sb-date-field label,
+.sb-toolbar label,
+.sb-total-label,
+.sb-stat-label,
+.sb-card-stat-label,
+.sb-badge-row {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     color: var(--ink-soft);
     font-family: var(--sans);
 }
 
-.sb-eyebrow--sm { font-size: 10px; letter-spacing: 0.08em; }
-.sb-eyebrow--md { letter-spacing: 0.06em; }
+.sb-date-field label,
+.sb-stars-label { font-size: 10px; }
 
-/* .sb-field — borderless input/select met een dunne lijn eronder.
-   Gebruikt voor toolbar-datums, inbox-filters, UTM-velden, … */
+/* ── Serif display: Georgia voor titels en grote getallen ── */
+.sb-title,
+.sb-content-subject,
+.sb-card-label,
+.sb-card-avg,
+.sb-stat-value,
+.sb-metric-value,
+.sb-total-value,
+.sb-stat-pill strong {
+    font-family: var(--serif);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+}
+
+/* ── Underline-link: transparante tekstknop ── */
+.sb-link-underline,
+.sb-quick-btn,
+.sb-back,
+.sb-reset,
+.sb-view-btn {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    padding: 0;
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.15s;
+}
+
+.sb-link-underline:hover,
+.sb-quick-btn:hover,
+.sb-back:hover,
+.sb-reset:hover,
+.sb-view-btn:hover { color: var(--accent); }
+
+/* ── Field: borderless input/select ── */
 .sb-field {
     width: 100%;
     border: none;
     border-bottom: 1px solid var(--rule);
     background: transparent;
     color: var(--ink);
-    font-family: var(--sans);
-    font-size: 14px;
+    font: 14px var(--sans);
     padding: 8px 0;
     border-radius: 0;
 }
 .sb-field::placeholder { color: var(--ink-faint); }
-.sb-field:focus {
-    outline: none;
-    border-bottom-color: var(--accent);
-    box-shadow: none;
-}
-.sb-field--inline { width: auto; padding: 4px 0; }
+.sb-field:focus        { outline: none; border-bottom-color: var(--accent); }
 
-/* .sb-btn-dark — zwarte knop met witte tekst. Primaire actie. */
+/* ── Knoppen ── */
 .sb-btn-dark {
     background: var(--ink);
     color: var(--bg);
@@ -157,13 +158,11 @@ button {
     font-size: 13px;
     font-weight: 600;
     letter-spacing: 0.04em;
-    box-shadow: none;
     transition: background 0.15s;
 }
-.sb-btn-dark:hover { background: var(--accent); }
+.sb-btn-dark:hover    { background: var(--accent); }
 .sb-btn-dark:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* .sb-btn-outline — secundaire knop, alleen rand */
 .sb-btn-outline {
     background: transparent;
     color: var(--ink);
@@ -174,28 +173,17 @@ button {
     font-weight: 600;
     transition: background 0.15s, color 0.15s;
 }
-.sb-btn-outline:hover {
-    background: var(--ink);
-    color: var(--bg);
-}
+.sb-btn-outline:hover { background: var(--ink); color: var(--bg); }
 
-/* .sb-link-underline — onderlijnde tekstknop/-link.
-   Gebruikt voor quick-replies, debug-toggle, reset, terug, … */
-.sb-link-underline {
-    background: none;
-    border: none;
-    color: var(--ink-soft);
-    padding: 0;
-    font-size: 13px;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    transition: color 0.15s;
-}
-.sb-link-underline:hover { color: var(--accent); }
-.sb-link-underline--sm { font-size: 12px; }
+/* ── Sectie-scheiding: dunne lijn boven ── */
+.sb-detail-section,
+.card,
+.section-card,
+.sb-utm-section { border-top: 1px solid var(--rule-soft); }
 
 
-/* ─────────── 5. Navigatie ─────────── */
+/* ═══════════ 4. NAVIGATIE ═══════════ */
+
 .navbar {
     display: flex;
     flex-wrap: wrap;
@@ -212,15 +200,11 @@ button {
     font-weight: 600;
     font-size: 19px;
     letter-spacing: -0.01em;
-    background: linear-gradient(
-        135deg,
-        var(--brand-purple) 0%,
-        var(--brand-blue-deep) 100%
-    );
+    background: linear-gradient(135deg, var(--brand-purple), var(--brand-blue-deep));
     -webkit-background-clip: text;
-            background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
-            color: transparent;
+    color: transparent;
     margin-right: auto;
 }
 
@@ -229,26 +213,17 @@ button {
     color: var(--ink-soft);
     font-size: 13px;
     font-weight: 500;
-    letter-spacing: 0.01em;
     transition: color 0.15s;
 }
-
-.nav-link:hover { color: var(--ink); }
-
-.nav-link.active {
-    color: var(--accent);
-    font-weight: 600;
-}
+.nav-link:hover  { color: var(--ink); }
+.nav-link.active { color: var(--accent); font-weight: 600; }
 
 
-/* ─────────── 6. Paginatitel ─────────── */
+/* ═══════════ 5. PAGINATITEL ═══════════ */
+
 .sb-title {
-    font-family: var(--serif);
-    font-weight: 400;
     font-size: clamp(36px, 5vw, 56px);
     line-height: 1.02;
-    letter-spacing: -0.02em;
-    color: var(--ink);
     margin-bottom: 8px;
 }
 
@@ -260,42 +235,19 @@ button {
 }
 
 
-/* ─────────── 7. Toolbar (datumvelden + tabs) ─────────── */
+/* ═══════════ 6. TOOLBAR ═══════════ */
+
 .sb-toolbar {
     display: flex;
     align-items: center;
     gap: 28px;
     flex-wrap: wrap;
-    padding: 0;
     margin-bottom: 56px;
-}
-
-.sb-toolbar label {
-    /* Gedraagt zich als .sb-eyebrow, maar zonder dat we 'm overal
-       opnieuw moeten zetten — labels in .sb-toolbar krijgen het automatisch. */
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    margin: 0;
-    font-weight: 600;
 }
 
 .sb-toolbar .sb-field { width: auto; padding: 4px 0; }
 
-.sb-divider {
-    width: 1px;
-    height: 20px;
-    background: var(--rule);
-}
-
-/* Tabs */
-.sb-tabs {
-    display: flex;
-    gap: 24px;
-    margin-left: auto;
-}
-
+.sb-tabs       { display: flex; gap: 24px; margin-left: auto; }
 .sb-tab {
     background: none;
     border: none;
@@ -305,17 +257,12 @@ button {
     border-bottom: 2px solid transparent;
     transition: color 0.15s, border-color 0.15s;
 }
-
-.sb-tab:hover { color: var(--ink); }
-
-.sb-tab.active {
-    color: var(--ink);
-    border-bottom-color: var(--accent);
-    font-weight: 600;
-}
+.sb-tab:hover  { color: var(--ink); }
+.sb-tab.active { color: var(--ink); border-bottom-color: var(--accent); font-weight: 600; }
 
 
-/* ─────────── 8. Layout: sidebar + canvas ─────────── */
+/* ═══════════ 7. LAYOUT: SIDEBAR + CANVAS ═══════════ */
+
 .sb-layout {
     display: grid;
     grid-template-columns: 180px 1fr;
@@ -326,18 +273,9 @@ button {
 .sb-sidebar {
     position: sticky;
     top: 24px;
-    padding-right: 0;
 }
 
-.sb-sidebar-title {
-    /* Zelfde stijl als .sb-eyebrow */
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    margin-bottom: 14px;
-    font-weight: 600;
-}
+.sb-sidebar-title { margin-bottom: 14px; }
 
 .sb-chip {
     display: flex;
@@ -347,33 +285,25 @@ button {
     font-size: 14px;
     color: var(--ink);
     cursor: grab;
-    border: none !important;
-    border-bottom: 1px solid var(--rule-soft) !important;
+    border: none;
+    border-bottom: 1px solid var(--rule-soft);
     background: transparent;
     user-select: none;
     transition: color 0.15s, padding-left 0.15s;
 }
-
-.sb-chip:hover {
-    color: var(--accent);
-    padding-left: 6px;
-}
-
+.sb-chip:hover    { color: var(--accent); padding-left: 6px; }
 .sb-chip.dragging { opacity: 0.35; }
-.sb-chip-icon { font-size: 14px; line-height: 1; }
 
 
-/* ─────────── 9. Canvas (drop-zone) ─────────── */
+/* ═══════════ 8. CANVAS (DROP-ZONE) ═══════════ */
+
 .sb-canvas {
     position: relative;
     min-height: 400px;
-    padding: 0;
     transition: background 0.15s;
 }
 
-.sb-canvas.drag-over {
-    background: rgba(86, 3, 173, 0.06);
-}
+.sb-canvas.drag-over { background: rgba(86, 3, 173, 0.06); }
 
 .sb-canvas.drag-over::after {
     content: "Laat los in dit kader";
@@ -385,10 +315,8 @@ button {
     border: 2px dashed var(--accent);
     background: rgba(255, 255, 250, 0.88);
     color: var(--accent);
-    font-family: var(--sans);
     font-size: 15px;
     font-weight: 700;
-    letter-spacing: 0.02em;
     z-index: 20;
     pointer-events: none;
 }
@@ -398,27 +326,12 @@ button {
     text-align: center;
     color: var(--ink-soft);
 }
-
-.sb-empty p {
-    margin: 4px 0;
-    font-style: italic;
-}
-
-.sb-empty-icon {
-    font-size: 28px;
-    opacity: 0.4;
-    margin-bottom: 14px;
-    background: transparent;
-    width: auto;
-    height: auto;
-}
+.sb-empty p { margin: 4px 0; font-style: italic; }
 
 
-/* ─────────── 10. Metric "cards" ─────────── */
-.sb-cards {
-    display: block;
-    border-top: 1px solid var(--rule-soft);
-}
+/* ═══════════ 9. METRIC CARDS ═══════════ */
+
+.sb-cards { border-top: 1px solid var(--rule-soft); }
 
 .sb-card-link {
     position: relative;
@@ -429,53 +342,23 @@ button {
     border-bottom: 1px solid var(--rule-soft);
     transition: opacity 0.15s;
 }
-
 .sb-card-link:hover .sb-card-avg  { color: var(--accent); }
 .sb-card-link:hover .sb-card-open { opacity: 1; }
 
 .sb-card {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
     display: grid;
     grid-template-columns: 200px minmax(140px, 1fr) 2fr;
     gap: 32px;
     align-items: center;
 }
 
-.sb-card::before { display: none !important; }
-
 .sb-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0;
 }
 
-.sb-card-label-wrap {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.sb-card-icon {
-    background: transparent !important;
-    width: auto !important;
-    height: auto !important;
-    font-size: 16px;
-    line-height: 1;
-}
-
-.sb-card-label {
-    font-family: var(--serif);
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--ink);
-    text-transform: none;
-    letter-spacing: -0.01em;
-}
+.sb-card-label { font-size: 18px; }
 
 .sb-card-actions {
     position: absolute;
@@ -491,40 +374,25 @@ button {
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--accent);
-    background: transparent !important;
-    padding: 0 !important;
     opacity: 0;
-    transform: none !important;
     transition: opacity 0.15s;
 }
-
 .sb-card-open svg { display: none; }
 
 .sb-card-remove {
-    background: none !important;
-    border: none !important;
+    background: none;
+    border: none;
     color: var(--ink-faint);
     font-size: 20px;
     line-height: 1;
-    padding: 0 !important;
-    width: auto !important;
-    height: auto !important;
+    padding: 0;
     transition: color 0.15s;
 }
-
-.sb-card-remove:hover {
-    color: var(--ink) !important;
-    background: transparent !important;
-}
+.sb-card-remove:hover { color: var(--ink); }
 
 .sb-card-avg {
-    font-family: var(--serif);
-    font-weight: 400;
     font-size: 36px;
     line-height: 1;
-    letter-spacing: -0.02em;
-    color: var(--ink);
-    margin: 0;
     transition: color 0.15s;
 }
 
@@ -532,26 +400,13 @@ button {
     display: flex;
     flex-wrap: wrap;
     gap: 6px 28px;
-    padding-top: 0;
     align-items: baseline;
 }
 
 .sb-card-stat {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
     display: inline-flex;
     align-items: baseline;
     gap: 6px;
-}
-
-.sb-card-stat-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ink-soft);
-    margin-bottom: 0;
 }
 
 .sb-card-stat-value {
@@ -560,65 +415,26 @@ button {
     color: var(--ink);
 }
 
-
-/* ─────────── 11. Reset-knop ─────────── */
 .sb-reset {
-    background: none !important;
-    border: none !important;
-    color: var(--ink-soft);
-    font-size: 13px;
     margin-top: 56px;
-    padding: 0 !important;
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    transition: color 0.15s;
+    font-size: 13px;
 }
-
-.sb-reset:hover { color: var(--accent); }
 .sb-reset svg { display: none; }
 
 
-/* ============================================================
-   12. INBOX (config.php)
-   ============================================================ */
+/* ═══════════ 10. INBOX ═══════════ */
 
-.sb-stats-pills {
-    display: flex;
-    gap: 32px;
-    margin-bottom: 48px;
-}
+/* Stats-pills */
+.sb-stats-pills { display: flex; gap: 32px; margin-bottom: 48px; }
+.sb-stat-pill   { font-size: 13px; color: var(--ink-soft); }
+.sb-stat-pill strong { font-size: 24px; margin-right: 8px; }
 
-.sb-stat-pill {
-    background: transparent !important;
-    border: none !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-    font-size: 13px;
-    color: var(--ink-soft);
-}
-
-.sb-stat-pill strong {
-    font-family: var(--serif);
-    font-weight: 400;
-    font-size: 24px;
-    color: var(--ink);
-    margin-right: 8px;
-}
-
+/* Twee-koloms layout */
 .sb-inbox-layout {
     display: grid;
     grid-template-columns: 360px 1fr;
-    gap: 0;
     align-items: start;
     min-height: calc(100vh - 320px);
-}
-
-.sb-panel {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    overflow: visible !important;
 }
 
 .sb-sidebar-inbox {
@@ -628,49 +444,19 @@ button {
     height: calc(100vh - 320px);
 }
 
-.sb-sidebar-header {
-    padding: 0 0 18px 0;
-    background: transparent !important;
-}
-
-.sb-sidebar-header h2 {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    margin-bottom: 14px;
-    font-weight: 600;
-}
+.sb-sidebar-header { padding-bottom: 18px; }
+.sb-sidebar-header h2 { margin-bottom: 14px; }
 
 .sb-filters { display: grid; gap: 10px; }
 
-/* De inbox-filters delen alle styling met .sb-field. We laten ze
-   gewoon ook die class hebben en regelen hier niets extra. */
-
 .sb-date-row { display: flex; gap: 20px; }
 .sb-date-field { flex: 1; }
-.sb-date-field label {
-    display: block;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-soft);
-    margin-bottom: 4px;
-    font-weight: 600;
-}
+.sb-date-field label { display: block; margin-bottom: 4px; }
 .sb-date-field .sb-field { padding: 6px 0; font-size: 13px; }
 
-/* Sterrenknoppen voor reviews */
+/* Sterren-filter */
 .sb-stars-filter { margin-top: 8px; }
-.sb-stars-filter.is-hidden { display: none; }
-.sb-stars-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-soft);
-    margin-bottom: 6px;
-    font-weight: 600;
-}
+.sb-stars-label  { margin-bottom: 6px; }
 .sb-stars-buttons { display: flex; gap: 4px; flex-wrap: wrap; }
 .sb-star-btn {
     flex: 1;
@@ -683,42 +469,29 @@ button {
     border-radius: 0;
     transition: color 0.15s, border-color 0.15s;
 }
-.sb-star-btn:hover { color: var(--accent); border-color: var(--accent); }
-.sb-star-btn.active {
-    background: var(--ink);
-    color: var(--bg);
-    border-color: var(--ink);
-}
+.sb-star-btn:hover  { color: var(--accent); border-color: var(--accent); }
+.sb-star-btn.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 
 /* Berichtenlijst */
 .sb-message-list {
     flex: 1;
     overflow-y: auto;
-    padding: 0;
     margin-top: 8px;
     border-top: 1px solid var(--rule-soft);
 }
-.sb-message-list::-webkit-scrollbar { width: 6px; }
+.sb-message-list::-webkit-scrollbar       { width: 6px; }
 .sb-message-list::-webkit-scrollbar-thumb { background: var(--rule); }
 
 .sb-message-item {
     display: flex;
     gap: 14px;
     padding: 16px 0;
-    border-radius: 0 !important;
-    border: none !important;
-    border-bottom: 1px solid var(--rule-soft) !important;
-    background: transparent !important;
+    border-bottom: 1px solid var(--rule-soft);
     cursor: pointer;
     transition: opacity 0.15s;
 }
-
-.sb-message-item::before { display: none !important; }
-
-.sb-message-item:hover { opacity: 0.6; background: transparent !important; }
-
+.sb-message-item:hover { opacity: 0.6; }
 .sb-message-item.active {
-    background: transparent !important;
     box-shadow: inset 3px 0 0 var(--accent);
     padding-left: 12px;
 }
@@ -752,7 +525,6 @@ button {
 .sb-message-name {
     font-weight: 600;
     font-size: 14px;
-    color: var(--ink);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -764,25 +536,15 @@ button {
     flex-wrap: wrap;
     gap: 10px;
     margin-bottom: 6px;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-soft);
 }
 .sb-provider-badge,
 .sb-type-badge,
-.sb-status-badge {
-    background: transparent !important;
-    color: var(--ink-soft) !important;
-    border: none !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-    font-weight: 600;
-}
-.sb-provider-badge.facebook        { color: #1877f2 !important; }
-.sb-provider-badge.instagram       { color: #e1306c !important; }
-.sb-provider-badge.gmb             { color: #4285f4 !important; }
-.sb-provider-badge.tiktokBusiness  { color: #ff0050 !important; }
+.sb-status-badge { font-weight: 600; }
+
+.sb-provider-badge.facebook       { color: #1877f2; }
+.sb-provider-badge.instagram      { color: #e1306c; }
+.sb-provider-badge.gmb            { color: #4285f4; }
+.sb-provider-badge.tiktokBusiness { color: #ff0050; }
 
 .sb-message-preview {
     font-size: 13px;
@@ -793,7 +555,7 @@ button {
     overflow: hidden;
 }
 
-/* Rechterkolom */
+/* Rechterkolom: berichtinhoud */
 .sb-content {
     padding-left: 40px;
     display: flex;
@@ -801,19 +563,10 @@ button {
     min-height: calc(100vh - 320px);
 }
 
-.sb-content-header {
-    padding: 0 0 8px 0;
-    background: transparent !important;
-}
-
 .sb-content-subject {
-    font-family: var(--serif);
-    font-weight: 400;
     font-size: 32px;
-    letter-spacing: -0.02em;
     line-height: 1.1;
-    color: var(--ink);
-    margin: 0 0 14px 0;
+    margin: 0 0 14px;
 }
 
 .sb-content-meta {
@@ -823,17 +576,12 @@ button {
     font-size: 12px;
     color: var(--ink-soft);
 }
-.sb-content-meta strong {
-    color: var(--ink);
-    font-weight: 600;
-    margin-right: 4px;
-}
+.sb-content-meta strong { color: var(--ink); font-weight: 600; margin-right: 4px; }
 
 .sb-content-body {
     padding: 28px 0;
     font-size: 15px;
     line-height: 1.7;
-    color: var(--ink);
     white-space: pre-wrap;
     overflow-y: auto;
     flex: 1;
@@ -843,51 +591,16 @@ button {
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    background: transparent;
-    color: var(--accent);
-    border: none;
-    padding: 0;
-    border-radius: 0;
     font-size: 12px;
     font-weight: 600;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    color: var(--accent);
 }
-.sb-view-btn:hover { color: var(--ink); }
 
 /* Antwoordblok */
-.sb-reply-box {
-    padding: 32px 0 0 0;
-    background: transparent !important;
-}
-.sb-reply-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    margin-bottom: 12px;
-    font-weight: 600;
-}
-
-.sb-quick-replies {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 14px;
-}
-/* .sb-quick-btn is een variant van .sb-link-underline (font-size 12) */
-.sb-quick-btn {
-    background: transparent;
-    border: none;
-    color: var(--ink-soft);
-    padding: 0;
-    border-radius: 0;
-    font-size: 12px;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    transition: color 0.15s;
-}
-.sb-quick-btn:hover { color: var(--accent); }
+.sb-reply-box     { padding-top: 32px; }
+.sb-reply-label   { margin-bottom: 12px; }
+.sb-quick-replies { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 14px; }
+.sb-quick-btn     { font-size: 12px; }
 
 .sb-reply-input {
     width: 100%;
@@ -895,16 +608,12 @@ button {
     background: transparent;
     color: var(--ink);
     padding: 12px 14px;
-    font-size: 14px;
+    font: 14px var(--sans);
     border-radius: 0;
-    font-family: inherit;
     resize: vertical;
     min-height: 80px;
 }
-.sb-reply-input:focus {
-    outline: none;
-    border-color: var(--accent);
-}
+.sb-reply-input:focus    { outline: none; border-color: var(--accent); }
 .sb-reply-input:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .sb-reply-actions {
@@ -914,11 +623,9 @@ button {
     margin-top: 12px;
     gap: 10px;
 }
-.sb-reply-status { font-size: 12px; color: var(--ink-soft); }
+.sb-reply-status     { font-size: 12px; color: var(--ink-soft); }
 .sb-reply-status.ok  { color: var(--ok); }
 .sb-reply-status.err { color: var(--err); }
-
-/* .sb-reply-send gebruikt .sb-btn-dark — geen aparte regels meer nodig. */
 
 /* Lege staten */
 .sb-empty-state {
@@ -935,15 +642,8 @@ button {
 }
 .sb-empty-state-icon { font-size: 32px; opacity: 0.4; }
 .sb-empty-state-text { font-size: 14px; }
-.sb-empty-list {
-    padding: 32px 0;
-    text-align: center;
-    color: var(--ink-soft);
-    font-style: italic;
-    font-size: 14px;
-}
+.sb-empty-list       { padding: 32px 0; text-align: center; color: var(--ink-soft); font-style: italic; font-size: 14px; }
 
-/* Reply-warning (te oud bericht) */
 .sb-reply-warning {
     font-size: 12px;
     color: var(--ink-soft);
@@ -953,83 +653,19 @@ button {
     font-style: italic;
 }
 
-/* Debug-blokje */
-.sb-debug-section { margin-top: 64px; padding-top: 0; }
-.sb-debug-toggle {
-    background: none;
-    border: none;
-    color: var(--ink-soft);
-    font-size: 12px;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    padding: 0;
-}
-.sb-debug-toggle:hover { color: var(--ink); }
-.sb-debug-content {
-    display: none;
-    margin-top: 20px;
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    padding: 0;
-}
-.sb-debug-content.visible { display: block; }
-.sb-debug-content h3 {
-    margin-bottom: 14px;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    font-weight: 600;
-}
-.sb-debug-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 16px 32px;
-}
-.sb-debug-card {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    padding: 0 !important;
-    font-size: 12px;
-    font-family: var(--mono);
-}
-.sb-debug-card strong {
-    display: block;
-    margin-bottom: 6px;
-    font-size: 12px;
-    color: var(--ink);
-    font-family: var(--sans);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-}
-.sb-debug-card div { margin-bottom: 3px; color: var(--ink-soft); }
-.sb-debug-card .ok  { color: var(--ok); }
-.sb-debug-card .err { color: var(--err); }
 
+/* ═══════════ 11. FATHOM DASHBOARD ═══════════ */
 
-/* ============================================================
-   13. FATHOM dashboard (fathom-info2.php)
-   ------------------------------------------------------------
-   Vroeger werd dit gestyled via :has(#realtimeD), [name="range"]
-   en andere ID/attribute-selectors. Nu via gewone classes die
-   in de PHP zelf op de elementen staan.
-   ============================================================ */
-
-/* KPI-strip: één doorlopende rij getallen met een hairline eronder. */
 .sb-kpi-strip {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 32px 40px;
     width: 100%;
-    padding: 0 0 22px 0;
+    padding-bottom: 22px;
     margin-bottom: 32px;
-    background: transparent;
     border-bottom: 1px solid var(--rule-soft);
 }
 
-/* Paginatitel boven de KPI-strip (Fathom heeft geen <h1>) */
 .sb-kpi-strip::before {
     content: attr(data-title);
     grid-column: 1 / -1;
@@ -1039,27 +675,20 @@ button {
     line-height: 1.02;
     letter-spacing: -0.02em;
     color: var(--ink);
-    text-transform: none;
     margin-bottom: 24px;
 }
 
-/* Eén KPI in de strip */
 .sb-kpi {
     position: relative;
-    padding: 0;
-    background: transparent;
-    text-align: left;
     cursor: help;
     font-family: var(--serif);
     font-size: 18px;
     font-weight: 400;
-    text-transform: none;
     letter-spacing: -0.01em;
     color: var(--ink);
     line-height: 1.35;
 }
 
-/* Tooltip-popover bij KPI's en tabel-headers */
 .sb-tooltip {
     position: absolute;
     top: 100%;
@@ -1070,60 +699,35 @@ button {
     padding: 10px 14px;
     background: var(--ink);
     color: var(--bg);
-    border: none;
-    border-radius: 0;
-    font-family: var(--sans);
-    font-size: 12px;
-    font-weight: 400;
-    line-height: 1.45;
+    font: 12px/1.45 var(--sans);
     z-index: 10;
 }
 
-.link{
-    text-decoration: none;
-}
-
-/* Tabel-header die ook een tooltip toont (gebruikt op Fathom) */
 .sb-th-tooltip {
     position: relative;
-    padding: 0;
-    background: transparent;
-    text-align: left;
     cursor: help;
     font-family: var(--serif);
     font-size: 18px;
     font-weight: 400;
-    text-transform: none;
     letter-spacing: -0.01em;
     color: var(--ink);
     line-height: 1.35;
 }
 .sb-th-tooltip:hover { color: var(--accent); }
 
-/* Grafiek-wrapper */
-.sb-chart-section {
-    background: transparent;
-    padding: 24px 0 32px 0;
-    margin-bottom: 32px;
-    box-shadow: none;
-}
-.sb-chart-section > div {
-    width: 100%;
-    max-width: 100%;
-    height: 360px;
-    margin: 0;
-}
-.sb-chart-canvas { width: 100% !important; height: 100% !important; }
+.link { text-decoration: none; }
 
-/* Range-knoppen (vandaag / 7 dagen / 30 dagen) */
+.sb-chart-section {
+    padding: 24px 0 32px;
+    margin-bottom: 32px;
+}
+.sb-chart-section > div { width: 100%; height: 360px; }
+.sb-chart-canvas         { width: 100% !important; height: 100% !important; }
+
 .sb-range-form {
     display: flex;
-    justify-content: flex-start;
     gap: 24px;
-    margin: 0 0 32px;
-    background: transparent;
-    padding: 0;
-    box-shadow: none;
+    margin-bottom: 32px;
     flex-wrap: wrap;
 }
 
@@ -1138,25 +742,14 @@ button {
     font-weight: 500;
     transition: color 0.15s, border-color 0.15s;
 }
-
-.sb-range-btn:hover {
-    background: transparent;
-    color: var(--ink);
-}
-
-.sb-range-btn.is-active,
-.sb-range-btn.is-active:hover {
-    background: transparent;
+.sb-range-btn:hover { color: var(--ink); }
+.sb-range-btn.is-active {
     color: var(--ink);
     border-bottom-color: var(--accent);
     font-weight: 600;
 }
 
-/* Custom datumkiezer */
 .sb-date-form {
-    background: transparent;
-    padding: 0;
-    box-shadow: none;
     margin: 32px 0;
     display: flex;
     gap: 16px;
@@ -1164,25 +757,15 @@ button {
     flex-wrap: wrap;
 }
 
-/* Referrer- en UTM-lijsten */
 .sb-data-list {
     list-style: none;
     width: 100%;
-    max-width: 100%;
-    padding: 0;
-    margin: 0;
     border-top: 1px solid var(--rule-soft);
 }
 
 .sb-data-list > li {
-    background: transparent;
-    color: var(--ink);
     padding: 16px 0;
-    border: none;
     border-bottom: 1px solid var(--rule-soft);
-    border-radius: 0;
-    margin: 0;
-    box-shadow: none;
 }
 
 .sb-data-list > li:has(> span) {
@@ -1195,54 +778,26 @@ button {
 
 .sb-data-list > li > span:first-child {
     font-family: var(--serif);
-    font-weight: 400;
     font-size: 20px;
-    color: var(--ink);
     letter-spacing: -0.01em;
 }
+.sb-data-list > li > span:last-child { color: var(--ink-soft); font-size: 13px; }
+.sb-data-list > li > div             { font-size: 13px; padding: 2px 0; }
+.sb-data-list > li > div:last-child  { color: var(--ink-soft); padding-top: 8px; margin-top: 8px; }
 
-.sb-data-list > li > span:last-child {
-    color: var(--ink-soft);
-    font-size: 13px;
-}
-
-.sb-data-list > li > div {
-    color: var(--ink);
-    font-size: 13px;
-    padding: 2px 0;
-}
-
-.sb-data-list > li > div:last-child {
-    color: var(--ink-soft);
-    padding-top: 8px;
-    margin-top: 8px;
-}
-
-/* UTM-generator */
 .sb-utm-section {
-    display: block;
-    background: transparent;
     padding: 32px 0;
-    border-top: 1px solid var(--rule-soft);
-    box-shadow: none;
-    max-width: 100%;
     margin: 32px 0;
+    max-width: 100%;
 }
-
-.sb-utm-section > div { margin-bottom: 18px; }
-
-/* UTM-velden delen alle styling met .sb-field — geen extra regels nodig. */
+.sb-utm-section > div          { margin-bottom: 18px; }
 .sb-utm-section .sb-field + .sb-field { margin-top: 8px; }
 
-/* UTM result-output */
 .sb-utm-result {
     min-height: 60px;
     padding: 12px 0;
-    background: transparent;
-    border: none;
     border-top: 1px solid var(--rule-soft);
     border-bottom: 1px solid var(--rule-soft);
-    border-radius: 0;
     font-family: var(--mono);
     font-size: 13px;
     color: var(--ink-soft);
@@ -1251,26 +806,18 @@ button {
 }
 
 
-/* ============================================================
-   14. Generieke PHP-componenten (legacy detail-pagina's)
-   ============================================================ */
+/* ═══════════ 12. GENERIEKE COMPONENTEN ═══════════ */
 
 .card,
 .section-card {
-    background: transparent;
     padding: 32px 0;
-    border-radius: 0;
     margin-bottom: 32px;
-    box-shadow: none;
-    border: none;
-    border-top: 1px solid var(--rule-soft);
 }
 
 .card h3 {
     font-family: var(--serif);
     font-size: 22px;
     font-weight: 400;
-    color: var(--ink);
     margin-bottom: 16px;
 }
 
@@ -1287,16 +834,11 @@ button {
     font-family: var(--serif);
     font-size: 28px;
     font-weight: 400;
-    color: var(--ink);
     letter-spacing: -0.01em;
 }
 
 .section-pill {
-    display: inline-block;
-    padding: 0;
-    background: transparent;
     color: var(--accent);
-    border-radius: 0;
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -1311,80 +853,45 @@ button {
 }
 
 .stat-item {
-    padding: 16px 0 0;
-    background: transparent;
-    border: none;
+    padding-top: 16px;
     border-top: 1px solid var(--rule);
-    border-left: none;
-    border-radius: 0;
 }
 
-.stat-item:hover {
-    background: transparent;
-    box-shadow: none;
-    transform: none;
-}
-
-.stat-label {
-    font-size: 11px;
-    color: var(--ink-soft);
-    margin-bottom: 8px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
-.stat-value {
-    font-family: var(--serif);
-    font-size: 40px;
-    color: var(--ink);
-    font-weight: 400;
-    letter-spacing: -0.02em;
-    margin-bottom: 4px;
-}
+.stat-label { margin-bottom: 8px; }
+.stat-value { font-size: 40px; margin-bottom: 4px; }
 
 .stat-subtext { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
+.positive     { color: var(--ok); }
+.negative     { color: var(--err); }
+.neutral      { color: var(--warn); }
 
-.positive { color: var(--ok); }
-.negative { color: var(--err); }
-.neutral  { color: var(--warn); }
-
-
-/* ─────────── Tabellen ─────────── */
+/* Tabellen */
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 24px;
-    background: transparent;
-    box-shadow: none;
-    border-radius: 0;
 }
 th, td {
-    border: none;
     border-bottom: 1px solid var(--rule-soft);
     padding: 12px 16px 12px 0;
     text-align: left;
 }
 th {
-    background: transparent;
     font-weight: 600;
     color: var(--ink-soft);
     font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    border-bottom: 1px solid var(--rule);
+    border-bottom-color: var(--rule);
 }
-td { font-size: 14px; color: var(--ink); }
+td { font-size: 14px; }
 .row-best  { background: rgba(46, 125, 50, 0.06); }
 .row-worst { background: rgba(198, 40, 40, 0.06); }
 
-
-/* ─────────── Alerts ─────────── */
+/* Alerts */
 .error, .info, .warning, .success {
     padding: 14px 0 14px 16px;
     border-left: 2px solid;
-    border-radius: 0;
-    background: transparent;
     margin-bottom: 24px;
     font-size: 14px;
 }
@@ -1394,83 +901,48 @@ td { font-size: 14px; color: var(--ink); }
 .success { border-left-color: var(--ok);     color: var(--ok); }
 
 
-/* ============================================================
-   15. METRIC DETAIL pagina (metric_detail.php) — ÉÉN keer.
-   ============================================================ */
+/* ═══════════ 13. METRIC DETAIL PAGINA ═══════════ */
 
-/* Breadcrumb */
 .sb-breadcrumb {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 12px;
-    color: var(--ink-soft);
-    margin-bottom: 8px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     font-weight: 600;
-}
-.sb-breadcrumb a {
     color: var(--ink-soft);
-    text-decoration: none;
-    transition: color 0.15s;
+    margin-bottom: 8px;
 }
+.sb-breadcrumb a     { text-decoration: none; transition: color 0.15s; }
 .sb-breadcrumb a:hover { color: var(--accent); }
-.sb-breadcrumb-sep { opacity: 0.4; }
+.sb-breadcrumb-sep     { opacity: 0.4; }
 .sb-breadcrumb-current { color: var(--ink); }
 
-/* Terug-link */
-.sb-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    color: var(--ink-soft);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-    margin-bottom: 40px;
-    transition: color 0.15s;
-}
-.sb-back:hover { color: var(--accent); }
+.sb-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 40px; }
 
-.sb-detail-header { margin-bottom: 40px; }
+.sb-detail-header              { margin-bottom: 40px; }
 .sb-detail-header .sb-title    { margin-bottom: 6px; }
 .sb-detail-header .sb-subtitle { margin-bottom: 0; }
 
-.sb-detail-stats {
-    grid-template-columns: repeat(4, 1fr);
-    margin-bottom: 56px;
-}
+.sb-detail-stats { grid-template-columns: repeat(4, 1fr); margin-bottom: 56px; }
 
 .sb-detail-section {
     padding-top: 40px;
-    border-top: 1px solid var(--rule-soft);
     margin-bottom: 56px;
 }
 
-.sb-section-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-soft);
-    font-weight: 600;
-    margin-bottom: 24px;
-    font-family: var(--sans);
-}
+.sb-section-label { margin-bottom: 24px; }
 
-.sb-chart-wrap {
-    position: relative;
-    height: 280px;
-    width: 100%;
-}
+.sb-chart-wrap { position: relative; height: 280px; width: 100%; }
 
-.sb-detail-table { margin-top: 0; }
-.sb-detail-table .col-rank   { width: 40px; }
-.sb-detail-table .col-date   { width: 120px; white-space: nowrap; }
-.sb-detail-table .col-metric { width: 110px; text-align: right; }
-.sb-detail-table th.col-metric { text-align: right; }
+.sb-detail-table           { margin-top: 0; }
+.sb-detail-table .col-rank { width: 40px; }
+.sb-detail-table .col-date { width: 120px; white-space: nowrap; }
+.sb-detail-table .col-metric,
+.sb-detail-table th.col-metric { width: 110px; text-align: right; }
 
-.sb-post-row--link { cursor: pointer; }
+.sb-post-row--link       { cursor: pointer; }
 .sb-post-row--link:hover td { opacity: 0.7; }
 
 .sb-rank {
@@ -1482,7 +954,6 @@ td { font-size: 14px; color: var(--ink); }
     font-size: 11px;
     font-weight: 700;
     color: var(--ink-soft);
-    font-family: var(--sans);
 }
 .sb-rank--top {
     color: var(--accent);
@@ -1491,18 +962,8 @@ td { font-size: 14px; color: var(--ink); }
     font-weight: 400;
 }
 
-.sb-post-thumb-wrap {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-.sb-post-thumb {
-    width: 36px;
-    height: 36px;
-    object-fit: cover;
-    flex-shrink: 0;
-    border-radius: 2px;
-}
+.sb-post-thumb-wrap { display: flex; align-items: center; gap: 12px; }
+.sb-post-thumb       { width: 36px; height: 36px; object-fit: cover; flex-shrink: 0; border-radius: 2px; }
 .sb-post-thumb--empty { background: var(--rule-soft); }
 .sb-post-text {
     max-width: 400px;
@@ -1510,22 +971,10 @@ td { font-size: 14px; color: var(--ink); }
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 14px;
-    color: var(--ink);
 }
 
-.sb-post-date {
-    font-size: 13px;
-    color: var(--ink-soft);
-}
-
-.sb-metric-value {
-    text-align: right;
-    font-family: var(--serif);
-    font-size: 18px;
-    font-weight: 400;
-    color: var(--accent);
-    letter-spacing: -0.01em;
-}
+.sb-post-date    { font-size: 13px; color: var(--ink-soft); }
+.sb-metric-value { text-align: right; font-size: 18px; color: var(--accent); }
 
 .sb-total-row td {
     border-top: 1px solid var(--rule);
@@ -1533,24 +982,10 @@ td { font-size: 14px; color: var(--ink); }
     padding-top: 16px;
     padding-bottom: 4px;
 }
-.sb-total-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink-soft);
-    font-weight: 600;
-}
-.sb-total-value {
-    font-family: var(--serif);
-    font-size: 22px;
-    font-weight: 400;
-    color: var(--accent) !important;
-}
+.sb-total-value { font-size: 22px; color: var(--accent); }
 
 
-/* ============================================================
-   16. Toast (drop-feedback)
-   ============================================================ */
+/* ═══════════ 14. TOAST ═══════════ */
 
 .sb-toast {
     position: fixed;
@@ -1562,7 +997,6 @@ td { font-size: 14px; color: var(--ink); }
     color: var(--brand-white);
     border-left: 4px solid var(--accent);
     padding: 14px 18px;
-    font-family: var(--sans);
     font-size: 14px;
     font-weight: 700;
     line-height: 1.35;
@@ -1570,34 +1004,20 @@ td { font-size: 14px; color: var(--ink); }
     opacity: 0;
     transform: translateY(14px);
     pointer-events: none;
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.2s, transform 0.2s;
 }
-
-.sb-toast.visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.sb-toast small {
-    display: block;
-    margin-top: 4px;
-    color: rgba(255, 255, 250, 0.72);
-    font-size: 12px;
-    font-weight: 500;
-}
+.sb-toast.visible { opacity: 1; transform: translateY(0); }
+.sb-toast small   { display: block; margin-top: 4px; color: rgba(255, 255, 250, 0.72); font-size: 12px; font-weight: 500; }
 
 
-/* ============================================================
-   17. Responsive
-   ============================================================ */
+/* ═══════════ 15. RESPONSIVE ═══════════ */
+
 @media (max-width: 900px) {
     body { padding: 24px 20px 64px; }
+
     .sb-layout { grid-template-columns: 1fr; gap: 48px; }
-    .sb-sidebar {
-        position: static;
-        padding-right: 0;
-        padding-bottom: 8px;
-    }
+    .sb-sidebar { position: static; }
+
     .sb-inbox-layout { grid-template-columns: 1fr; }
     .sb-sidebar-inbox {
         height: auto;
@@ -1607,34 +1027,16 @@ td { font-size: 14px; color: var(--ink); }
         margin-bottom: 48px;
     }
     .sb-content { padding-left: 0; min-height: auto; }
-    .sb-tabs { margin-left: 0; }
 
-    .sb-card {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    .sb-card-actions {
-        position: static;
-        justify-content: flex-end;
-    }
+    .sb-card { grid-template-columns: 1fr; gap: 10px; }
+    .sb-card-actions { position: static; justify-content: flex-end; }
 }
 
-@media (max-width: 768px) {
-    .sb-detail-stats { grid-template-columns: 1fr 1fr; }
-}
+@media (max-width: 768px) { .sb-detail-stats { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 600px) { .sb-title { font-size: 32px; } .sb-card-avg { font-size: 32px; } }
+@media (max-width: 480px) { .sb-detail-stats { grid-template-columns: 1fr; } }
 
-@media (max-width: 600px) {
-    .sb-title { font-size: 32px; }
-    .sb-card-avg { font-size: 32px; }
-}
-
-@media (max-width: 480px) {
-    .sb-detail-stats { grid-template-columns: 1fr; }
-}
-
-
-/* ─────────── Print ─────────── */
 @media print {
-    .navbar, .sb-toolbar, .sb-sidebar, .sb-debug-section, button { display: none; }
+    .navbar, .sb-toolbar, .sb-sidebar, button { display: none; }
     body { padding: 0; background: white; }
 }

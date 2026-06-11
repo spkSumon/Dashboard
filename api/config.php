@@ -1,17 +1,11 @@
 <?php
-
-$userId = 4394337;
-$blogId = 5668624;
-$token  = "YTQGUMFFSNCTTTRMJPHRVFOHDACWTAULVIIPDJQOUIJDTONUCOIJUELBHLAZQDUB";
-
-$headers = [
-    "Accept: application/json",
-    "Content-Type: application/json",
-    "X-Mc-Auth: $token",
-];
+/**
+ * config.php — Inbox: berichten, reacties en reviews op één plek.
+ */
+require_once __DIR__ . '/token.php';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// REPLY-HANDLER
+// REPLY-HANDLER (AJAX POST)
 // ─────────────────────────────────────────────────────────────────────────────
 if (($_POST['action'] ?? '') === 'reply') {
     header('Content-Type: application/json');
@@ -25,15 +19,7 @@ if (($_POST['action'] ?? '') === 'reply') {
         echo json_encode(['success' => false, 'error' => 'Antwoord of bericht-ID ontbreekt.']);
         exit;
     }
-    if ($token === '') {
-        echo json_encode(['success' => false, 'error' => 'Geen Metricool token ingesteld.']);
-        exit;
-    }
 
-    // Correcte Metricool v2 reply-endpoints per type
-    // Structuur: POST /api/v2/inbox/{type}/{id}/reply
-    // Body: { "text": "..." }
-    // Query: userId + blogId
     $endpointsToTry = [
         '/api/v2/inbox/' . $endpointType . '/' . $messageId . '/reply',
         '/api/v2/inbox/' . $endpointType . '/' . $messageId . '/answer',
@@ -41,7 +27,6 @@ if (($_POST['action'] ?? '') === 'reply') {
         '/api/v2/inbox/reply',
     ];
 
-    // Body: alleen 'text' is vereist; sommige endpoints willen ook provider mee
     $bodyFull = json_encode([
         'text'      => $replyText,
         'provider'  => $provider,
@@ -49,13 +34,11 @@ if (($_POST['action'] ?? '') === 'reply') {
         'blogId'    => (int)$blogId,
         'messageId' => $messageId,
     ]);
-    $bodyMinimal = json_encode(['text' => $replyText]);
-
-    $queryParams = http_build_query(['userId' => $userId, 'blogId' => $blogId]);
+    $bodyMinimal  = json_encode(['text' => $replyText]);
+    $queryParams  = http_build_query(['userId' => $userId, 'blogId' => $blogId]);
 
     $tried = [];
     foreach ($endpointsToTry as $endpoint) {
-        // Probeer eerst met volledige body, dan met minimale body
         foreach ([$bodyFull, $bodyMinimal] as $body) {
             $url = "https://app.metricool.com" . $endpoint . "?" . $queryParams;
 
@@ -111,26 +94,9 @@ $providerEndpoints = [
     'tiktokBusiness' => ['post-comments'],
 ];
 
-function callMetricool($endpoint, $params, $headers) {
-    $url = "https://app.metricool.com" . $endpoint . "?" . http_build_query($params);
-    $ch = curl_init();
-    curl_setopt_array($ch, [
-        CURLOPT_URL            => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER     => $headers,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_SSL_VERIFYPEER => true,
-        CURLOPT_TIMEOUT        => 30,
-    ]);
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    curl_close($ch);
-    if ($error) return ['error' => $error, 'httpCode' => $httpCode, 'raw' => null, 'data' => null];
-    return ['error' => null, 'httpCode' => $httpCode, 'raw' => $response, 'data' => json_decode($response, true)];
-}
+// ── Helperfuncties voor normalisatie ──
 
-function extractItems($decodedData) {
+function extractItems($decodedData): array {
     if (!is_array($decodedData)) return [];
     foreach (['data', 'results', 'conversations', 'reviews', 'comments', 'items'] as $key) {
         if (isset($decodedData[$key]) && is_array($decodedData[$key])) return $decodedData[$key];
@@ -139,7 +105,7 @@ function extractItems($decodedData) {
     return [];
 }
 
-function pickFirstNonEmpty($values, $default = '') {
+function pickFirstNonEmpty(array $values, string $default = ''): string {
     foreach ($values as $value) {
         if (is_string($value) && trim($value) !== '') return trim($value);
         if (is_numeric($value)) return (string)$value;
@@ -147,94 +113,121 @@ function pickFirstNonEmpty($values, $default = '') {
     return $default;
 }
 
-function getInitials($name) {
-    $name = trim((string)$name);
+function getInitials(string $name): string {
+    $name = trim($name);
     if ($name === '') return 'O';
     $parts = array_values(array_filter(preg_split('/\s+/', $name)));
     if (count($parts) === 1) return strtoupper(mb_substr($parts[0], 0, 1));
     return strtoupper(mb_substr($parts[0], 0, 1) . mb_substr($parts[1], 0, 1));
 }
 
-function normalizeMessage($msg, $provider, $endpointType) {
-    $ownAccountNames = ['giudittalevuven'];
-    $id = (string)($msg['id'] ?? uniqid($provider . '_', true));
-    $name = 'Onbekend'; $avatar = ''; $fullMessage = ''; $time = '';
-    $subject = ''; $status = ''; $extraMeta = ''; $postLink = '';
-    $canReply = true; // of dit bericht beantwoord kan worden
+/** Labels voor niet-tekstuele berichttypes (story mentions, media shares, etc.) */
+function getTypeLabel(string $type): string {
+    $labels = [
+        'story_mention'  => '📸 Heeft je Story vermeld',
+        'story_reply'    => '💬 Heeft gereageerd op je Story',
+        'media_share'    => '🖼 Heeft een afbeelding gedeeld',
+        'reel_share'     => '🎬 Heeft een Reel gedeeld',
+        'video_share'    => '🎬 Heeft een video gedeeld',
+        'audio'          => '🎤 Heeft een audiobericht gestuurd',
+        'image'          => '🖼 Heeft een afbeelding gestuurd',
+        'video'          => '🎬 Heeft een video gestuurd',
+        'like'           => '❤️ Heeft een like gestuurd',
+        'sticker'        => '🎭 Heeft een sticker gestuurd',
+        'animated_media' => '🎭 Heeft een GIF gestuurd',
+        'share'          => '🔗 Heeft iets gedeeld',
+        'product_share'  => '🛍 Heeft een product gedeeld',
+        'xma_link'       => '🔗 Heeft een link gedeeld',
+    ];
+    return $labels[$type] ?? ($type !== '' ? "[$type]" : '');
+}
 
+function getShortTypeLabel(string $type): string {
+    $labels = [
+        'story_mention'  => '📸 Story vermeld',
+        'story_reply'    => '💬 Story reactie',
+        'media_share'    => '🖼 Afbeelding gedeeld',
+        'reel_share'     => '🎬 Reel gedeeld',
+        'video_share'    => '🎬 Video gedeeld',
+        'audio'          => '🎤 Audiobericht',
+        'image'          => '🖼 Afbeelding',
+        'video'          => '🎬 Video',
+        'like'           => '❤️ Like',
+        'sticker'        => '🎭 Sticker',
+        'animated_media' => '🎭 GIF',
+        'share'          => '🔗 Gedeeld item',
+        'xma_link'       => '🔗 Link',
+    ];
+    return $labels[$type] ?? ($type !== '' ? "[$type]" : '');
+}
+
+/**
+ * Normaliseer een rauw API-bericht naar een uniforme structuur.
+ */
+function normalizeMessage(array $msg, string $provider, string $endpointType): array {
+    $ownAccountNames = ['giudittalevuven'];
+    $id       = (string)($msg['id'] ?? uniqid($provider . '_', true));
+    $name     = 'Onbekend';
+    $avatar   = '';
+    $fullMessage = '';
+    $time     = '';
+    $subject  = '';
+    $status   = '';
+    $extraMeta = '';
+    $postLink = '';
+    $canReply = true;
+
+    // ── Conversaties (DMs) ──
     if ($endpointType === 'conversations') {
+        // Naam ophalen uit deelnemers (eigen account overslaan)
         if (!empty($msg['participants']) && is_array($msg['participants'])) {
-            foreach ($msg['participants'] as $participant) {
-                $pName = trim((string)($participant['name'] ?? ''));
+            foreach ($msg['participants'] as $p) {
+                $pName = trim((string)($p['name'] ?? ''));
                 if ($pName !== '' && !in_array(mb_strtolower($pName), $ownAccountNames, true)) {
-                    $name = $pName; $avatar = $participant['imageProfileUrl'] ?? ''; break;
+                    $name = $pName;
+                    $avatar = $p['imageProfileUrl'] ?? '';
+                    break;
                 }
             }
             if ($name === 'Onbekend' && !empty($msg['participants'][0]['name'])) {
-                $name = $msg['participants'][0]['name'];
+                $name   = $msg['participants'][0]['name'];
                 $avatar = $msg['participants'][0]['imageProfileUrl'] ?? '';
             }
         }
+
+        // Laatste bericht met inhoud zoeken
         if (!empty($msg['messages']) && is_array($msg['messages'])) {
-            // Loop van nieuwste naar oudste — zoek het eerste bericht met bruikbare inhoud
-            $reversedMsgs = array_reverse($msg['messages']);
-            foreach ($reversedMsgs as $m) {
+            foreach (array_reverse($msg['messages']) as $m) {
                 if (!is_array($m)) continue;
 
-                // Datum + status altijd van het laatste bericht (eerste in reversed)
                 if ($time === '') {
-                    $time = $m['publicationDateTime'] ?? $m['createdAt'] ?? $m['date'] ?? '';
+                    $time   = $m['publicationDateTime'] ?? $m['createdAt'] ?? $m['date'] ?? '';
                     $status = $m['status'] ?? ($msg['status'] ?? '');
                 }
 
-                // Tekstinhoud
                 $msgText = trim((string)($m['text'] ?? $m['message'] ?? $m['body'] ?? $m['content'] ?? ''));
-
-                // Als er geen tekst is, kijk dan naar het berichttype voor een beschrijving
                 if ($msgText === '') {
                     $msgType = strtolower((string)($m['type'] ?? $m['messageType'] ?? ''));
-                    $typeLabels = [
-                        'story_mention'   => '📸 Heeft je Story vermeld',
-                        'story_reply'     => '💬 Heeft gereageerd op je Story',
-                        'media_share'     => '🖼 Heeft een afbeelding gedeeld',
-                        'reel_share'      => '🎬 Heeft een Reel gedeeld',
-                        'video_share'     => '🎬 Heeft een video gedeeld',
-                        'audio'           => '🎤 Heeft een audiobericht gestuurd',
-                        'image'           => '🖼 Heeft een afbeelding gestuurd',
-                        'video'           => '🎬 Heeft een video gestuurd',
-                        'like'            => '❤️ Heeft een like gestuurd',
-                        'sticker'         => '🎭 Heeft een sticker gestuurd',
-                        'animated_media'  => '🎭 Heeft een GIF gestuurd',
-                        'share'           => '🔗 Heeft iets gedeeld',
-                        'product_share'   => '🛍 Heeft een product gedeeld',
-                        'xma_link'        => '🔗 Heeft een link gedeeld',
-                    ];
-                    if (isset($typeLabels[$msgType])) {
-                        $msgText = $typeLabels[$msgType];
-                    } elseif ($msgType !== '') {
-                        $msgText = '[' . $msgType . ']';
-                    }
-                    // Controleer ook op media-URL als fallback
+                    $msgText = getTypeLabel($msgType);
                     if ($msgText === '') {
                         $mediaUrl = $m['mediaUrl'] ?? $m['imageUrl'] ?? $m['videoUrl'] ?? $m['attachmentUrl'] ?? '';
                         if ($mediaUrl) $msgText = '📎 Bijlage ontvangen';
                     }
                 }
 
-                if ($msgText !== '') {
-                    $fullMessage = $msgText;
-                    break;
-                }
+                if ($msgText !== '') { $fullMessage = $msgText; break; }
             }
 
-            // Als nog steeds leeg: gebruik conversatie-level velden
             if ($fullMessage === '') {
                 $fullMessage = trim((string)($msg['lastMessage'] ?? $msg['snippet'] ?? $msg['preview'] ?? ''));
             }
         }
-        if ($time === '') $time = $msg['lastReadTime'] ?? $msg['lastUpdateTime'] ?? $msg['creationDate'] ?? '';
 
-        // Bouw volledige berichtgeschiedenis op voor weergave
+        if ($time === '') {
+            $time = $msg['lastReadTime'] ?? $msg['lastUpdateTime'] ?? $msg['creationDate'] ?? '';
+        }
+
+        // Volledige berichtgeschiedenis opbouwen
         $allMsgLines = [];
         if (!empty($msg['messages']) && is_array($msg['messages'])) {
             foreach ($msg['messages'] as $m) {
@@ -242,50 +235,34 @@ function normalizeMessage($msg, $provider, $endpointType) {
                 $mText = trim((string)($m['text'] ?? $m['message'] ?? $m['body'] ?? ''));
                 if ($mText === '') {
                     $mType = strtolower((string)($m['type'] ?? $m['messageType'] ?? ''));
-                    $typeLabels2 = [
-                        'story_mention'  => '📸 Story vermeld',
-                        'story_reply'    => '💬 Story reactie',
-                        'media_share'    => '🖼 Afbeelding gedeeld',
-                        'reel_share'     => '🎬 Reel gedeeld',
-                        'video_share'    => '🎬 Video gedeeld',
-                        'audio'          => '🎤 Audiobericht',
-                        'image'          => '🖼 Afbeelding',
-                        'video'          => '🎬 Video',
-                        'like'           => '❤️ Like',
-                        'sticker'        => '🎭 Sticker',
-                        'animated_media' => '🎭 GIF',
-                        'share'          => '🔗 Gedeeld item',
-                        'xma_link'       => '🔗 Link',
-                    ];
-                    $mText = $typeLabels2[$mType] ?? ($mType ? '[' . $mType . ']' : '');
+                    $mText = getShortTypeLabel($mType);
                     if ($mText === '') {
                         $mUrl = $m['mediaUrl'] ?? $m['imageUrl'] ?? $m['videoUrl'] ?? '';
                         if ($mUrl) $mText = '📎 Bijlage';
                     }
                 }
                 if ($mText === '') continue;
-                $mTime = $m['publicationDateTime'] ?? $m['createdAt'] ?? '';
+                $mTime    = $m['publicationDateTime'] ?? $m['createdAt'] ?? '';
                 $mTimeStr = $mTime ? date('d/m H:i', strtotime($mTime)) : '';
                 $allMsgLines[] = ($mTimeStr ? "[$mTimeStr] " : '') . $mText;
             }
         }
-        // Gebruik de volledige geschiedenis als berichtinhoud (nieuwste onderaan)
         if (!empty($allMsgLines)) {
-            $fullMessage = implode("
-", $allMsgLines);
+            $fullMessage = implode("\n", $allMsgLines);
         }
 
         $subject = 'Conversatie via ' . ucfirst($provider);
 
-        // Meta-check: DMs ouder dan 7 dagen kan Meta niet beantwoorden
+        // Meta-beperking: DMs ouder dan 7 dagen
         if ($time && (time() - strtotime($time)) > 7 * 86400) $canReply = false;
     }
 
+    // ── Post-reacties ──
     elseif ($endpointType === 'post-comments') {
         if (!empty($msg['participants']) && is_array($msg['participants'])) {
-            foreach ($msg['participants'] as $participant) {
-                $pName = trim((string)($participant['name'] ?? ''));
-                if ($pName !== '') { $name = $pName; $avatar = $participant['imageProfileUrl'] ?? ''; break; }
+            foreach ($msg['participants'] as $p) {
+                $pName = trim((string)($p['name'] ?? ''));
+                if ($pName !== '') { $name = $pName; $avatar = $p['imageProfileUrl'] ?? ''; break; }
             }
         }
         if ($name === 'Onbekend') {
@@ -294,54 +271,49 @@ function normalizeMessage($msg, $provider, $endpointType) {
                 $msg['author']['name'] ?? '', $msg['from']['name'] ?? '', $msg['root']['owner'] ?? '',
             ], 'Onbekend');
         }
-        $postLink = (string)($msg['root']['element']['link'] ?? '');
+        $postLink    = (string)($msg['root']['element']['link'] ?? '');
         $fullMessage = pickFirstNonEmpty([
             $msg['root']['text'] ?? '', $msg['text'] ?? '', $msg['comment'] ?? '',
             $msg['message'] ?? '', $msg['body'] ?? '', $msg['content'] ?? '',
-        ], '');
-        $time = pickFirstNonEmpty([
-            $msg['creationDate'] ?? '', $msg['publicationDateTime'] ?? '',
-            $msg['date'] ?? '', $msg['createdAt'] ?? '',
-        ], '');
-        $status = (string)($msg['status'] ?? '');
+        ]);
+        $time    = pickFirstNonEmpty([$msg['creationDate'] ?? '', $msg['publicationDateTime'] ?? '', $msg['date'] ?? '', $msg['createdAt'] ?? '']);
+        $status  = (string)($msg['status'] ?? '');
         $subject = 'Reactie via ' . ucfirst($provider);
 
-        // Reacties op posts: Meta staat max 24u toe
+        // Meta-beperking: reacties ouder dan 24u
         if ($time && (time() - strtotime($time)) > 86400) $canReply = false;
     }
 
+    // ── Reviews (Google Business) ──
     elseif ($endpointType === 'reviews') {
         if (!empty($msg['participants']) && is_array($msg['participants'])) {
-            foreach ($msg['participants'] as $participant) {
-                $pName = trim((string)($participant['name'] ?? ''));
-                if ($pName !== '') { $name = $pName; $avatar = $participant['imageProfileUrl'] ?? ''; break; }
+            foreach ($msg['participants'] as $p) {
+                $pName = trim((string)($p['name'] ?? ''));
+                if ($pName !== '') { $name = $pName; $avatar = $p['imageProfileUrl'] ?? ''; break; }
             }
         }
         $stars = $msg['stars'] ?? null;
         if ($stars !== null) $extraMeta = (string)$stars;
         $fullMessage = pickFirstNonEmpty([
             $msg['comment'] ?? '', $msg['text'] ?? '', $msg['review'] ?? '', $msg['message'] ?? '',
-        ], '');
-        if ($fullMessage === '' && $stars !== null)
-            $fullMessage = 'Deze review heeft ' . $stars . ' van de 5 sterren (geen geschreven tekst).';
-        $time = pickFirstNonEmpty([
-            $msg['creationDate'] ?? '', $msg['date'] ?? '', $msg['lastUpdateTime'] ?? '',
-        ], '');
-        $status = (string)($msg['status'] ?? '');
+        ]);
+        if ($fullMessage === '' && $stars !== null) {
+            $fullMessage = "Deze review heeft {$stars} van de 5 sterren (geen geschreven tekst).";
+        }
+        $time    = pickFirstNonEmpty([$msg['creationDate'] ?? '', $msg['date'] ?? '', $msg['lastUpdateTime'] ?? '']);
+        $status  = (string)($msg['status'] ?? '');
         $subject = 'Review via ' . ucfirst($provider);
-        // Reviews (GMB) kunnen altijd beantwoord worden
         $canReply = true;
     }
 
     if ($fullMessage === '') $fullMessage = 'Geen berichtinhoud beschikbaar.';
     $preview = mb_substr($fullMessage, 0, 90) . (mb_strlen($fullMessage) > 90 ? '...' : '');
-    if ($preview === '') $preview = '[Geen tekst gevonden]';
 
     return [
         'id'           => $id,
         'name'         => $name,
         'time'         => $time,
-        'preview'      => $preview,
+        'preview'      => $preview ?: '[Geen tekst gevonden]',
         'subject'      => $subject,
         'fullMessage'  => $fullMessage,
         'provider'     => $provider,
@@ -352,29 +324,25 @@ function normalizeMessage($msg, $provider, $endpointType) {
         'postLink'     => $postLink,
         'initials'     => getInitials($name),
         'canReply'     => $canReply,
-        'raw'          => $msg,
     ];
 }
 
+// ── Alle berichten ophalen ──
 $allMessages = [];
-$debugInfo   = [];
 
 foreach ($providerEndpoints as $provider => $endpointKeys) {
     foreach ($endpointKeys as $endpointKey) {
         $result = callMetricool($endpointMap[$endpointKey], [
-            'provider' => $provider, 'userId' => $userId, 'blogId' => $blogId,
+            'provider' => $provider,
+            'userId'   => $userId,
+            'blogId'   => $blogId,
         ], $headers);
-        $items = extractItems($result['data'] ?? null);
-        $debugInfo[] = [
-            'provider'     => $provider,
-            'endpointType' => $endpointKey,
-            'httpCode'     => $result['httpCode'] ?? null,
-            'error'        => $result['error'] ?? null,
-            'count'        => count($items),
-            'rawDataKeys'  => ($result['data'] ? array_keys($result['data']) : []),
-        ];
+
+        $items = extractItems($result['body'] ?? null);
         foreach ($items as $msg) {
-            if (is_array($msg)) $allMessages[] = normalizeMessage($msg, $provider, $endpointKey);
+            if (is_array($msg)) {
+                $allMessages[] = normalizeMessage($msg, $provider, $endpointKey);
+            }
         }
     }
 }
@@ -410,7 +378,7 @@ usort($allMessages, fn($a, $b) => strcmp((string)($b['time'] ?? ''), (string)($a
 
     <div class="sb-inbox-layout">
 
-        <!-- Linkerpaneel: berichtenlijst -->
+        <!-- Berichtenlijst -->
         <div class="sb-panel sb-sidebar-inbox">
             <div class="sb-sidebar-header">
                 <h2>Berichten</h2>
@@ -455,7 +423,7 @@ usort($allMessages, fn($a, $b) => strcmp((string)($b['time'] ?? ''), (string)($a
             <div class="sb-message-list" id="messageList"></div>
         </div>
 
-        <!-- Rechterpaneel: berichtinhoud + reply -->
+        <!-- Berichtinhoud + reply -->
         <div class="sb-panel sb-content" id="contentPanel">
             <div class="sb-empty-state">
                 <div class="sb-empty-state-icon">💬</div>
@@ -464,41 +432,18 @@ usort($allMessages, fn($a, $b) => strcmp((string)($b['time'] ?? ''), (string)($a
         </div>
 
     </div>
-
-    <!-- Debug -->
-    <div class="sb-debug-section">
-        <button class="sb-debug-toggle" type="button" onclick="document.getElementById('debugContent').classList.toggle('visible')">Debug info</button>
-        <div class="sb-debug-content" id="debugContent">
-            <h3>API endpoints status</h3>
-            <div class="sb-debug-grid">
-                <?php foreach ($debugInfo as $dbg): ?>
-                    <div class="sb-debug-card">
-                        <strong><?= htmlspecialchars($dbg['provider']) ?></strong>
-                        <div>Type: <?= htmlspecialchars($dbg['endpointType']) ?></div>
-                        <div>HTTP: <span class="<?= $dbg['httpCode'] == 200 ? 'ok' : 'err' ?>"><?= htmlspecialchars((string)$dbg['httpCode']) ?></span></div>
-                        <div>Items: <?= htmlspecialchars((string)$dbg['count']) ?></div>
-                        <?php if (!empty($dbg['rawDataKeys'])): ?>
-                            <div>Keys: <?= htmlspecialchars(implode(', ', $dbg['rawDataKeys'])) ?></div>
-                        <?php endif; ?>
-                        <div class="<?= $dbg['error'] ? 'err' : 'ok' ?>"><?= $dbg['error'] ? htmlspecialchars($dbg['error']) : '✓ OK' ?></div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 <script>
 const messages = <?= json_encode($allMessages, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
 
-const messageList  = document.getElementById('messageList');
-const contentPanel = document.getElementById('contentPanel');
-const searchInput  = document.getElementById('searchInput');
+const messageList    = document.getElementById('messageList');
+const contentPanel   = document.getElementById('contentPanel');
+const searchInput    = document.getElementById('searchInput');
 const providerFilter = document.getElementById('providerFilter');
-const typeFilter   = document.getElementById('typeFilter');
-const dateFrom     = document.getElementById('dateFrom');
-const dateTo       = document.getElementById('dateTo');
+const typeFilter     = document.getElementById('typeFilter');
+const dateFrom       = document.getElementById('dateFrom');
+const dateTo         = document.getElementById('dateTo');
 let activeStarFilter = 0;
 
 function escapeHtml(str) {
@@ -571,7 +516,6 @@ async function sendReply(messageId, provider, endpointType) {
     try {
         const response = await fetch('config.php', { method: 'POST', body: formData });
         const result = await response.json();
-
         if (result.success) {
             status.textContent = '✓ Antwoord verstuurd!';
             status.className = 'sb-reply-status ok';
@@ -579,7 +523,6 @@ async function sendReply(messageId, provider, endpointType) {
         } else {
             status.textContent = '✗ ' + (result.error || 'Onbekende fout');
             status.className = 'sb-reply-status err';
-            if (result.tried) console.log('Geprobeerde endpoints:', result.tried);
         }
     } catch (err) {
         status.textContent = '✗ Netwerk-fout: ' + err.message;
@@ -591,8 +534,7 @@ async function sendReply(messageId, provider, endpointType) {
 function renderContent(message) {
     const stars   = message.endpointType === 'reviews' ? ratingStars(message.extraMeta) : '';
     const viewBtn = message.postLink
-        ? `<a href="${escapeHtml(message.postLink)}" target="_blank" rel="noopener" class="sb-view-btn">↗ Bekijk origineel</a>`
-        : '';
+        ? `<a href="${escapeHtml(message.postLink)}" target="_blank" rel="noopener" class="sb-view-btn">↗ Bekijk origineel</a>` : '';
 
     const quickReplies = [
         'Bedankt voor je bericht! 🙏',
@@ -604,15 +546,10 @@ function renderContent(message) {
         `<button type="button" class="sb-quick-btn" onclick="fillReply(this.dataset.txt)" data-txt="${escapeHtml(t)}">${escapeHtml(t)}</button>`
     ).join('');
 
-    // Waarschuwing als het bericht te oud is om te beantwoorden
     const replyWarning = !message.canReply
-        ? `<div class="sb-reply-warning">⚠ Dit bericht is te oud om te beantwoorden via de API (Meta-beperking: reacties max 24u, DMs max 7 dagen).</div>`
-        : '';
-
-    const replyDisabled = !message.canReply ? 'disabled' : '';
-    const replyPlaceholder = !message.canReply
-        ? 'Te oud om te beantwoorden via API…'
-        : 'Schrijf je antwoord…';
+        ? `<div class="sb-reply-warning">⚠ Dit bericht is te oud om te beantwoorden via de API (Meta-beperking: reacties max 24u, DMs max 7 dagen).</div>` : '';
+    const replyDisabled    = !message.canReply ? 'disabled' : '';
+    const replyPlaceholder = !message.canReply ? 'Te oud om te beantwoorden via API…' : 'Schrijf je antwoord…';
 
     contentPanel.innerHTML = `
         <div class="sb-content-header">
@@ -639,8 +576,7 @@ function renderContent(message) {
                     Verstuur
                 </button>
             </div>
-        </div>
-    `;
+        </div>`;
 }
 
 function getFilteredMessages() {
@@ -649,13 +585,11 @@ function getFilteredMessages() {
     const fromVal = dateFrom.value, toVal = dateTo.value;
 
     return messages.filter(m => {
-        const hay = [m.name, m.provider, m.endpointType, m.subject, m.preview, m.fullMessage, m.status].join(' ').toLowerCase();
+        const hay     = [m.name, m.provider, m.endpointType, m.subject, m.preview, m.fullMessage, m.status].join(' ').toLowerCase();
         const msgDate = (m.time || '').substring(0, 10);
         let matchStars = true;
         if (activeStarFilter > 0) {
-            matchStars = m.endpointType === 'reviews'
-                ? parseInt(m.extraMeta, 10) === activeStarFilter
-                : false;
+            matchStars = m.endpointType === 'reviews' && parseInt(m.extraMeta, 10) === activeStarFilter;
         }
         return hay.includes(term)
             && (pVal === '' || m.provider === pVal)
@@ -670,7 +604,7 @@ function renderList() {
     const filtered = getFilteredMessages();
 
     if (filtered.length === 0) {
-        messageList.innerHTML = `<div class="sb-empty-list">Geen berichten gevonden.</div>`;
+        messageList.innerHTML  = `<div class="sb-empty-list">Geen berichten gevonden.</div>`;
         contentPanel.innerHTML = `<div class="sb-empty-state"><div class="sb-empty-state-icon">🔍</div><div class="sb-empty-state-text">Geen resultaat voor de huidige filters</div></div>`;
         return;
     }
@@ -680,12 +614,11 @@ function renderList() {
             ? `<div class="sb-avatar"><img src="${escapeHtml(msg.avatar)}" alt=""></div>`
             : `<div class="sb-avatar">${escapeHtml(msg.initials || 'O')}</div>`;
         const statusHtml = msg.status ? `<span class="sb-status-badge">${escapeHtml(msg.status)}</span>` : '';
-        let previewHtml = escapeHtml(msg.preview || '');
+        let previewHtml  = escapeHtml(msg.preview || '');
         if (msg.endpointType === 'reviews') {
             const s = ratingStars(msg.extraMeta);
             if (s) previewHtml = s + '<br>' + previewHtml;
         }
-        // Grijze indicator als bericht te oud is
         const oldIndicator = !msg.canReply ? ' <span style="font-size:10px;opacity:.5;">(te oud)</span>' : '';
 
         return `
