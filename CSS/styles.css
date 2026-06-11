@@ -12,8 +12,7 @@
    5. Georgia voor titels en grote getallen, sans-serif voor de rest.
 
    Conventies in dit bestand:
-   - We stylen NIETS op basis van een #id of [attribute] meer.
-     Alle styling gaat via classes.
+    Alle styling gaat via classes.
    - Patronen die op meerdere plekken voorkomen zijn naar boven
      getrokken als utility-class (.sb-eyebrow, .sb-field,
      .sb-btn-dark, .sb-btn-outline, .sb-link-underline).
@@ -1078,6 +1077,10 @@ button {
     font-weight: 400;
     line-height: 1.45;
     z-index: 10;
+}
+
+.link{
+    text-decoration: none;
 }
 
 /* Tabel-header die ook een tooltip toont (gebruikt op Fathom) */
