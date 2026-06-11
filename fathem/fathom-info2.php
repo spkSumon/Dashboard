@@ -1,5 +1,6 @@
 <?php
 
+require_once __DIR__ . '/../api/token.php';
 // =======================
 // 1. BASIS INSTELLINGEN
 // =======================
@@ -99,144 +100,7 @@ $paramsUTM = [
 
 
 // Functie om de Fathom API aan te roepen met URL, parameters en API key
-function callFathom($url, $params, $apiKey) {
-    if (!empty($params)) {
-        $url .= '?' . http_build_query($params);
-    }
 
-    $ch = curl_init();
-
-    curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_HTTPHEADER => [
-            "Authorization: Bearer $apiKey",
-            "Accept: application/json",
-            "Connection: keep-alive"
-        ],
-        CURLOPT_TIMEOUT => 5,
-        CURLOPT_CONNECTTIMEOUT => 2,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_ENCODING => "",
-    ]);
-
-    $response = curl_exec($ch);
-
-    
-    if ($response === false) {
-    $error = curl_error($ch);
-    curl_close($ch);
-
-    error_log("cURL error: " . $error);
-
-    return [
-        'error' => true,
-        'type' => 'curl',
-        'message' => $error,
-        'url' => $url
-    ];
-}
-
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-   
-    if ($httpCode >= 400) {
-        error_log("HTTP error $httpCode: $response");
-
-        return [
-            'error' => true,
-            'code' => $httpCode,
-            'raw' => $response
-        ];
-    }
-
-    $data = json_decode($response, true);
-
-    
-    if (!is_array($data)) {
-        error_log("Invalid JSON: " . $response);
-
-        return [
-            'error' => true,
-            'message' => 'Invalid JSON',
-            'raw' => $response
-        ];
-    }
-
-    return $data;
-}
-
-
-
-function manageCache($dir, $maxAge = 3600, $maxFiles = 50) {
-    if (!is_dir($dir)) return;
-
-    $files = glob($dir . '*.json');
-
-    
-    foreach ($files as $file) {
-        if (time() - filemtime($file) > $maxAge) {
-            unlink($file);
-        }
-    }
-
-
-    
-    if (count($files) > $maxFiles) {
-        usort($files, fn($a, $b) => filemtime($a) - filemtime($b));
-        $filesToDelete = array_slice($files, 0, count($files) - $maxFiles);
-
-        foreach ($filesToDelete as $file) {
-            unlink($file);
-        }
-    }
-}
-
-
-function cachedCall($key, $callback, $ttl = 300) {
-    $dir = __DIR__ . '/cache/';
-    $file = $dir . md5($key) . '.json';
-
-    if (!is_dir($dir)) {
-        mkdir($dir, 0777, true);
-    }
-
-    
-    if (rand(1, 50) === 1) {
-    manageCache($dir, 3600, 50);
-    }
-
-    
-    if (file_exists($file) && (time() - filemtime($file) < $ttl)) {
-        $cached = json_decode(file_get_contents($file), true);
-
-        if (is_array($cached)) {
-            return $cached;
-        }
-    }
-
-    
-    $data = $callback();
-
-    
-    if (!is_array($data) || isset($data['error'])) {
-
-        error_log("API ERROR [$key]: " . json_encode($data));
-
-        
-        if (file_exists($file)) {
-            return json_decode(file_get_contents($file), true);
-        }
-
-        return $data;
-    }
-
-    
-    file_put_contents($file, json_encode($data));
-
-    return $data;
-}
 
 
 // =======================
@@ -270,21 +134,6 @@ $currentVisitors = json_encode($currentVisitors['total'] ?? 0);
 
 // Functie om het hoofddomein uit een URL te halen,
 // zodat we de data per domein groeperen i.p.v. per subdomein
-function getMainDomain($hostname) {
-    $hostname = preg_replace('/^(www|m|l)\./', '', $hostname);
-    $parts = explode('.', $hostname);
-    $count = count($parts);
-
-    if ($count >= 3 && strlen($parts[$count - 2]) <= 3) {
-        return $parts[$count - 3];
-    }
-
-    if ($count >= 2) {
-        return $parts[$count - 2];
-    }
-
-    return $hostname;
-}
 
 
 
@@ -365,7 +214,14 @@ $totalViewsPerVisit = $totalVisits > 0 ? $totalPageViews / $totalVisits : 0;
 $totalBounceRate = $totalVisits > 0 ? $totalBounceWeighted / $totalVisits : 0;
 $totalAvgDuration = $totalVisits > 0 ? $totalAvg_duration / $totalVisits : 0;
 
+$sort = $_GET['sort'] ?? 'name';
+$order = $_GET['order'] ?? 'asc';
 
+
+usort($grouped, function($a, $b) use ($sort, $order) {
+    $result = $a[$sort] <=> $b[$sort];
+    return $order === 'asc' ? $result : -$result;
+});
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -456,9 +312,10 @@ Styling:
 
 <!-- Datumkiezer -->
 <section>
+    <p>Kies een specifiek datumbereik:</p>
     <form method="GET" class="sb-date-form">
         <input type="date" name="date_from" class="sb-field sb-field--inline" value="<?= htmlspecialchars($dateFrom) ?>">
-        <span>—</span>
+        
         <input type="date" name="date_to" class="sb-field sb-field--inline" value="<?= htmlspecialchars($dateTo) ?>">
         <button type="submit" class="sb-btn-dark">Apply</button>
     </form>
@@ -482,27 +339,7 @@ Styling:
 <!-- Referrer-lijst: styles.css target via section > ul > li
      en maakt er automatisch een platte lijst met hairlines van -->
 
-<?php 
-$sort = $_GET['sort'] ?? 'name';
-$order = $_GET['order'] ?? 'asc';
 
-function sortUrl(string $col, string $currentSort, string $currentOrder): string {
-    $params = array_merge($_GET, [
-        'sort'  => $col,
-        'order' => $col === $currentSort && $currentOrder === 'asc' ? 'desc' : 'asc',
-    ]);
-    return '?' . http_build_query($params);
-}
-
-function getArrow(string $col, string $sort, string $order): string {
-    if ($col !== $sort) return '';
-    return $order === 'asc' ? ' ↓' : ' ↑';
-}
-usort($grouped, function($a, $b) use ($sort, $order) {
-    $result = $a[$sort] <=> $b[$sort];
-    return $order === 'asc' ? $result : -$result;
-});
-?>
 <section>
     <table>
         <thead>

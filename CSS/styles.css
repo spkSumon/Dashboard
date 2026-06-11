@@ -49,7 +49,7 @@ body {
     background: var(--bg);
     font-family: "Montserrat", sans-serif;
     color: var(--ink);
-    font: 15px/1.6 var(--sans);
+    
     padding: 40px clamp(20px, 5vw, 64px) 96px;
     -webkit-font-smoothing: antialiased;
 }
